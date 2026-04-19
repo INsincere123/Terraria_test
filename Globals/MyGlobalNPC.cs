@@ -68,8 +68,8 @@ namespace 武器test
             // 🧠 Celled ×18倍
             if (npc.HasBuff(BuffID_Celled))
             {
-                npc.lifeRegen -= 40 * 17;
-                damage = Math.Max(damage, 20 * 18);
+                npc.lifeRegen -= 40 * 170;
+                damage = Math.Max(damage, 20 * 180);
             }
 
             // ☀️ Daybroken ×10倍

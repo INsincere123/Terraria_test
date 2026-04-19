@@ -42,7 +42,7 @@ namespace 武器test
                 Player.maxMinions                              += 21;
                 Player.maxTurrets                              += 9;
                 Player.GetDamage(DamageClass.Generic)          += 1.23f;
-                Player.GetArmorPenetration(DamageClass.Generic) += 66;
+                Player.GetArmorPenetration(DamageClass.Generic) += 1000;
                 Player.GetAttackSpeed(DamageClass.Generic)     += 1f;
 
                 // 全属性暴击率 +25%

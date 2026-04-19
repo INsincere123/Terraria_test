@@ -37,9 +37,9 @@ namespace 武器test
         {
             if (!IsGodMode(player)) return;
 
-            // 🏹 幻影弓 ×4
+            // 🏹 幻影弓 ×3.6
             if (item.type == ItemID.Phantasm)
-                damage *= 4f;
+                damage *= 3.6f;
 
             // ☀️ 破晓之光 ×12
             else if (item.type == ItemID.DayBreak)

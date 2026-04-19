@@ -28,6 +28,8 @@ namespace 武器test
 
         // 破晓之光太阳爆发触发记录，防止每帧重复触发
         private static readonly HashSet<int> _daybreakBurstFiredSet = new HashSet<int>();
+        // 破晓之光追踪延迟计时器
+        private int _daybreakTrackDelay = 0;
 
         // ══════════════════════════════════════════════════════════════
         //   PostAI — 每帧追踪入口（按弹射物类型分发到各专属追踪逻辑）
@@ -70,9 +72,10 @@ namespace 武器test
                 if (!godMode || projectile.ai[0] != 0) return;
                 ApplyDaybreakTracking(projectile);
             }
-            // 👻 普通召唤物（排除哨兵和星尘细胞本体）
+            // 👻 普通召唤物（排除哨兵、模组和星尘细胞本体）
             else if (projectile.minion && !projectile.sentry &&
-                     projectile.type != ProjectileID.StardustCellMinion)
+                     projectile.type != ProjectileID.StardustCellMinion &&
+                     projectile.type < ProjectileID.Count)  // 排除模组召唤物
             {
                 ApplyGenericMinionTracking(projectile, player, summonRange);
             }
@@ -145,11 +148,18 @@ namespace 武器test
         // ══════════════════════════════════════════════════════════════
         private void ApplyDaybreakTracking(Projectile projectile)
         {
+            // 发射后前45帧保持原方向，不追踪
+            if (_daybreakTrackDelay < 45)
+            {
+                _daybreakTrackDelay++;
+                return;
+            }
+
             const float trackRange      = 800f;
             const float minSpeed        = 36f;
             const float maxSpeed        = 60f;
-            const float lerpAmount      = 0.2f;
-            const float correctionForce = 0.4f;
+            const float lerpAmount      = 0.1f;
+            const float correctionForce = 0.32f;
 
             int targetIndex = AcquireNearestTarget(projectile.Center, trackRange);
             if (targetIndex < 0) return;
