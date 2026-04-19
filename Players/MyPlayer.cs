@@ -34,7 +34,7 @@ namespace 武器test
             // ══════════════════════════════════════════════════════════
             if (godModeBuff2)
             {
-                Player.statDefense                              += 666;
+                Player.statDefense                              += 6666;
                 Player.statLifeMax2                            += 6666;
                 Player.statManaMax2                            += 666;
                 Player.endurance                                = MathHelper.Clamp(Player.endurance + 0.66f, 0f, 0.999f);
@@ -42,14 +42,14 @@ namespace 武器test
                 Player.maxMinions                              += 21;
                 Player.maxTurrets                              += 9;
                 Player.GetDamage(DamageClass.Generic)          += 1.23f;
-                Player.GetArmorPenetration(DamageClass.Generic) += 1000;
+                Player.GetArmorPenetration(DamageClass.Generic) += 3600;
                 Player.GetAttackSpeed(DamageClass.Generic)     += 1f;
 
                 // 全属性暴击率 +25%
                 Player.GetCritChance(DamageClass.Generic)      += 25;
 
                 // 暴击伤害 +50%，在 ModifyHitNPC / ModifyHitNPCWithProj 里应用
-                critDamageBonus = 0.5f;
+                critDamageBonus = 1f;
             }
             else
             {

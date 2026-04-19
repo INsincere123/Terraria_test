@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("武器test")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4fc6399d7ce21815ec5c193b2cfdb1e7ee1c0bd5")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c98efe860f3809bbb46fb5d985038c2943cd6e72")]
 [assembly: System.Reflection.AssemblyProductAttribute("武器test")]
 [assembly: System.Reflection.AssemblyTitleAttribute("武器test")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

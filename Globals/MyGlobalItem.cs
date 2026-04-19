@@ -45,6 +45,10 @@ namespace 武器test
             else if (item.type == ItemID.DayBreak)
                 damage *= 12f;
 
+            // 星云烈焰 ×1.8
+            else if (item.type == ItemID.NebulaBlaze)
+                damage *= 1.8f;
+
             // 🌟 召唤法杖
             else if (item.DamageType == DamageClass.Summon)
             {

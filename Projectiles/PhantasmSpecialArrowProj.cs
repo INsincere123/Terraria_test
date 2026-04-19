@@ -23,16 +23,16 @@ namespace 武器test.Projectiles
 
         public override void SetDefaults()
         {
-            Projectile.width       = 10;
-            Projectile.height      = 10;
-            Projectile.friendly    = true;
-            Projectile.DamageType  = DamageClass.Ranged;
-            Projectile.arrow       = true;
+            Projectile.width       = 10;        // 碰撞箱宽（像素）
+            Projectile.height      = 10;        // 碰撞箱高（像素）
+            Projectile.friendly    = true;      // 伤害敌人而非玩家
+            Projectile.DamageType  = DamageClass.Ranged;    // 受远程加成影响
+            Projectile.arrow       = true;      // 标记为箭矢，激活幻影弓等弓的特殊逻辑
             Projectile.tileCollide = false;     // 穿墙
-            Projectile.penetrate   = 5;         // 穿透5个敌人后消失
+            Projectile.penetrate   = -1;        // 无限穿透
             Projectile.timeLeft    = 300;       // 5秒存活
-            Projectile.light       = 0.5f;
-            Projectile.extraUpdates = 1;
+            Projectile.light       = 0.5f;      // 发出微弱光晕（范围 0~1）
+            Projectile.extraUpdates = 1;        // 每帧更新 2 次（速度加倍，追踪更流畅）
 
             // 独立无敌帧，多支箭同时命中同一敌人各自结算，不互相骗伤
             Projectile.usesLocalNPCImmunity = true;
