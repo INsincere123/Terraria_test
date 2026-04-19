@@ -1,0 +1,38 @@
+Items: {
+	BuffToggleItem: {
+		DisplayName: 成神之路
+		Tooltip:
+			'''
+			开启成神之路
+			全属性强化，部分武器大幅强化
+			再次使用可关闭
+			'''
+	}
+
+	BuffToggleItem2: {
+		DisplayName: 你已成神
+		Tooltip: 全属性大幅强化，再次使用可关闭
+	}
+}
+
+Buffs: {
+	HarvestTimeBuff: {
+		Description: 古有暗黑收割，今有光明收割，攻速提高50%
+		DisplayName: 光明收割
+	}
+
+	DarkMarkBuff: {
+		Description: Mods.武器test.Buffs.DarkMarkBuff.Description
+		DisplayName: Dark Mark Buff
+	}
+
+	ArmorShredDebuff: {
+		Description: Mods.武器test.Buffs.ArmorShredDebuff.Description
+		DisplayName: Armor Shred Debuff
+	}
+}
+
+Projectiles: {
+	PhantasmSpecialArrowProj.DisplayName: 真·弑神箭
+	PhantasmHoldout.DisplayName: Phantasm Holdout
+}

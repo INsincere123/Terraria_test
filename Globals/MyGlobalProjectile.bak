@@ -1,0 +1,244 @@
+using Terraria;
+using Terraria.ID;
+using Terraria.ModLoader;
+using Microsoft.Xna.Framework;
+using System;
+
+namespace 武器test
+{
+    public class MyGlobalProjectile : GlobalProjectile
+    {
+        public override bool InstancePerEntity => true;
+
+        public float currentWhipDecay = 1f;
+
+        public override void PostAI(Projectile projectile)
+        {
+            if (projectile.owner < 0 || projectile.owner >= Main.maxPlayers)
+                return;
+
+            Player player = Main.player[projectile.owner];
+            if (!player.active || !player.GetModPlayer<MyPlayer>().godModeBuff)
+                return;
+
+            float summonRange = Math.Max(Main.screenWidth, Main.screenHeight) * 1.1f;
+
+            // ====================== 星尘龙专属温和追踪（解决贴图崩） ======================
+            if (ProjectileID.Sets.StardustDragon[projectile.type])
+            {
+                ApplyHighTierTracking(projectile, 33f, 80f, 0.1f, 0.2f); 
+            }
+            // ====================== 泰拉棱镜（保持原强追踪） ======================
+            else if (projectile.type == ProjectileID.EmpressBlade)
+            {
+                ApplyHighTierTracking(projectile, 18f, 56f, 0.32f, 0.45f);
+            }
+            // ====================== 高速追踪（乌鸦 + 沙漠虎） ======================
+            else if (projectile.type == 1802 || projectile.type == 4607)
+            {
+                ApplyHighTierTracking(projectile, 26f, 48f, 0.35f, 0.6f);
+            }
+            // ====================== 其他普通召唤物 ======================
+            else if (projectile.minion || projectile.sentry)
+            {
+                int targetIndex = AcquireTargetAroundPlayer(player, summonRange);
+                if (targetIndex >= 0)
+                {
+                    NPC target = Main.npc[targetIndex];
+                    Vector2 toTarget = target.Center - projectile.Center;
+
+                    if (toTarget.LengthSquared() > 1f)
+                    {
+                        float dist = toTarget.Length();
+                        toTarget.Normalize();
+                        float desiredSpeed = MathHelper.Clamp(11f + dist / 65f, 13f, 26f);
+                        projectile.velocity = Vector2.Lerp(projectile.velocity, toTarget * desiredSpeed, 0.09f);
+                    }
+                }
+                else if (projectile.velocity.LengthSquared() > 0.01f)
+                {
+                    Vector2 dir = projectile.velocity;
+                    dir.Normalize();
+                    projectile.velocity = Vector2.Lerp(projectile.velocity, dir * 14f, 0.06f);
+                }
+            }
+        }
+
+        private void ApplyHighTierTracking(Projectile projectile, float minSpeed, float maxSpeed, float lerpAmount, float extraCorrection)
+        {
+            int targetIndex = AcquireStardustTarget(projectile, 2400f);
+            if (targetIndex >= 0)
+            {
+                NPC target = Main.npc[targetIndex];
+                Vector2 toTarget = target.Center - projectile.Center;
+
+                if (toTarget.LengthSquared() > 1f)
+                {
+                    float dist = toTarget.Length();
+                    toTarget.Normalize();
+
+                    float desiredSpeed = MathHelper.Clamp(minSpeed + dist / 45f, minSpeed, maxSpeed);
+                    Vector2 desiredVelocity = toTarget * desiredSpeed;
+
+                    projectile.velocity = Vector2.Lerp(projectile.velocity, desiredVelocity, lerpAmount);
+                    projectile.velocity += toTarget * extraCorrection;
+
+                    projectile.netUpdate = true;
+                }
+            }
+        }
+
+        // ====================== 伤害修正（万花筒） ======================
+        public override void ModifyHitNPC(Projectile projectile, NPC target, ref NPC.HitModifiers modifiers)
+        {
+            if (projectile.owner < 0 || projectile.owner >= Main.maxPlayers)
+                return;
+
+            Player player = Main.player[projectile.owner];
+            if (!player.active || !player.GetModPlayer<MyPlayer>().godModeBuff)
+                return;
+
+            if (projectile.type == 915) // 万花筒
+            {
+                modifiers.SourceDamage *= currentWhipDecay;
+                currentWhipDecay *= 0.95f;
+            }
+        }
+
+        // ====================== 命中逻辑（保持不变） ======================
+        public override void OnHitNPC(Projectile projectile, NPC target, NPC.HitInfo hit, int damageDone)
+        {
+            if (projectile.owner < 0 || projectile.owner >= Main.maxPlayers)
+                return;
+
+            Player player = Main.player[projectile.owner];
+            if (!player.active || !player.GetModPlayer<MyPlayer>().godModeBuff)
+                return;
+
+            if (ProjectileID.Sets.StardustDragon[projectile.type])
+            {
+                int chainCount = 0;
+                const float chainMaxDist = 500f;
+
+                for (int i = 0; i < Main.npc.Length; i++)
+                {
+                    NPC npc = Main.npc[i];
+                    if (!npc.active || npc.friendly || npc.whoAmI == target.whoAmI) continue;
+                    if (Vector2.Distance(target.Center, npc.Center) > chainMaxDist) continue;
+
+                    int dmg = (int)(damageDone * 0.7f);
+                    npc.SimpleStrikeNPC(dmg, 0);
+                    SpawnSplitVisual(target.Center, npc.Center);
+
+                    chainCount++;
+                    if (chainCount >= 3) break;
+                }
+
+                for (int i = 0; i < Main.npc.Length; i++)
+                {
+                    NPC npc = Main.npc[i];
+                    if (!npc.active || npc.friendly || npc.whoAmI == target.whoAmI) continue;
+                    if (Vector2.Distance(target.Center, npc.Center) < 300f)
+                    {
+                        int dmg = (int)(damageDone * 0.5f);
+                        npc.SimpleStrikeNPC(dmg, 0);
+                        SpawnSplitVisual(target.Center, npc.Center);
+                    }
+                }
+            }
+
+            if (ProjectileID.Sets.IsAWhip[projectile.type])
+            {
+                target.AddBuff(ModContent.BuffType<DarkMarkBuff>(), 600);
+                currentWhipDecay = 1f;
+            }
+
+            if ((projectile.minion || ProjectileID.Sets.MinionShot[projectile.type] || ProjectileID.Sets.SentryShot[projectile.type]) &&
+                target.HasBuff(ModContent.BuffType<DarkMarkBuff>()))
+            {
+                DoHarvest(target, player);
+            }
+        }
+
+        public override void ModifyDamageHitbox(Projectile projectile, ref Rectangle hitbox)
+        {
+            if (projectile.owner < 0 || projectile.owner >= Main.maxPlayers)
+                return;
+
+            Player player = Main.player[projectile.owner];
+            if (!player.active || !player.GetModPlayer<MyPlayer>().godModeBuff)
+                return;
+
+            if (ProjectileID.Sets.IsAWhip[projectile.type])
+            {
+                hitbox.Inflate(hitbox.Width / 2, hitbox.Height / 2);
+            }
+        }
+
+        // ====================== 辅助方法 ======================
+        private int AcquireStardustTarget(Projectile projectile, float maxRange)
+        {
+            int bestIndex = -1;
+            float bestDistSq = maxRange * maxRange;
+            for (int i = 0; i < Main.npc.Length; i++)
+            {
+                NPC npc = Main.npc[i];
+                if (!npc.CanBeChasedBy()) continue;
+                float distSq = Vector2.DistanceSquared(projectile.Center, npc.Center);
+                if (distSq < bestDistSq)
+                {
+                    bestDistSq = distSq;
+                    bestIndex = i;
+                }
+            }
+            return bestIndex;
+        }
+
+        private int AcquireTargetAroundPlayer(Player player, float maxRange)
+        {
+            int bestIndex = -1;
+            float bestDistSq = maxRange * maxRange;
+            for (int i = 0; i < Main.npc.Length; i++)
+            {
+                NPC npc = Main.npc[i];
+                if (!npc.CanBeChasedBy()) continue;
+                float distSq = Vector2.DistanceSquared(player.Center, npc.Center);
+                if (distSq < bestDistSq)
+                {
+                    bestDistSq = distSq;
+                    bestIndex = i;
+                }
+            }
+            return bestIndex;
+        }
+
+        private void DoHarvest(NPC center, Player player)
+        {
+            int count = 0;
+            for (int i = 0; i < Main.npc.Length; i++)
+            {
+                NPC npc = Main.npc[i];
+                if (!npc.active || npc.friendly) continue;
+                if (Vector2.Distance(center.Center, npc.Center) < 400f)
+                {
+                    npc.SimpleStrikeNPC(66, 50);
+                    count++;
+                    if (count >= 6) break;
+                }
+            }
+            player.AddBuff(ModContent.BuffType<HarvestTimeBuff>(), 180);
+        }
+
+        private void SpawnSplitVisual(Vector2 from, Vector2 to)
+        {
+            if (Main.netMode == NetmodeID.Server) return;
+            Dust.QuickDustLine(from, to, 10f, Color.Cyan);
+            for (int i = 0; i < 6; i++)
+            {
+                Vector2 pos = Vector2.Lerp(from, to, i / 5f);
+                Dust.NewDustPerfect(pos, DustID.Electric, Vector2.Zero, 0, Color.Cyan, 1.1f);
+            }
+            Dust.NewDustPerfect(to, DustID.Electric, Vector2.Zero, 0, Color.White, 1.4f);
+        }
+    }
+}

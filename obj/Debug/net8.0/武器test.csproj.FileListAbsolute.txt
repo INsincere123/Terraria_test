@@ -1,0 +1,12 @@
+D:\Document\My Games\Terraria\tModLoader\ModSources\武器test\bin\Debug\net8.0\武器test.deps.json
+D:\Document\My Games\Terraria\tModLoader\ModSources\武器test\bin\Debug\net8.0\武器test.dll
+D:\Document\My Games\Terraria\tModLoader\ModSources\武器test\bin\Debug\net8.0\武器test.pdb
+D:\Document\My Games\Terraria\tModLoader\ModSources\武器test\obj\Debug\net8.0\武器test.csproj.AssemblyReference.cache
+D:\Document\My Games\Terraria\tModLoader\ModSources\武器test\obj\Debug\net8.0\武器test.GeneratedMSBuildEditorConfig.editorconfig
+D:\Document\My Games\Terraria\tModLoader\ModSources\武器test\obj\Debug\net8.0\武器test.AssemblyInfoInputs.cache
+D:\Document\My Games\Terraria\tModLoader\ModSources\武器test\obj\Debug\net8.0\武器test.AssemblyInfo.cs
+D:\Document\My Games\Terraria\tModLoader\ModSources\武器test\obj\Debug\net8.0\武器test.csproj.CoreCompileInputs.cache
+D:\Document\My Games\Terraria\tModLoader\ModSources\武器test\obj\Debug\net8.0\武器test.dll
+D:\Document\My Games\Terraria\tModLoader\ModSources\武器test\obj\Debug\net8.0\refint\武器test.dll
+D:\Document\My Games\Terraria\tModLoader\ModSources\武器test\obj\Debug\net8.0\武器test.pdb
+D:\Document\My Games\Terraria\tModLoader\ModSources\武器test\obj\Debug\net8.0\ref\武器test.dll

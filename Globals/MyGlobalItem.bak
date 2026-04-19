@@ -1,0 +1,67 @@
+using Terraria;
+using Terraria.ID;
+using Terraria.ModLoader;
+
+namespace 武器test
+{
+    public class MyGlobalItem : GlobalItem
+    {
+        public override void SetDefaults(Item item)
+        {
+            // 星尘之龙法杖
+            if (item.type == ItemID.StardustDragonStaff)
+            {
+                item.damage = 666;
+                item.knockBack = 2;
+                item.useTime = 10;
+                item.useAnimation = 12;
+            }
+
+            // 星尘细胞法杖
+            if (item.type == ItemID.StardustCellStaff)
+            {
+                item.damage = 2333;
+                item.knockBack = 13;
+                item.useTime = 12;
+                item.useAnimation = 12;
+            }
+
+            // 泰拉棱镜
+            if (item.type == ItemID.EmpressBlade)
+            {
+                item.damage = 2333;
+                item.knockBack = 10;
+                item.useTime = 14;
+                item.useAnimation = 14;
+            }
+
+            // 月亮传送门法杖
+            if (item.type == ItemID.MoonlordTurretStaff)
+            {
+                item.damage = 666;
+                item.knockBack = 18;
+                item.useTime = 16;
+                item.useAnimation = 16;  
+            }
+
+            // 七彩水晶法杖
+            if (item.type == ItemID.RainbowCrystalStaff)
+            {
+                item.damage = 1888;
+                item.knockBack = 18;
+                item.useTime = 18;
+                item.useAnimation=18;
+            }
+
+            // 万花筒（鞭子）
+            if (item.type == ItemID.RainbowWhip)
+            {
+                item.damage = 2333;
+                item.knockBack = 10;
+                item.useTime = 20;
+                item.useAnimation = 20;
+                item.shootSpeed = 12;
+            }
+        }
+    }
+}
