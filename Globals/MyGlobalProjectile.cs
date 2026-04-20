@@ -32,6 +32,40 @@ namespace 武器test
         private int _daybreakTrackDelay = 0;
 
         // ══════════════════════════════════════════════════════════════
+        //   PreAI — 乌鸦专属：完全接管 vanilla AI（返回 false 跳过原版 AI）
+        //
+        //   vanilla Raven 的 AI 状态机每帧会操作 friendly/damage 等属性，
+        //   即使 PostAI 覆盖 velocity 也无法解决"撞到 boss 没伤害"问题，
+        //   因此必须用 PreAI 彻底屏蔽 vanilla AI，完全由我们驱动行为。
+        // ══════════════════════════════════════════════════════════════
+        public override bool PreAI(Projectile projectile)
+        {
+            if (projectile.type != ProjectileID.Raven) return true;
+            if (projectile.owner < 0 || projectile.owner >= Main.maxPlayers) return true;
+
+            Player player = Main.player[projectile.owner];
+            if (!player.active) return true;
+
+            // 强制攻击属性，防止任何残留逻辑禁用伤害判定
+            projectile.friendly = true;
+            projectile.hostile  = false;
+
+            // vanilla AI 被跳过 → 手动递减 localNPCImmunity
+            // （原本这段递减逻辑在 Projectile.AI() 内部，不做会死锁）
+            if (projectile.usesLocalNPCImmunity && projectile.localNPCImmunity != null)
+            {
+                for (int i = 0; i < projectile.localNPCImmunity.Length; i++)
+                {
+                    if (projectile.localNPCImmunity[i] > 0)
+                        projectile.localNPCImmunity[i]--;
+                }
+            }
+
+            ApplyCorvidRavenAI(projectile, player);
+            return false; // 跳过 vanilla AI
+        }
+
+        // ══════════════════════════════════════════════════════════════
         //   PostAI — 每帧追踪入口（按弹射物类型分发到各专属追踪逻辑）
         // ══════════════════════════════════════════════════════════════
         public override void PostAI(Projectile projectile)
@@ -66,10 +100,13 @@ namespace 武器test
             {
                 ApplyHighTierTracking(projectile, 18f, 90f, 0.32f, 0.45f);
             }
-            // 🐺 乌鸦(1802) + 沙漠虎(4607)
-            else if (projectile.type == 1802 || projectile.type == 4607)
+            // 🐦‍⬛ 乌鸦(317) 由 PreAI 接管，此处不重复处理
+            // 🐯 沙漠虎三形态(833=幼崽 / 834=成年 / 835=装甲)：龙头级别追踪
+            else if (projectile.type == ProjectileID.StormTigerTier1 ||
+                     projectile.type == ProjectileID.StormTigerTier2 ||
+                     projectile.type == ProjectileID.StormTigerTier3)
             {
-                ApplyHighTierTracking(projectile, 40f, 83f, 0.3f, 0.6f);
+                ApplyStardustDragonTracking(projectile);
             }
             // 🌌 星云烈焰普通弹(3541) + Ex弹(3542)：环射 + 追踪扩大到 800px
             else if (projectile.type == ProjectileID.NebulaBlaze1 || projectile.type == ProjectileID.NebulaBlaze2)
@@ -84,9 +121,13 @@ namespace 武器test
                 if (!godMode || projectile.ai[0] != 0) return;
                 ApplyDaybreakTracking(projectile);
             }
-            // 👻 普通召唤物（排除哨兵、模组和星尘细胞本体）
+            // 👻 普通召唤物（排除哨兵、模组、星尘细胞本体、乌鸦、沙漠虎三形态）
             else if (projectile.minion && !projectile.sentry &&
                      projectile.type != ProjectileID.StardustCellMinion &&
+                     projectile.type != ProjectileID.Raven &&             // 乌鸦走专属 AI
+                     projectile.type != ProjectileID.StormTigerTier1 &&   // 沙漠虎走龙头追踪
+                     projectile.type != ProjectileID.StormTigerTier2 &&
+                     projectile.type != ProjectileID.StormTigerTier3 &&
                      projectile.type < ProjectileID.Count)  // 排除模组召唤物
             {
                 ApplyGenericMinionTracking(projectile, player, summonRange);
