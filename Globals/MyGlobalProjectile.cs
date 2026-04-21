@@ -48,7 +48,7 @@ namespace 武器test
 
             // 强制攻击属性，防止任何残留逻辑禁用伤害判定
             projectile.friendly = true;
-            projectile.hostile  = false;
+            projectile.hostile = false;
 
             // vanilla AI 被跳过 → 手动递减 localNPCImmunity
             // （原本这段递减逻辑在 Projectile.AI() 内部，不做会死锁）
@@ -63,6 +63,11 @@ namespace 武器test
 
             ApplyCorvidRavenAI(projectile, player);
             return false; // 跳过 vanilla AI
+        }
+
+        public override void SetDefaults(Projectile projectile)
+        {
+            ApplySpiderSetDefaults(projectile);
         }
 
         // ══════════════════════════════════════════════════════════════
@@ -121,6 +126,13 @@ namespace 武器test
                 if (!godMode || projectile.ai[0] != 0) return;
                 ApplyDaybreakTracking(projectile);
             }
+
+            // 🕷️ 蜘蛛法杖：独立无敌帧 + 扩展瞄准/返回范围
+            else if (IsSpiderMinion(projectile.type))
+            {
+                ApplySpiderPostAI(projectile, player);
+            }
+
             // 👻 普通召唤物（排除哨兵、模组、星尘细胞本体、乌鸦、沙漠虎三形态）
             else if (projectile.minion && !projectile.sentry &&
                      projectile.type != ProjectileID.StardustCellMinion &&
