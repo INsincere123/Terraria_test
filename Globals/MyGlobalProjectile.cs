@@ -198,7 +198,7 @@ namespace 武器test
                 _dragonTrackingCooldown = 3;
             }
 
-            // 🪢 鞭子命中：打暗印 + 重置衰减
+            // 🪢 鞭子命中：打暗印 + 重置衰减 
             if (ProjectileID.Sets.IsAWhip[projectile.type])
             {
                 target.AddBuff(ModContent.BuffType<DarkMarkBuff>(), 600);

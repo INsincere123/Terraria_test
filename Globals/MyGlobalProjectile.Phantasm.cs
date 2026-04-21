@@ -53,7 +53,7 @@ namespace 武器test
         }
 
         // ══════════════════════════════════════════════════════════════
-        //   通用高阶追踪（泰拉棱镜 / 乌鸦 / 沙漠虎 / 星尘细胞子细胞）
+        //   通用高阶追踪
         // ══════════════════════════════════════════════════════════════
         private void ApplyHighTierTracking(Projectile projectile, float minSpeed, float maxSpeed,
             float lerpAmount, float extraCorrection)

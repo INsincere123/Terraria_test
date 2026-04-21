@@ -1,5 +1,5 @@
 using Terraria;
-using Terraria.ID;
+//using Terraria.ID;
 using Microsoft.Xna.Framework;
 
 namespace 武器test
@@ -16,14 +16,14 @@ namespace 武器test
         // ══════════════════════════════════════════════════════════════
         private void ApplyNebulaBlazeBoostedTracking(Projectile projectile)
         {
-            // 飞出 30 帧后才开始追踪
+            // 飞出 45 帧后才开始追踪
             int ticksPerFrame = projectile.extraUpdates + 1;
-            if (projectile.timeLeft > 3600 - 30 * ticksPerFrame)
+            if (projectile.timeLeft > 3600 - 45 * ticksPerFrame)
                 return;
 
             // 追踪范围扩大到 800px，其余参数保持和原版手感接近
             // minSpeed=16, maxSpeed=22 对应原版约 16~20 速度区间
-            ApplyHighTierTracking(projectile, 16f, 22f, 0.12f, 0.3f);
+            ApplyHighTierTracking(projectile, 16f, 22f, 0.03f, 0.18f);
         }
 
         // ══════════════════════════════════════════════════════════════

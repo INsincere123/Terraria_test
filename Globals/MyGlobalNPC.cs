@@ -11,8 +11,8 @@ namespace 武器test
     /// </summary>
     public class MyGlobalNPC : GlobalNPC
     {
-        private const int BuffID_Celled    = 182; // 星尘细胞 debuff
-        private const int BuffID_Daybroken = 189; // 破晓之光 debuff
+        private const int BuffID_Celled    = BuffID.StardustMinionBleed; // 星尘细胞 debuff
+        private const int BuffID_Daybroken = BuffID.Daybreak; // 破晓之光 debuff
 
         // ══════════════════════════════════════════════════════════════
         //   破甲层数字典（key = npc.whoAmI，最多10层，每层-10护甲）
@@ -65,11 +65,11 @@ namespace 武器test
             }
             if (!anyGodMode) return;
 
-            // 🧠 Celled ×18倍
+            // 🧠 Celled ×36倍
             if (npc.HasBuff(BuffID_Celled))
             {
-                npc.lifeRegen -= 40 * 170;
-                damage = Math.Max(damage, 20 * 180);
+                npc.lifeRegen -= 80 * 170;
+                damage = Math.Max(damage, 40 * 180);
             }
 
             // ☀️ Daybroken ×10倍
