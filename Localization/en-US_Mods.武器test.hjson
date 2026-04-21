@@ -13,6 +13,11 @@ Items: {
 		DisplayName: 你已成神
 		Tooltip: 全属性大幅强化，再次使用可关闭
 	}
+
+	Sirius: {
+		Tooltip: ""
+		DisplayName: Sirius
+	}
 }
 
 Buffs: {
@@ -30,9 +35,16 @@ Buffs: {
 		Description: Mods.武器test.Buffs.ArmorShredDebuff.Description
 		DisplayName: Armor Shred Debuff
 	}
+
+	SiriusBuff: {
+		Description: Mods.武器test.Buffs.SiriusBuff.Description
+		DisplayName: Sirius Buff
+	}
 }
 
 Projectiles: {
 	PhantasmSpecialArrowProj.DisplayName: 真·弑神箭
 	PhantasmHoldout.DisplayName: Phantasm Holdout
+	SiriusMinion.DisplayName: Sirius Minion
+	SiriusBeam.DisplayName: Sirius Beam
 }
