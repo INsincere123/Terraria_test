@@ -70,6 +70,7 @@ namespace 武器test
         public override void SetDefaults(Projectile projectile)
         {
             ApplySpiderSetDefaults(projectile);
+            ApplyContactMinionSetDefaults(projectile);   // ① 冲撞型:独立无敌帧
         }
 
         // ══════════════════════════════════════════════════════════════
@@ -77,18 +78,14 @@ namespace 武器test
         // ══════════════════════════════════════════════════════════════
         public override void PostAI(Projectile projectile)
         {
-
-            //Main.NewText($"PostAI type={projectile.type}");  // 临时探针
-
             if (projectile.owner < 0 || projectile.owner >= Main.maxPlayers) return;
 
             Player player = Main.player[projectile.owner];
             if (!player.active) return;
 
-
-
             bool godMode = player.GetModPlayer<MyPlayer>().godModeBuff;
-            float summonRange = Math.Max(Main.screenWidth, Main.screenHeight) * 1.3f;
+
+            // ─────────────── 专属处理分支 (优先级最高) ───────────────
 
             // 🐉 星尘龙（仅龙头，godMode 开启时生效）
             if (ProjectileID.Sets.StardustDragon[projectile.type])
@@ -96,13 +93,7 @@ namespace 武器test
                 if (!godMode || projectile.type != ProjectileID.StardustDragon1) return;
                 ApplyStardustDragonTracking(projectile);
             }
-            // 🧠 星尘细胞子细胞（godMode 开启时生效）
-            else if (projectile.type == ProjectileID.StardustCellMinionShot)
-            {
-                if (!godMode) return;
-                ApplyHighTierTracking(projectile, 51f, 120f, 0.6f, 0.8f);
-            }
-            // ⚡ 泰拉棱镜
+            // ✨ 泰拉棱镜
             else if (projectile.type == ProjectileID.EmpressBlade)
             {
                 ApplyHighTierTracking(projectile, 18f, 90f, 0.32f, 0.45f);
@@ -128,24 +119,33 @@ namespace 武器test
                 if (!godMode || projectile.ai[0] != 0) return;
                 ApplyDaybreakTracking(projectile);
             }
-
             // 🕷️ 蜘蛛法杖：独立无敌帧 + 扩展瞄准/返回范围
             else if (IsSpiderMinion(projectile.type))
             {
                 ApplySpiderPostAI(projectile, player);
             }
 
-            // 👻 普通召唤物（排除哨兵、模组、星尘细胞本体、乌鸦、沙漠虎三形态）
-            else if (projectile.minion && !projectile.sentry &&
-                     projectile.type != ProjectileID.StardustCellMinion &&
-                     projectile.type != ProjectileID.Raven &&             // 乌鸦走专属 AI
-                     projectile.type != ProjectileID.StormTigerTier1 &&   // 沙漠虎走龙头追踪
-                     projectile.type != ProjectileID.StormTigerTier2 &&
-                     projectile.type != ProjectileID.StormTigerTier3 &&
-                     projectile.type < ProjectileID.Count)  // 排除模组召唤物
+            // ─────────────── 通用分类分支 ───────────────
+
+            // 🔫 ③ 召唤物射弹 (MinionShot)：通用高阶追踪
+            //    覆盖星尘细胞子弹/大黄蜂尖刺/UFO激光/双子激光/迷你鲨鱼等
+            else if (ProjectileID.Sets.MinionShot[projectile.type])     // 官方集合，包含所有标记为 MinionShot 的弹射物，要排除的话必须排除射弹，不能排除召唤物
             {
-                ApplyGenericMinionTracking(projectile, player, summonRange);
+                ApplyHighTierTracking(projectile, 14f, 60f, 0.08f, 0.18f);
             }
+            // 🚫 ② 射击型本体：保持 vanilla AI，不干预
+            //    (贴敌会让它们不发射射弹,必须放弃追踪强化)
+            else if (IsShootingMinionBody(projectile.type))
+            {
+                // 故意留空 —— 完全交给 vanilla AI
+            }
+            // 🥊 ① 冲撞型召唤物：蜘蛛式扩大范围追踪
+            else if (IsContactMinion(projectile))
+            {
+                ApplyContactMinionTracking(projectile, player);
+            }
+
+            // ─────────────── 独立判断 (不在 if-else 链内) ───────────────
 
             //     万花筒范围扩大
             if (projectile.type == ProjectileID.RainbowWhip)
@@ -161,7 +161,6 @@ namespace 武器test
                     }
                 }
             }
-
         }
 
         // ══════════════════════════════════════════════════════════════
@@ -184,12 +183,12 @@ namespace 武器test
             // ✨ 泰拉棱镜 ×11
             else if (projectile.type == ProjectileID.EmpressBlade)
                 modifiers.SourceDamage *= 11f;
-            // 🌙 月亮传送门激光 ×12
+            // 🌙 月亮传送门激光 ×13
             else if (projectile.type == ProjectileID.MoonlordTurretLaser)
-                modifiers.SourceDamage *= 12f;
-            // 🌈 七彩水晶本体 + 爆炸 ×15
+                modifiers.SourceDamage *= 13f;
+            // 🌈 七彩水晶本体 + 爆炸 ×10
             else if (projectile.type == 643 || projectile.type == 644)
-                modifiers.SourceDamage *= 15f;
+                modifiers.SourceDamage *= 10f;
 
             // 🪢 万花筒衰减（用独立 if，确保鞭子能同时应用其他倍率）
             if (ProjectileID.Sets.IsAWhip[projectile.type])
@@ -200,14 +199,27 @@ namespace 武器test
         }
 
         // ══════════════════════════════════════════════════════════════
-        //   OnHitNPC — 命中后特效（godMode 开启时生效）
+        //   OnHitNPC — 命中后特效
+        //
+        //   · 冲撞型召唤物的"弹开"是 QoL 功能,不依赖 godMode
+        //   · 其余特效需 godMode 开启
         // ══════════════════════════════════════════════════════════════
         public override void OnHitNPC(Projectile projectile, NPC target, NPC.HitInfo hit, int damageDone)
         {
             if (projectile.owner < 0 || projectile.owner >= Main.maxPlayers) return;
 
             Player player = Main.player[projectile.owner];
-            if (!player.active || !player.GetModPlayer<MyPlayer>().godModeBuff) return;
+            if (!player.active) return;
+
+            // 💥 ① 冲撞型召唤物 (含蜘蛛) 命中后弹开 ── 不需 godMode
+            //    防止贴在 boss 身上空转无敌帧
+            if (IsContactMinion(projectile) || IsSpiderMinion(projectile.type))
+            {
+                ApplyContactMinionBounce(projectile, target);
+            }
+
+            // ─────────────── 以下为 godMode 专属效果 ───────────────
+            if (!player.GetModPlayer<MyPlayer>().godModeBuff) return;
 
             // 🏹 幻影弓强化箭：链式跳跃 + 范围爆炸（绕过无敌帧）
             if (projectile.type == ModContent.ProjectileType<Projectiles.PhantasmSpecialArrowProj>())

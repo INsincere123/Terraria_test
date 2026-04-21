@@ -91,7 +91,7 @@ namespace 武器test
                 if (dist > 60f)
                 {
                     toTarget /= dist;
-                    const float chaseSpeed = 20f;   // 20f 追击速度（原版约 14f，适当提升以覆盖更大范围）
+                    const float chaseSpeed = 21f;   // 21f 追击速度（原版约 14f，适当提升以覆盖更大范围）
                     projectile.velocity = Vector2.Lerp(
                         projectile.velocity,
                         toTarget * chaseSpeed,
