@@ -12,10 +12,10 @@ using 武器test.Common.Players;
 
 namespace 武器test.Projectiles.Minions
 {
-    public class SiriusMinion : ModProjectile
+    public class AntaresMinion : ModProjectile
     {
         public Player Owner => Main.player[Projectile.owner];
-        public SiriusMinionPlayer ModdedOwner => Owner.GetModPlayer<SiriusMinionPlayer>();
+        public AntaresMinionPlayer ModdedOwner => Owner.GetModPlayer<AntaresMinionPlayer>();
 
         public ref float TimerForShooting => ref Projectile.ai[0];
 
@@ -36,16 +36,16 @@ namespace 武器test.Projectiles.Minions
 
         public override void SetDefaults()
         {
-            Projectile.width = 38;
-            Projectile.height = 48;
-            Projectile.minionSlots = 1f;
-            Projectile.penetrate = -1;
-            Projectile.netImportant = true;
-            Projectile.friendly = true;
-            Projectile.ignoreWater = true;
-            Projectile.tileCollide = false;
-            Projectile.minion = true;
-            Projectile.DamageType = DamageClass.Summon;
+            Projectile.width = 38;                    // 宽度38像素
+            Projectile.height = 48;                   // 高度48像素
+            Projectile.minionSlots = 1f;              // 占用1个仆从槽位
+            Projectile.penetrate = -1;                // 无穷穿透（仆从永不消失）
+            Projectile.netImportant = true;           // 网络同步重要（多人模式同步）
+            Projectile.friendly = true;               // 对玩家友好（不伤害玩家）
+            Projectile.ignoreWater = true;            // 忽视水（不受水影响）
+            Projectile.tileCollide = false;           // 穿过方块（不碰撞）
+            Projectile.minion = true;                 // 标记为仆从
+            Projectile.DamageType = DamageClass.Summon;  // 伤害类型：召唤伤害
         }
 
         public override void AI()
@@ -97,7 +97,7 @@ namespace 武器test.Projectiles.Minions
         {
             Vector2 center = Projectile.Center;
 
-            void Star(float slotReq, Vector2 offset, float intensity)
+            void Star(float slotReq, Vector2 offset, float intensity, int dustType = DustID.BlueTorch) // ← 加参数，默认蓝色
             {
                 if (slotReq > 0 && Projectile.minionSlots < slotReq)
                     return;
@@ -105,23 +105,25 @@ namespace 武器test.Projectiles.Minions
                 Vector2 pos = center + offset * Projectile.scale;
                 if (Main.rand.NextBool(2))
                 {
-                    int d = Dust.NewDust(pos - Vector2.One * 2f, 4, 4, DustID.BlueTorch, 0f, 0f, 100, default, intensity);
+                    int d = Dust.NewDust(pos - Vector2.One * 2f, 4, 4, dustType, 0f, 0f, 100, default, intensity); // ← 用参数
                     Main.dust[d].noGravity = true;
                     Main.dust[d].velocity *= 0.2f;
                     Main.dust[d].scale = intensity * Main.rand.NextFloat(1f, 1.4f);
                 }
             }
 
-            Star(0, new Vector2(0f, 0f), 1.5f);
-            Star(2, new Vector2(-118f, 217f), 0.75f);
-            Star(3, new Vector2(-67f, 272f), 0.75f);
-            Star(4, new Vector2(119f, 32f), 0.75f);
-            Star(5, new Vector2(-192f, 284f), 0.75f);
-            Star(6, new Vector2(-62f, 11f), 0.5f);
-            Star(7, new Vector2(-50f, -103f), 0.5f);
-            Star(8, new Vector2(-101f, -23f), 0.5f);
-            Star(9, new Vector2(46f, 59f), 0.5f);
-            Star(10, new Vector2(-49f, 166f), 0.5f);
+            // ─── Scorpius 天蝎座 (以 α Antares 心宿二为中心) ───
+            Star(0, new Vector2(0f, 0f), 1.5f, DustID.RedTorch);  // α Antares (心宿二,主星)    红色，其他不传就默认蓝
+            Star(2, new Vector2(70f, -80f), 0.75f); // δ Sco    (房宿三,头)
+            Star(3, new Vector2(-30f, 80f), 0.75f); // τ Sco    (身躯上段)
+            Star(4, new Vector2(-80f, 150f), 0.75f); // ε Sco    (身躯中段)
+            Star(5, new Vector2(140f, -140f), 0.75f); // β Sco    (房宿四,头顶)
+            Star(6, new Vector2(-120f, 210f), 0.5f);  // μ Sco    (尾部起点)
+            Star(7, new Vector2(-170f, 240f), 0.5f);  // ζ Sco    (钩底拐点)
+            Star(8, new Vector2(-210f, 200f), 0.5f);  // θ Sco    (钩外最远端)
+            Star(9, new Vector2(-140f, 170f), 0.75f); // λ Sco    (Shaula 毒针)
+            Star(10, new Vector2(190f, -100f), 0.5f);  // ρ Sco    (右爪)
+            Star(11, new Vector2(80f, -160f), 0.5f);  // π Sco    (左爪)
         }
 
         private NPC FindTarget(float range)
@@ -152,10 +154,10 @@ namespace 武器test.Projectiles.Minions
 
         private void CheckMinionExistence()
         {
-            Owner.AddBuff(ModContent.BuffType<SiriusBuff>(), 3600);
+            Owner.AddBuff(ModContent.BuffType<AntaresBuff>(), 3600);
             if (Owner.dead)
-                ModdedOwner.sirius = false;
-            if (ModdedOwner.sirius)
+                ModdedOwner.antares = false;
+            if (ModdedOwner.antares)
                 Projectile.timeLeft = 2;
         }
 
@@ -178,7 +180,7 @@ namespace 武器test.Projectiles.Minions
         {
             if (target == null) return;
 
-            float timer = 90f * (10f / (10f + Projectile.minionSlots));
+            float timer = 90f * (4f / (4f + Projectile.minionSlots));   //槽位越多，分母越大，timer值越小 → 更频繁射击
             if (TimerForShooting < timer || Projectile.owner != Main.myPlayer)
                 return;
 
@@ -194,15 +196,22 @@ namespace 武器test.Projectiles.Minions
                 dust.noGravity = true;
             }
 
-            for (int i = 0; i < 2; i++)
+            // 5% 概率触发爆发射击，数量 = 当前占用召唤槽
+            int burstCount = Main.rand.NextFloat() < 0.05f ? (int)Projectile.minionSlots : 3;
+
+            for (int i = 0; i < burstCount; i++)
             {
+                if (burstCount > 3)
+                    SoundEngine.PlaySound(SoundID.Item122 with { Pitch = 0.3f }, Projectile.Center); // 触发爆发时播放不同音效
+                else
+                    SoundEngine.PlaySound(SoundID.Item9 with { Pitch = -0.15f }, Projectile.Center); // 原来的音效
                 Vector2 velocity = new Vector2(25f, 0f).RotatedByRandom(MathHelper.Pi);
-                float damageMod = 1f + MathF.Pow(0.2f * Projectile.minionSlots, 1.5f);
+                float damageMod = 1f + MathF.Pow(0.06f * Projectile.minionSlots, 1.5f);
                 Projectile.NewProjectile(
                     Projectile.GetSource_FromThis(),
                     Projectile.Center + velocity,
                     velocity,
-                    ModContent.ProjectileType<SiriusBeam>(),
+                    ModContent.ProjectileType<AntaresBeam>(),
                     (int)(Projectile.damage * damageMod),
                     Projectile.knockBack,
                     Projectile.owner);
@@ -230,17 +239,17 @@ namespace 武器test.Projectiles.Minions
                     color, 2f);
             }
 
-            Connect(4, new Vector2(0f, 0f), new Vector2(119f, 32f));
-            Connect(2, new Vector2(0f, 0f), new Vector2(-118f, 217f));
-            Connect(6, new Vector2(0f, 0f), new Vector2(-62f, 11f));
-            Connect(9, new Vector2(119f, 32f), new Vector2(46f, 59f));
-            Connect(10, new Vector2(46f, 59f), new Vector2(-49f, 166f));
-            Connect(10, new Vector2(-49f, 166f), new Vector2(-67f, 272f));
-            Connect(3, new Vector2(-67f, 272f), new Vector2(-118f, 217f));
-            Connect(5, new Vector2(-118f, 217f), new Vector2(-192f, 284f));
-            Connect(8, new Vector2(-62f, 11f), new Vector2(-101f, -23f));
-            Connect(8, new Vector2(-101f, -23f), new Vector2(-50f, -103f));
-            Connect(7, new Vector2(-50f, -103f), new Vector2(-62f, 11f));
+            // ─── 身躯主线: 从头部经心宿二到毒针 ───
+            Connect(2, new Vector2(0f, 0f), new Vector2(70f, -80f)); // Antares → δ
+            Connect(3, new Vector2(0f, 0f), new Vector2(-30f, 80f)); // Antares → τ
+            Connect(4, new Vector2(-30f, 80f), new Vector2(-80f, 150f)); // τ → ε
+            Connect(5, new Vector2(70f, -80f), new Vector2(140f, -140f)); // δ → β
+            Connect(6, new Vector2(-80f, 150f), new Vector2(-120f, 210f)); // ε → μ
+            Connect(7, new Vector2(-120f, 210f), new Vector2(-170f, 240f)); // μ → ζ 入钩
+            Connect(8, new Vector2(-170f, 240f), new Vector2(-210f, 200f)); // ζ → θ 钩外
+            Connect(9, new Vector2(-210f, 200f), new Vector2(-140f, 170f)); // θ → λ 毒针
+            Connect(10, new Vector2(140f, -140f), new Vector2(190f, -100f)); // β → ρ 右爪
+            Connect(11, new Vector2(140f, -140f), new Vector2(80f, -160f)); // β → π 左爪
 
             return false;
         }

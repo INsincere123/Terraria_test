@@ -5,7 +5,7 @@ using 武器test.Projectiles.Minions;
 
 namespace 武器test.Buffs
 {
-    public class SiriusBuff : ModBuff
+    public class AntaresBuff : ModBuff
     {
         public override void SetStaticDefaults()
         {
@@ -15,14 +15,14 @@ namespace 武器test.Buffs
 
         public override void Update(Player player, ref int buffIndex)
         {
-            var modPlayer = player.GetModPlayer<SiriusMinionPlayer>();
+            var modPlayer = player.GetModPlayer<AntaresMinionPlayer>();
 
-            if (player.ownedProjectileCounts[ModContent.ProjectileType<SiriusMinion>()] > 0)
+            if (player.ownedProjectileCounts[ModContent.ProjectileType<AntaresMinion>()] > 0)
             {
-                modPlayer.sirius = true;
+                modPlayer.antares = true;
             }
 
-            if (!modPlayer.sirius)
+            if (!modPlayer.antares)
             {
                 player.DelBuff(buffIndex);
                 buffIndex--;

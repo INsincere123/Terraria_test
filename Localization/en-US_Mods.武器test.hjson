@@ -14,9 +14,13 @@ Items: {
 		Tooltip: 全属性大幅强化，再次使用可关闭
 	}
 
-	Sirius: {
-		Tooltip: ""
-		DisplayName: Sirius
+	Antares: {
+		DisplayName: 心宿二
+		Tooltip: 
+		'''
+		召唤蝎子座，发射追踪火焰，命中敌人后爆炸
+		5%概率触发爆发射击
+		'''
 	}
 }
 
@@ -36,15 +40,15 @@ Buffs: {
 		DisplayName: Armor Shred Debuff
 	}
 
-	SiriusBuff: {
-		Description: Mods.武器test.Buffs.SiriusBuff.Description
-		DisplayName: Sirius Buff
+	AntaresBuff: {
+		DisplayName: 心宿二
+		Description: “蝎子的心脏”
 	}
 }
 
 Projectiles: {
 	PhantasmSpecialArrowProj.DisplayName: 真·弑神箭
 	PhantasmHoldout.DisplayName: Phantasm Holdout
-	SiriusMinion.DisplayName: Sirius Minion
-	SiriusBeam.DisplayName: Sirius Beam
+	AntaresBeam.DisplayName: Antares Beam
+	AntaresMinion.DisplayName: Antares Minion
 }

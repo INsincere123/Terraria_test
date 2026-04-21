@@ -1,8 +1,8 @@
 using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
-using Microsoft.Xna.Framework;
-using System;
+//using Microsoft.Xna.Framework;
+//using System;
 using System.Collections.Generic;
 
 namespace 武器test
