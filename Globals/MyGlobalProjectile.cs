@@ -31,6 +31,8 @@ namespace 武器test
         // 破晓之光追踪延迟计时器
         private int _daybreakTrackDelay = 0;
 
+        private bool _whipRangeSet = false;
+
         // ══════════════════════════════════════════════════════════════
         //   PreAI — 乌鸦专属：完全接管 vanilla AI（返回 false 跳过原版 AI）
         //
@@ -144,6 +146,22 @@ namespace 武器test
             {
                 ApplyGenericMinionTracking(projectile, player, summonRange);
             }
+
+            //     万花筒范围扩大
+            if (projectile.type == ProjectileID.RainbowWhip)
+            {
+                if (player.active && player.GetModPlayer<MyPlayer>().godModeBuff)
+                {
+                    if (!_whipRangeSet)
+                    {
+                        var ws = projectile.WhipSettings;
+                        ws.RangeMultiplier *= 1.5f;
+                        projectile.WhipSettings = ws;
+                        _whipRangeSet = true;
+                    }
+                }
+            }
+
         }
 
         // ══════════════════════════════════════════════════════════════
@@ -163,12 +181,12 @@ namespace 武器test
             else if (projectile.type == ProjectileID.StardustCellMinion ||
                      projectile.type == ProjectileID.StardustCellMinionShot)
                 modifiers.SourceDamage *= 15f;
-            // ✨ 泰拉棱镜 ×13
+            // ✨ 泰拉棱镜 ×11
             else if (projectile.type == ProjectileID.EmpressBlade)
-                modifiers.SourceDamage *= 13f;
-            // 🌙 月亮传送门激光 ×15
+                modifiers.SourceDamage *= 11f;
+            // 🌙 月亮传送门激光 ×12
             else if (projectile.type == ProjectileID.MoonlordTurretLaser)
-                modifiers.SourceDamage *= 15f;
+                modifiers.SourceDamage *= 12f;
             // 🌈 七彩水晶本体 + 爆炸 ×15
             else if (projectile.type == 643 || projectile.type == 644)
                 modifiers.SourceDamage *= 15f;
@@ -227,19 +245,6 @@ namespace 武器test
             }
         }
 
-        // ══════════════════════════════════════════════════════════════
-        //   ModifyDamageHitbox — 鞭子判定框扩大
-        // ══════════════════════════════════════════════════════════════
-        public override void ModifyDamageHitbox(Projectile projectile, ref Rectangle hitbox)
-        {
-            if (projectile.owner < 0 || projectile.owner >= Main.maxPlayers) return;
-
-            Player player = Main.player[projectile.owner];
-            if (!player.active || !player.GetModPlayer<MyPlayer>().godModeBuff) return;
-
-            if (ProjectileID.Sets.IsAWhip[projectile.type])
-                hitbox.Inflate(hitbox.Width / 2, hitbox.Height / 2);
-        }
 
         // ══════════════════════════════════════════════════════════════
         //   OnKill — 清理破晓之光矛的触发记录，防止字典无限增长

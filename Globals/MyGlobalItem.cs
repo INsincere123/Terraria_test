@@ -16,11 +16,11 @@ namespace 武器test
         // ══════════════════════════════════════════════════════════════
         public override void SetDefaults(Item item)
         {
-            // 沙漠虎杖：提升基础数值和攻速
+            // 沙漠虎杖：提升基础数值
             if (item.type == ItemID.StormTigerStaff)
             {
-                item.damage = 55;
-                item.knockBack = 8;
+                item.damage = 45;
+                item.knockBack = 10;
                 item.useTime = 12;
                 item.useAnimation = 12;
             }
