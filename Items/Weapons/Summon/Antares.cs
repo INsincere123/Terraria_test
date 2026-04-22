@@ -23,7 +23,7 @@ namespace 武器test.Items.Weapons.Summon
         {
             Item.width = 62;
             Item.height = 62;
-            Item.damage = 28;
+            Item.damage = 27;
             Item.useAnimation = 12;
             Item.useTime = 12;
             Item.mana = 10;

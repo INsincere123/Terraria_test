@@ -1,3 +1,4 @@
+using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Terraria;
@@ -11,7 +12,7 @@ namespace 武器test.Projectiles.Minions
     {
         public override void SetStaticDefaults()
         {
-            ProjectileID.Sets.TrailCacheLength[Type] = 14;
+            ProjectileID.Sets.TrailCacheLength[Type] = 32;  // 32个点构成火焰尾迹
             ProjectileID.Sets.TrailingMode[Type] = 2;
             ProjectileID.Sets.MinionShot[Type] = true;
         }
@@ -78,14 +79,28 @@ namespace 武器test.Projectiles.Minions
 
             Projectile.rotation = Projectile.velocity.ToRotation();
 
-            // ── 红色尾迹粉尘 ──
-            if (Main.rand.NextBool(3))  // 每帧 1/3 概率生成，稀疏一些
+            // ── 火焰粒子：火星飞溅 + 向后喷射的火焰粉尘 ──
+            if (Main.rand.NextBool(2))  // 更频繁的火焰粒子
             {
+                // Torch 粒子（主火焰）
                 int d = Dust.NewDust(Projectile.position, Projectile.width, Projectile.height,
-                    DustID.RedTorch, 0f, 0f, 150, default, 0.4f);  // alpha 150 更透明，scale 0.4f 更小
+                    DustID.Torch, 0f, 0f, 100, default, Main.rand.NextFloat(0.8f, 1.3f));
                 Main.dust[d].noGravity = true;
-                Main.dust[d].velocity *= 0.1f;  // 速度更低，散开幅度更小
+                // 向后喷射，加一点随机扰动模拟火焰飘动
+                Main.dust[d].velocity = -Projectile.velocity * 0.3f
+                    + new Vector2(Main.rand.NextFloat(-1.5f, 1.5f), Main.rand.NextFloat(-1.5f, 1.5f));
             }
+            if (Main.rand.NextBool(4))
+            {
+                // 小概率生成亮红的 RedTorch 增加层次
+                int d = Dust.NewDust(Projectile.position, Projectile.width, Projectile.height,
+                    DustID.RedTorch, 0f, 0f, 120, default, Main.rand.NextFloat(0.6f, 1f));
+                Main.dust[d].noGravity = true;
+                Main.dust[d].velocity = -Projectile.velocity * 0.2f
+                    + new Vector2(Main.rand.NextFloat(-1f, 1f), Main.rand.NextFloat(-1f, 1f));
+            }
+
+            Lighting.AddLight(Projectile.Center, 0.8f, 0.35f, 0.1f);  // 火焰光照偏橙
         }
 
         // 命中后进入不追踪冷却，让弹体自然穿过
@@ -111,7 +126,6 @@ namespace 武器test.Projectiles.Minions
                         Projectile.owner);
                 }
             }
-
         }
 
         /// <summary>
@@ -143,27 +157,87 @@ namespace 武器test.Projectiles.Minions
             Texture2D pixel = TextureAssets.MagicPixel.Value;
             Rectangle src = new Rectangle(0, 0, 1, 1);
 
+            // 全局时间用于火焰抖动
+            float globalTime = Main.GlobalTimeWrappedHourly * 8f;
+
+            // ── 切换到 Additive 混合模式，颜色叠加发光，消除颗粒感 ──
+            Main.spriteBatch.End();
+            Main.spriteBatch.Begin(
+                SpriteSortMode.Deferred,
+                BlendState.Additive,
+                SamplerState.LinearClamp,
+                DepthStencilState.None,
+                RasterizerState.CullNone,
+                null,
+                Main.GameViewMatrix.TransformationMatrix);
+
             int trailLen = ProjectileID.Sets.TrailCacheLength[Type];
             for (int i = trailLen - 1; i >= 0; i--)
             {
                 if (Projectile.oldPos[i] == Vector2.Zero)
                     continue;
 
-                Vector2 drawPos = Projectile.oldPos[i] + Projectile.Size * 0.5f - Main.screenPosition;
-                float fade = 1f - i / (float)trailLen;
+                float progress = i / (float)trailLen;  // 0=最新, 1=最老
+                float fade = 1f - progress;
 
-                Color outer = Color.DarkRed * fade * 0.8f;
-                float outerScale = 14f * fade;
-                Main.spriteBatch.Draw(pixel, drawPos, src, outer, 0f, new Vector2(0.5f), outerScale, SpriteEffects.None, 0f);
+                // 火焰抖动：每个点加一个正弦偏移，模拟火焰飘动
+                Vector2 perpendicular = Projectile.velocity.SafeNormalize(Vector2.UnitX).RotatedBy(MathHelper.PiOver2);
+                float wobble = MathF.Sin(globalTime + i * 0.4f) * progress * 3f;  // 越靠后抖动越大
+                Vector2 drawPos = Projectile.oldPos[i] + Projectile.Size * 0.5f
+                                  + perpendicular * wobble
+                                  - Main.screenPosition;
 
-                Color inner = Color.OrangeRed * fade;
-                float innerScale = 8f * fade;
-                Main.spriteBatch.Draw(pixel, drawPos, src, inner, 0f, new Vector2(0.5f), innerScale, SpriteEffects.None, 0f);
+                // ── 火焰三层颜色：由外到内 暗红→亮红→橙黄→白 ──
+                // 火焰温度随距离衰减：越靠后越暗越红，越靠前越亮越黄
+                float temperature = fade;  // 温度参数
+
+                // 最外层：暗红色大光晕（火焰外焰）
+                Color outerFlame = Color.Lerp(new Color(80, 0, 0), new Color(200, 50, 0), temperature) * fade * 0.5f;
+                float outerScale = (10f + progress * 4f) * fade;  // 越靠后越粗（火焰扩散）
+                Main.spriteBatch.Draw(pixel, drawPos, src, outerFlame, 0f, new Vector2(0.5f), outerScale, SpriteEffects.None, 0f);
+
+                // 中层：橙红色（火焰主体）
+                Color midFlame = Color.Lerp(new Color(200, 60, 10), new Color(255, 140, 20), temperature) * fade * 0.75f;
+                float midScale = (6f + progress * 2f) * fade;
+                Main.spriteBatch.Draw(pixel, drawPos, src, midFlame, 0f, new Vector2(0.5f), midScale, SpriteEffects.None, 0f);
+
+                // 内层：黄橙色（火焰内焰）
+                Color innerFlame = Color.Lerp(new Color(255, 150, 30), new Color(255, 230, 100), temperature) * fade;
+                float innerScale = 3f * fade;
+                Main.spriteBatch.Draw(pixel, drawPos, src, innerFlame, 0f, new Vector2(0.5f), innerScale, SpriteEffects.None, 0f);
+
+                // 最内层：白热高光（只在前半段尾迹）
+                if (progress < 0.5f)
+                {
+                    Color whiteHot = Color.White * fade * (1f - progress * 2f) * 0.8f;
+                    float whiteScale = 1.5f * fade;
+                    Main.spriteBatch.Draw(pixel, drawPos, src, whiteHot, 0f, new Vector2(0.5f), whiteScale, SpriteEffects.None, 0f);
+                }
             }
 
+            // 弹体核心：白热四层，带脉动
             Vector2 corePos = Projectile.Center - Main.screenPosition;
-            Main.spriteBatch.Draw(pixel, corePos, src, Color.Lerp(Color.OrangeRed, Color.White, 0.5f),
-                0f, new Vector2(0.5f), 12f, SpriteEffects.None, 0f);
+            float pulse = 1f + MathF.Sin(globalTime * 2f) * 0.15f;  // 脉动系数
+
+            Main.spriteBatch.Draw(pixel, corePos, src, new Color(150, 30, 0) * 0.8f,
+                0f, new Vector2(0.5f), 14f * pulse, SpriteEffects.None, 0f);
+            Main.spriteBatch.Draw(pixel, corePos, src, new Color(255, 100, 20),
+                0f, new Vector2(0.5f), 9f * pulse, SpriteEffects.None, 0f);
+            Main.spriteBatch.Draw(pixel, corePos, src, new Color(255, 220, 80),
+                0f, new Vector2(0.5f), 5f * pulse, SpriteEffects.None, 0f);
+            Main.spriteBatch.Draw(pixel, corePos, src, Color.White,
+                0f, new Vector2(0.5f), 2.5f * pulse, SpriteEffects.None, 0f);
+
+            // ── 恢复原版 AlphaBlend 混合模式 ──
+            Main.spriteBatch.End();
+            Main.spriteBatch.Begin(
+                SpriteSortMode.Deferred,
+                BlendState.AlphaBlend,
+                SamplerState.LinearClamp,
+                DepthStencilState.None,
+                RasterizerState.CullNone,
+                null,
+                Main.GameViewMatrix.TransformationMatrix);
 
             return false;
         }

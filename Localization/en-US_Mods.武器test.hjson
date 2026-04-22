@@ -16,11 +16,16 @@ Items: {
 
 	Antares: {
 		DisplayName: 心宿二
-		Tooltip: 
-		'''
-		召唤蝎子座，发射追踪火焰，命中敌人后爆炸
-		5%概率触发爆发射击
-		'''
+		Tooltip:
+			'''
+			召唤蝎子座，发射追踪火焰，命中敌人后爆炸
+			5%概率触发爆发射击
+			'''
+	}
+
+	ThunderBreathingStaff: {
+		Tooltip: ""
+		DisplayName: 雷之呼吸
 	}
 }
 
@@ -44,11 +49,17 @@ Buffs: {
 		DisplayName: 心宿二
 		Description: “蝎子的心脏”
 	}
+
+	ThunderBreathingBuff: {
+		Description: 一闪
+		DisplayName: 雷之呼吸
+	}
 }
 
 Projectiles: {
 	PhantasmSpecialArrowProj.DisplayName: 真·弑神箭
 	PhantasmHoldout.DisplayName: Phantasm Holdout
-	AntaresBeam.DisplayName: Antares Beam
+	AntaresBeam.DisplayName: 心宿二火焰
 	AntaresMinion.DisplayName: Antares Minion
+	ZenitsuMinion.DisplayName: 一闪
 }
