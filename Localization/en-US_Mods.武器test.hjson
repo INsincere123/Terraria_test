@@ -27,6 +27,11 @@ Items: {
 		Tooltip: ""
 		DisplayName: 雷之呼吸
 	}
+
+	OmniGuardianAccessory: {
+		Tooltip: 泰拉大陆在你眼中都是蝼蚁
+		DisplayName: 神之心
+	}
 }
 
 Buffs: {
