@@ -14,6 +14,10 @@ namespace 武器test.Projectiles.Minions
 {
     public class AntaresMinion : ModProjectile
     {
+        // ── 质变常量（槽位超过此值时触发全部质变效果） ──
+        private const int AscensionThreshold = 11;      // 触发质变的槽位门槛
+        private const float AscensionDamageMultiplier = 2.2f;       // 质变后额外伤害倍率（在原有 damageMod 基础上再乘）
+
         public Player Owner => Main.player[Projectile.owner];
         public AntaresMinionPlayer ModdedOwner => Owner.GetModPlayer<AntaresMinionPlayer>();
 
@@ -24,6 +28,9 @@ namespace 武器test.Projectiles.Minions
             get => (int)Projectile.ai[1];
             set => Projectile.ai[1] = value;
         }
+
+        // localAI[0] 用作质变脉冲爆发计时器
+        public ref float AscensionPulseTimer => ref Projectile.localAI[0];
 
         private bool spawnEffectPlayed;
 
@@ -91,8 +98,36 @@ namespace 武器test.Projectiles.Minions
             Projectile.velocity = Vector2.Zero;
 
             SpawnStarDust();
-        }
 
+            // ── 质变脉冲爆发（每600帧一次，仅质变状态） ──
+            if (Projectile.minionSlots > AscensionThreshold)
+            {
+                AscensionPulseTimer++;
+                if (AscensionPulseTimer >= 600f)
+                {
+                    AscensionPulseTimer = 0f;
+                    if (Main.netMode != NetmodeID.Server)
+                    {
+                        const int burstCount = 36;  // 爆发粒子数量，可调节
+                        for (int d = 0; d < burstCount; d++)
+                        {
+                            float angle = MathHelper.TwoPi / burstCount * d;
+                            Vector2 vel = angle.ToRotationVector2() * Main.rand.NextFloat(8f, 14f);
+                            // RedTorch 和 Torch 交替，增加层次感
+                            int dustType = (d % 2 == 0) ? DustID.RedTorch : DustID.Torch;
+                            Dust dust = Dust.NewDustPerfect(Projectile.Center, dustType, vel,
+                                100, default, Main.rand.NextFloat(1.2f, 2.0f));
+                            dust.noGravity = true;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                AscensionPulseTimer = 0f;  // 退出质变时重置，避免重入时立刻爆发
+            }
+        }
+        
         private void SpawnStarDust()
         {
             Vector2 center = Projectile.Center;
@@ -113,7 +148,17 @@ namespace 武器test.Projectiles.Minions
             }
 
             // ─── Scorpius 天蝎座 (以 α Antares 心宿二为中心) ───
-            Star(0, new Vector2(0f, 0f), 1.5f, DustID.RedTorch);  // α Antares (心宿二,主星)    红色，其他不传就默认蓝
+            // α Antares (心宿二,主星) 红色；质变后必生成粒子且更大更亮
+            bool isAscended = Projectile.minionSlots > AscensionThreshold;
+            if (Main.rand.NextBool(2) || isAscended)
+            {
+                Vector2 pos = center + new Vector2(0f, 0f) * Projectile.scale;
+                int d = Dust.NewDust(pos - Vector2.One * 2f, 4, 4, DustID.RedTorch, 0f, 0f, 100, default,
+                    isAscended ? 2.2f : 1.5f);
+                Main.dust[d].noGravity = true;
+                Main.dust[d].velocity *= 0.2f;
+                Main.dust[d].scale = (isAscended ? 2.2f : 1.5f) * Main.rand.NextFloat(1f, 1.4f);
+            }
             Star(2, new Vector2(70f, -80f), 0.75f); // δ Sco    (房宿三,头)
             Star(3, new Vector2(-30f, 80f), 0.75f); // τ Sco    (身躯上段)
             Star(4, new Vector2(-80f, 150f), 0.75f); // ε Sco    (身躯中段)
@@ -178,6 +223,7 @@ namespace 武器test.Projectiles.Minions
 
         private void ShootTarget(NPC target)
         {
+
             if (target == null) return;
 
             float timer = 90f * (4f / (4f + Projectile.minionSlots));   //槽位越多，分母越大，timer值越小 → 更频繁射击
@@ -199,6 +245,9 @@ namespace 武器test.Projectiles.Minions
             // 5% 概率触发爆发射击，数量 = 当前占用召唤槽
             int burstCount = Main.rand.NextFloat() < 0.05f ? (int)Projectile.minionSlots : 3;
 
+            // 判断是否处于质变状态
+            bool ascended = Projectile.minionSlots > AscensionThreshold;
+
             for (int i = 0; i < burstCount; i++)
             {
                 if (burstCount > 3)
@@ -207,6 +256,11 @@ namespace 武器test.Projectiles.Minions
                     SoundEngine.PlaySound(SoundID.Item9 with { Pitch = -0.15f }, Projectile.Center); // 原来的音效
                 Vector2 velocity = new Vector2(25f, 0f).RotatedByRandom(MathHelper.Pi);
                 float damageMod = 1f + MathF.Pow(0.06f * Projectile.minionSlots, 1.5f);
+
+                // 质变加成：超过阈值后伤害再乘以 AscensionDamageMultiplier
+                if (ascended)
+                    damageMod *= AscensionDamageMultiplier;
+
                 Projectile.NewProjectile(
                     Projectile.GetSource_FromThis(),
                     Projectile.Center + velocity,
@@ -225,6 +279,94 @@ namespace 武器test.Projectiles.Minions
         public override bool PreDraw(ref Color lightColor)
         {
             Vector2 center = Projectile.Center;
+
+            // ── 质变主星光晕（仅 Antares 主星，先于连线绘制） ──
+            if (Projectile.minionSlots > AscensionThreshold)
+            {
+                Texture2D pixel = TextureAssets.MagicPixel.Value;
+                Rectangle src = new Rectangle(0, 0, 1, 1);
+                float pulse = 1f + MathF.Sin(Main.GlobalTimeWrappedHourly * 1.8f) * 0.12f;  // 缓慢脉动，体现变星
+                Vector2 starPos = center - Main.screenPosition;
+                float scaleNorm = Projectile.scale / 0.33f;  // 随仆从缩放同步
+
+                Main.spriteBatch.End();
+                Main.spriteBatch.Begin(
+                    SpriteSortMode.Deferred,
+                    BlendState.Additive,
+                    SamplerState.LinearClamp,
+                    DepthStencilState.None,
+                    RasterizerState.CullNone,
+                    null,
+                    Main.GameViewMatrix.TransformationMatrix);
+
+                // ── 多层光晕（6层，模拟高斯软边） ──
+                // 层参数：(半径, 颜色, 透明度)
+                (float radius, Color color, float alpha)[] haloLayers = new[]
+                {
+                    (52f, new Color(120,  10,   0), 0.18f),  // 最外：极暗深红，大光晕
+                    (42f, new Color(180,  20,   0), 0.25f),  // 外层：深红
+                    (32f, new Color(230,  45,   5), 0.38f),  // 中外：暗橙红
+                    (22f, new Color(255,  80,  15), 0.55f),  // 中层：亮红橙
+                    (13f, new Color(255, 160,  40), 0.75f),  // 内层：橙黄
+                    ( 6f, new Color(255, 230,  90), 0.95f),  // 最内：黄白热核
+                };
+                foreach (var (radius, color, alpha) in haloLayers)
+                {
+                    Main.spriteBatch.Draw(pixel, starPos, src,
+                        color * alpha, 0f, new Vector2(0.5f),
+                        radius * pulse * scaleNorm, SpriteEffects.None, 0f);
+                }
+
+                // ── 星芒（4主芒 + 4斜芒，共8条） ──
+                // 主芒旋转角：让星芒随时间缓慢旋转，增加动感
+                float spikeRot = Main.GlobalTimeWrappedHourly * 0.4f;
+
+                // 每条芒是一个极细长矩形：长=芒长，宽=芒宽
+                void DrawSpike(float angle, float length, float width, Color color, float alpha)
+                {
+                    Main.spriteBatch.Draw(pixel, starPos, src,
+                        color * alpha, angle, new Vector2(0f, 0.5f),  // 原点在左端中心
+                        new Vector2(length * pulse * scaleNorm, width * scaleNorm),
+                        SpriteEffects.None, 0f);
+                    // 反向也画一条，形成双向芒
+                    Main.spriteBatch.Draw(pixel, starPos, src,
+                        color * alpha, angle + MathHelper.Pi, new Vector2(0f, 0.5f),
+                        new Vector2(length * pulse * scaleNorm, width * scaleNorm),
+                        SpriteEffects.None, 0f);
+                }
+
+                // 4条主芒（十字，较长较亮）
+                for (int s = 0; s < 4; s++)
+                {
+                    float angle = spikeRot + MathHelper.PiOver2 * s;
+                    DrawSpike(angle, 27f, 1.8f, new Color(255, 80, 10), 0.55f);   // 外段：橙红
+                    DrawSpike(angle, 15f, 2.8f, new Color(255, 180, 60), 0.70f);  // 内段：橙黄，更粗
+                }
+                // 4条斜芒（×形，较短较暗）
+                for (int s = 0; s < 4; s++)
+                {
+                    float angle = spikeRot + MathHelper.PiOver4 + MathHelper.PiOver2 * s;
+                    DrawSpike(angle, 17f, 1.2f, new Color(220, 50, 5), 0.35f);
+                    DrawSpike(angle, 9f, 2.0f, new Color(255, 150, 40), 0.50f);
+                }
+
+                // 白热芒芯（极短极亮，覆盖在最上面增加刺眼感）
+                for (int s = 0; s < 4; s++)
+                {
+                    float angle = spikeRot + MathHelper.PiOver2 * s;
+                    DrawSpike(angle, 7f, 1.5f, Color.White, 0.80f);
+                }
+
+                Main.spriteBatch.End();
+                Main.spriteBatch.Begin(
+                    SpriteSortMode.Deferred,
+                    BlendState.AlphaBlend,
+                    SamplerState.LinearClamp,
+                    DepthStencilState.None,
+                    RasterizerState.CullNone,
+                    null,
+                    Main.GameViewMatrix.TransformationMatrix);
+            }
 
             void Connect(float slotReq, Vector2 p1, Vector2 p2)
             {
