@@ -4,6 +4,7 @@ using Terraria;
 using Terraria.DataStructures;
 using Terraria.ID;
 using Terraria.ModLoader;
+using 武器test.Items.Accessories.Dashes;
 
 namespace 武器test.Items.Accessories
 {
@@ -19,7 +20,7 @@ namespace 武器test.Items.Accessories
 	//    - 无限飞行           = player.empressBrooch (御翼徽章效果)
 	//
 	//  其它功能:
-	//    [1] AsgardianAegis 风格冲刺
+	//    [1] AsgardianAegis 风格冲刺 (独立文件 OmniguardianDash.cs)
 	//    [2] 鞋子奔跑 + 移速
 	//    [3] Radiance & RampartOfDeities 综合生存效果
 	//    [4] 大量 debuff 免疫
@@ -83,8 +84,9 @@ namespace 武器test.Items.Accessories
 		public const float UpBoostMultiplier = 5f;          // 5 倍 (原版女皇之翼为 1.5 倍)
 
 		// ---------- 冲刺参数 ----------
-		// dashType 取值 (原版): 2=克苏鲁之盾, 3=克苏鲁之眼盾, 4=Solar/Tabi 等
-		public const int DashTypeValue = 3;
+		// 使用 AsgardianAegis 风格的自定义冲刺 (见 OmniguardianDash.cs)
+		// 冲刺详细数值在 OmniguardianDash.cs 顶部调节
+		public const bool EnableAegisDash = true;
 
 		// ---------- 生存效果 ----------
 		public const float LowHpDamageReduction     = 0.35f;  // 生命 < 50% 时额外免伤
@@ -188,7 +190,8 @@ namespace 武器test.Items.Accessories
 			player.lifeRegen    += LifeRegenBaseBonus;
 			player.manaRegenBonus += (int)(ManaRegenBonus * 100); // 单位是百分比 * 100
 
-			// ===== 召唤栏位 / 哨兵栏位 =====
+			// ===== 常驻 Buff =====
+			player.AddBuff(BuffID.Honey, 2); // 蜂蜜 buff (每帧刷新, 实现常驻效果)
 			player.maxMinions += ExtraMinionSlots;
 			player.maxTurrets += ExtraSentrySlots;
 
@@ -209,9 +212,13 @@ namespace 武器test.Items.Accessories
 			player.noKnockback = true;    // 免疫击退
 			player.longInvince = true;    // 延长无敌帧时间
 
-			// ===== 冲刺 (AsgardianAegis 风格) =====
-			if (player.dashType == 0)
-				player.dashType = DashTypeValue;
+			// ===== 冲刺 (灾厄风格 dash 框架, 见 Dashes/ 文件夹) =====
+			// 灾厄做法: 设 ActiveDashId + dashType=0 (禁用 vanilla 双击 dash, 避免冲突)
+			if (EnableAegisDash)
+			{
+				player.GetModPlayer<DashPlayer>().ActiveDashId = "OmniguardianDash";
+				player.dashType = 0;
+			}
 
 			// =====================================================================
 			// 闪避三件套 (vanilla 内部互斥, 一次受伤至多触发一种, 优先级按顺序)
