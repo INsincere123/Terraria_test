@@ -40,7 +40,7 @@ namespace 武器test.Items.Accessories.Dashes
 		public const float ExitInertiaRatio = 0.7f; // 0=立刻清零, 1=完全保留, 0.5=保留一半
 
 		// 撞击伤害
-		public const int   ContactDamage     = 350;
+		public const int   ContactDamage     = 1350;
 		public const float ContactKnockback  = 12f;
 		public const int   ContactCritDenom  = 4;   // 1/4 = 25% 暴击
 		public const int   MaxHitsPerDash    = 8;

@@ -29,8 +29,18 @@ Items: {
 	}
 
 	OmniGuardianAccessory: {
-		Tooltip: 泰拉大陆在你眼中都是蝼蚁
 		DisplayName: 神之心
+		Tooltip:
+			'''
+			获得超级翅膀、奔跑效果
+			获得冲刺效果
+			超坚硬躯体，超强生存能力，三重闪避
+			全方位属性加成
+			免疫所有原版debuff
+			不受太空低重力影响
+			耐药性降低50%，治疗效果提高
+			泰拉大陆在你眼中都是蝼蚁，去挑战愤怒的突变体吧
+			'''
 	}
 }
 
@@ -58,6 +68,11 @@ Buffs: {
 	ThunderBreathingBuff: {
 		Description: 一闪
 		DisplayName: 雷之呼吸
+	}
+
+	GravityNormalizerBuff: {
+		Description: 不受太空低重力影响
+		DisplayName: 重力正常
 	}
 }
 

@@ -83,6 +83,14 @@ namespace 武器test.Items.Accessories
 		// ---------- 上升加速 (按上键, 喷气背包风格) ----------
 		public const float UpBoostMultiplier = 5f;          // 5 倍 (原版女皇之翼为 1.5 倍)
 
+		// ---------- 药水治疗效果 ----------
+		// 额外治疗量 (固定值, 叠加在原治疗量之后): 0 = 不增加
+		// 例如: 大治疗药水原本治疗 150, 设 50 后变为 200
+		public const int   PotionHealFlatBonus = 50;
+		// 治疗量乘数 (百分比加成): 1.0f = 不加成, 1.5f = 治疗量 +50%, 2.0f = 翻倍
+		// 乘法在加法之后应用: 最终 = (原治疗量 + FlatBonus) × MultBonus
+		public const float PotionHealMultBonus = 5f;
+
 		// ---------- 冲刺参数 ----------
 		// 使用 AsgardianAegis 风格的自定义冲刺 (见 OmniguardianDash.cs)
 		// 冲刺详细数值在 OmniguardianDash.cs 顶部调节
@@ -190,8 +198,15 @@ namespace 武器test.Items.Accessories
 			player.lifeRegen    += LifeRegenBaseBonus;
 			player.manaRegenBonus += (int)(ManaRegenBonus * 100); // 单位是百分比 * 100
 
+			// ===== 耐药性 CD 缩减 (点金石效果, CD × 0.75 缩短 25%) =====
+			player.pStone = true;
+
 			// ===== 常驻 Buff =====
-			player.AddBuff(BuffID.Honey, 2); // 蜂蜜 buff (每帧刷新, 实现常驻效果)
+			player.AddBuff(BuffID.Honey, 2);                                  // 蜂蜜 buff
+			player.AddBuff(ModContent.BuffType<GravityNormalizerBuff>(), 2);  // 重力正常化 buff
+			player.AddBuff(BuffID.WellFed3, 2);
+			player.AddBuff(BuffID.DryadsWard, 2);
+			player.AddBuff(BuffID.NebulaUpMana3, 2);
 			player.maxMinions += ExtraMinionSlots;
 			player.maxTurrets += ExtraSentrySlots;
 
@@ -237,38 +252,63 @@ namespace 武器test.Items.Accessories
 			// ====================================================================
 			// =====                Debuff 免疫列表 (可自由增删)              =====
 			// ====================================================================
-			player.buffImmune[BuffID.OnFire]         = true; // 燃烧
-			player.buffImmune[BuffID.OnFire3]        = true; // 神圣燃烧
-			player.buffImmune[BuffID.Frostburn]      = true; // 寒霜燃烧
-			player.buffImmune[BuffID.Frostburn2]     = true; // 寒霜燃烧 II
-			player.buffImmune[BuffID.Burning]        = true; // 灼烧 (近熔岩)
-			player.buffImmune[BuffID.Poisoned]       = true; // 中毒
-			player.buffImmune[BuffID.Venom]          = true; // 剧毒
-			player.buffImmune[BuffID.Bleeding]       = true; // 流血
-			player.buffImmune[BuffID.Cursed]         = true; // 被诅咒
-			player.buffImmune[BuffID.CursedInferno]  = true; // 诅咒地狱火
-			player.buffImmune[BuffID.Confused]       = true; // 困惑
-			player.buffImmune[BuffID.Silenced]       = true; // 沉默
-			player.buffImmune[BuffID.Slow]           = true; // 减速
-			player.buffImmune[BuffID.Weak]           = true; // 虚弱
-			player.buffImmune[BuffID.BrokenArmor]    = true; // 破甲
-			player.buffImmune[BuffID.Darkness]       = true; // 黑暗
-			player.buffImmune[BuffID.Blackout]       = true; // 全黑
-			player.buffImmune[BuffID.Chilled]        = true; // 冷冻
-			player.buffImmune[BuffID.Frozen]         = true; // 冻结
-			player.buffImmune[BuffID.Stoned]         = true; // 石化
-			player.buffImmune[BuffID.Suffocation]    = true; // 窒息
-			player.buffImmune[BuffID.Wet]            = true; // 潮湿
-			player.buffImmune[BuffID.Webbed]         = true; // 蛛网
-			player.buffImmune[BuffID.Electrified]    = true; // 电击
-			player.buffImmune[BuffID.Dazed]          = true; // 眩晕
-			player.buffImmune[BuffID.Obstructed]     = true; // 阻碍
-			player.buffImmune[BuffID.WitheredArmor]  = true; // 凋零护甲
-			player.buffImmune[BuffID.WitheredWeapon] = true; // 凋零武器
-			player.buffImmune[BuffID.TheTongue]      = true; // 长舌
-			player.buffImmune[BuffID.Rabies]         = true; // 狂犬病
-			player.buffImmune[BuffID.VortexDebuff]   = true; // 星旋 debuff
-			player.buffImmune[BuffID.Lovestruck]     = true; // 中爱神
+			player.buffImmune[BuffID.Poisoned]          = true; // 20  中毒
+			// BuffID.PotionSickness (21) 单独处理: 见数值调节区 PotionSicknessDurationMult
+			player.buffImmune[BuffID.Darkness]          = true; // 22  黑暗
+			player.buffImmune[BuffID.Cursed]            = true; // 23  诅咒
+			player.buffImmune[BuffID.OnFire]            = true; // 24  着火了！
+			player.buffImmune[BuffID.Bleeding]          = true; // 30  流血
+			player.buffImmune[BuffID.Confused]          = true; // 31  困惑
+			player.buffImmune[BuffID.Slow]              = true; // 32  缓慢
+			player.buffImmune[BuffID.Weak]              = true; // 33  虚弱
+			player.buffImmune[BuffID.Silenced]          = true; // 35  沉默
+			player.buffImmune[BuffID.BrokenArmor]       = true; // 36  破损盔甲
+			player.buffImmune[BuffID.Horrified]         = true; // 37  惊恐
+			player.buffImmune[BuffID.TheTongue]         = true; // 38  狂卷之舌
+			player.buffImmune[BuffID.CursedInferno]     = true; // 39  诅咒狱火
+			player.buffImmune[BuffID.Frostburn]         = true; // 44  霜冻
+			player.buffImmune[BuffID.Chilled]           = true; // 46  冷冻
+			player.buffImmune[BuffID.Frozen]            = true; // 47  冰冻
+			player.buffImmune[BuffID.Burning]           = true; // 67  燃烧
+			player.buffImmune[BuffID.Suffocation]       = true; // 68  窒息
+			player.buffImmune[BuffID.Ichor]             = true; // 69  灵液
+			player.buffImmune[BuffID.Venom]             = true; // 70  酸性毒液
+			player.buffImmune[BuffID.Midas]             = true; // 72  迈达斯
+			player.buffImmune[BuffID.Blackout]          = true; // 80  黑视
+			player.buffImmune[BuffID.ChaosState]        = true; // 88  混沌状态
+			player.buffImmune[BuffID.ManaSickness]      = true; // 94  耐魔性
+			player.buffImmune[BuffID.Wet]               = true; // 103 潮湿
+			player.buffImmune[BuffID.Lovestruck]        = true; // 119 热恋
+			player.buffImmune[BuffID.Stinky]            = true; // 120 恶臭
+			player.buffImmune[BuffID.Slimed]            = true; // 137 史莱姆
+			player.buffImmune[BuffID.Electrified]       = true; // 144 带电
+			player.buffImmune[BuffID.MoonLeech]         = true; // 145 月噬
+			player.buffImmune[BuffID.Rabies]            = true; // 148 野性咬噬
+			player.buffImmune[BuffID.Webbed]            = true; // 149 被网住
+			player.buffImmune[BuffID.ShadowFlame]       = true; // 153 暗影焰
+			player.buffImmune[BuffID.Stoned]            = true; // 156 石化
+			player.buffImmune[BuffID.Dazed]             = true; // 160 眩晕
+			player.buffImmune[BuffID.Obstructed]        = true; // 163 遮挡
+			player.buffImmune[BuffID.VortexDebuff]      = true; // 164 扭曲
+			player.buffImmune[BuffID.BoneJavelin]       = true; // 169 穿透
+			player.buffImmune[BuffID.StardustMinionBleed] = true; // 183 细胞附着
+			player.buffImmune[BuffID.DryadsWardDebuff]  = true; // 186 树妖祸害
+			player.buffImmune[BuffID.Daybreak]          = true; // 189 破晓
+			player.buffImmune[BuffID.WindPushed]        = true; // 194 强风
+			player.buffImmune[BuffID.WitheredArmor]     = true; // 195 枯萎盔甲
+			player.buffImmune[BuffID.WitheredWeapon]    = true; // 196 枯萎武器
+			player.buffImmune[BuffID.OgreSpit]          = true; // 197 分泌物
+			player.buffImmune[BuffID.NoBuilding]        = true; // 199 创意震撼
+			player.buffImmune[BuffID.BetsysCurse]       = true; // 203 双足翼龙诅咒
+			player.buffImmune[BuffID.Oiled]             = true; // 204 涂油
+			player.buffImmune[BuffID.GelBalloonBuff]    = true; // 320 闪耀史莱姆
+			player.buffImmune[BuffID.OnFire3]           = true; // 323 狱炎
+			player.buffImmune[BuffID.Frostburn2]        = true; // 324 冻伤
+			player.buffImmune[BuffID.NeutralHunger]     = true; // 332 稍饿
+			player.buffImmune[BuffID.Hunger]            = true; // 333 饥饿
+			player.buffImmune[BuffID.Starving]          = true; // 334 极饿
+			player.buffImmune[BuffID.BloodButcherer]    = true; // 344 血腥屠宰
+			player.buffImmune[BuffID.Shimmer]           = true; // 353 微光闪烁
 			// 添加更多: player.buffImmune[BuffID.???] = true;
 		}
 
@@ -375,11 +415,24 @@ namespace 武器test.Items.Accessories
 			}
 		}
 
+
 		// =================================================
 		// 自定义闪避: 在受伤前判定, 命中则跳过本次伤害
 		// 神圣套闪避 (shadowDodge) 和黑带闪避 (blackBelt) 都由 vanilla 自动处理
 		// 这里再额外加一层独立的概率闪避
 		// =================================================
+		// =================================================
+		// 药水治疗效果提升
+		// 先加固定值, 再乘倍率: 最终 = (原值 + FlatBonus) × MultBonus
+		// =================================================
+		public override void GetHealLife(Item item, bool quickHeal, ref int healValue)
+		{
+			if (!Equipped) return;
+
+			healValue += OmniGuardianAccessory.PotionHealFlatBonus;
+			healValue  = (int)(healValue * OmniGuardianAccessory.PotionHealMultBonus);
+		}
+
 		public override bool FreeDodge(Player.HurtInfo info)
 		{
 			if (!Equipped) return false;
