@@ -127,6 +127,10 @@ namespace 武器test.Items.Accessories.Dashes
 			CurrentDash.OnDashEffects(Player, DashDirX, DashDirY, DashFrame);
 			DashFrame++;
 
+			// OnDashEffects 内部可能调用 EndDash() 提前结束 (如撞墙), 这会把 CurrentDash 设为 null
+			// 所以这里必须再次判空, 避免 NullReferenceException
+			if (CurrentDash == null) return;
+
 			if (DashFrame >= CurrentDash.DashDuration)
 			{
 				CurrentDash.OnDashEnd(Player);

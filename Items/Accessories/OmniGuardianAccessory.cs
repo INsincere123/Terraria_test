@@ -105,6 +105,12 @@ namespace 武器test.Items.Accessories
 		public const int   ExtraDebuffTimeReduction = 2;      // 每帧额外减少的 debuff tick 数
 		public const int   ExtraImmuneFrames        = 10;     // 额外受伤无敌帧
 
+		// ---------- 快速下落 (InterstellarStompers 风格) ----------
+		// 按"下"键时 (非飞行状态) 提高最大下落速度
+		// vanilla 默认 maxFallSpeed = 10f
+		public const float ExtraFallSpeed   = 30f;  // 按下键时的最大下落速度上限
+		public const float FallGravityBoost = 2f; // 按下键时的重力倍率 (加速达到上限, 1.0f = 不加速)
+
 		// ---------- 闪避 ----------
 		public const bool  EnableHallowedShadowDodge  = true;   // 启用神圣套护甲闪避 (100% 闪避一次, 30秒冷却)
 		public const bool  EnableBlackBeltDodge       = true;   // 启用原版黑带闪避 (10% 几率, 无冷却)
@@ -198,7 +204,7 @@ namespace 武器test.Items.Accessories
 			player.lifeRegen    += LifeRegenBaseBonus;
 			player.manaRegenBonus += (int)(ManaRegenBonus * 100); // 单位是百分比 * 100
 
-			// ===== 耐药性 CD 缩减 (点金石效果, CD × 0.75 缩短 25%) =====
+			// ===== 耐药性 CD 缩减 (哲学家之石效果, CD × 0.75 缩短 25%) =====
 			player.pStone = true;
 
 			// ===== 常驻 Buff =====
@@ -312,13 +318,43 @@ namespace 武器test.Items.Accessories
 			// 添加更多: player.buffImmune[BuffID.???] = true;
 		}
 
-		public override void AddRecipes()
-		{
-			CreateRecipe()
-				.AddIngredient(ItemID.Wood, 10)
-				.AddTile(TileID.WorkBenches)
-				.Register();
-		}
+        public override void AddRecipes()
+        {
+            Recipe recipe = Recipe.Create(Type);
+
+            // 添加所有大师模式圣物（Master Trophies）
+            recipe.AddIngredient(4924); // 克苏鲁之眼
+            recipe.AddIngredient(4925); // 世界吞噬怪
+            recipe.AddIngredient(4926); // 克苏鲁之脑
+            recipe.AddIngredient(4927); // 骷髅王
+            recipe.AddIngredient(4928); // 蜂王
+            recipe.AddIngredient(4929); // 史莱姆王
+            recipe.AddIngredient(4930); // 血肉墙
+            recipe.AddIngredient(4931); // 双子魔眼
+            recipe.AddIngredient(4932); // 毁灭者
+            recipe.AddIngredient(4933); // 机械骷髅王
+            recipe.AddIngredient(4934); // 世纪之花
+            recipe.AddIngredient(4935); // 石巨人
+            recipe.AddIngredient(4936); // 猪龙鱼公爵
+            recipe.AddIngredient(4937); // 拜月教邪教徒
+            recipe.AddIngredient(4938); // 月亮领主
+            recipe.AddIngredient(4939); // 火星飞碟
+            recipe.AddIngredient(4940); // 荷兰飞盗船
+            recipe.AddIngredient(4941); // 哀木
+            recipe.AddIngredient(4942); // 南瓜王
+            recipe.AddIngredient(4943); // 冰雪女王
+            recipe.AddIngredient(4944); // 常绿尖叫怪
+            recipe.AddIngredient(4945); // 圣诞坦克
+            recipe.AddIngredient(4946); // 暗黑魔法师
+            recipe.AddIngredient(4947); // 食人魔
+            recipe.AddIngredient(4948); // 双足翼龙
+            recipe.AddIngredient(4949); // 光之女皇
+            recipe.AddIngredient(4950); // 史莱姆皇后
+            recipe.AddIngredient(5110); // 独眼巨鹿
+
+            recipe.AddTile(TileID.LunarCraftingStation); // 月亮合成站
+            recipe.Register();
+        }
 	}
 
 	// ============================================================================
@@ -340,6 +376,25 @@ namespace 武器test.Items.Accessories
 		{
 			if (ExtraDodgeCooldown > 0)
 				ExtraDodgeCooldown--;
+		}
+
+		// =================================================
+		// 快速下落 (InterstellarStompers 风格)
+		// 修改 maxFallSpeed 和 gravity 须在 PostUpdateRunSpeeds 里:
+		//   maxFallSpeed 在第 20245 行重置, PostUpdateRunSpeeds (22220) 在此之后
+		//   velocity.Y > maxFallSpeed 的限制在第 22305 行, 也在 PostUpdateRunSpeeds 之后
+		// =================================================
+		public override void PostUpdateRunSpeeds()
+		{
+			if (!Equipped) return;
+
+			// 按下键 + 正在下落 + 没有按跳跃键 (飞行时用翅膀悬停逻辑, 不干扰)
+			if (Player.controlDown && !Player.controlJump && Player.velocity.Y > 0f)
+			{
+				Player.maxFallSpeed = OmniGuardianAccessory.ExtraFallSpeed;
+				Player.gravity     *= OmniGuardianAccessory.FallGravityBoost;
+				Player.GoingDownWithGrapple = true;	// 下落中按下键时完全无视平台 (不会踩上去再穿过)
+			}
 		}
 
 		// =================================================
@@ -414,7 +469,6 @@ namespace 武器test.Items.Accessories
 				}
 			}
 		}
-
 
 		// =================================================
 		// 自定义闪避: 在受伤前判定, 命中则跳过本次伤害
