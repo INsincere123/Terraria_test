@@ -125,7 +125,7 @@ namespace 武器test.Items.Armor
             recipe.AddIngredient(4950); // 史莱姆皇后
             recipe.AddIngredient(5110); // 独眼巨鹿
 
-            recipe.AddTile(TileID.LunarCraftingStation); // 月亮合成站
+            recipe.AddTile(TileID.LunarCraftingStation); // 远古操纵机
             recipe.Register();
         }
     }
