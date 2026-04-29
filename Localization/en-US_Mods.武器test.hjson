@@ -42,6 +42,21 @@ Items: {
 			泰拉大陆在你眼中都是蝼蚁，去挑战愤怒的突变体吧
 			'''
 	}
+
+	AntaresBreastplate: {
+		DisplayName: Antares Breastplate
+		Tooltip: ""
+	}
+
+	AntaresHelmet: {
+		DisplayName: Antares Helmet
+		Tooltip: ""
+	}
+
+	AntaresLeggings: {
+		DisplayName: Antares Leggings
+		Tooltip: ""
+	}
 }
 
 Buffs: {
@@ -74,6 +89,16 @@ Buffs: {
 		Description: 不受太空低重力影响
 		DisplayName: 重力正常
 	}
+
+	AntaresReviveCooldown: {
+		DisplayName: Antares Revive Cooldown
+		Description: 你无法复活
+	}
+
+	AntaresGravityWellBuff: {
+		Description: 敌人被你强行拉过来
+		DisplayName: 引力井
+	}
 }
 
 Projectiles: {
@@ -84,4 +109,7 @@ Projectiles: {
 	ZenitsuMinion.DisplayName: 一闪
 }
 
-"Keybinds.Omniguardian Dash.DisplayName": 神之冲刺
+Keybinds: {
+	"Omniguardian Dash.DisplayName": 神之冲刺
+	"Antares Gravity Well.DisplayName": 引力井
+}
