@@ -81,18 +81,18 @@ Buffs: {
 	}
 
 	ThunderBreathingBuff: {
-		Description: 一闪
+		Description: 一闪，足矣
 		DisplayName: 雷之呼吸
 	}
 
 	GravityNormalizerBuff: {
-		Description: 不受太空低重力影响
+		Description: 你不受太空低重力影响
 		DisplayName: 重力正常
 	}
 
 	AntaresReviveCooldown: {
-		DisplayName: Antares Revive Cooldown
-		Description: 你无法复活
+		DisplayName: 复活冷却
+		Description: 
 	}
 
 	AntaresGravityWellBuff: {
