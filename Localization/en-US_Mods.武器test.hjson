@@ -92,7 +92,7 @@ Buffs: {
 
 	AntaresReviveCooldown: {
 		DisplayName: 复活冷却
-		Description: 
+		Description: ""
 	}
 
 	AntaresGravityWellBuff: {

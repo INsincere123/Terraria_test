@@ -3,6 +3,7 @@ using Terraria.ID;
 using Terraria.ModLoader;
 using Terraria.DataStructures;
 using Microsoft.Xna.Framework;
+using 武器test.Rarities;
 
 namespace 武器test
 {
@@ -29,6 +30,24 @@ namespace 武器test
         /// <summary>神模开关检查</summary>
         private bool IsGodMode(Player player) =>
             player?.active == true && player.GetModPlayer<MyPlayer>().godModeBuff;
+
+        // ══════════════════════════════════════════════════════════════
+        //   PreDrawTooltipLine — 拦截物品名称行，替换为自定义稀有度绘制
+        // ══════════════════════════════════════════════════════════════
+        public override bool PreDrawTooltipLine(Item item, DrawableTooltipLine line, ref int yOffset)
+        {
+            // 只拦截物品名称行
+            if (line.Mod != "Terraria" || line.Name != "ItemName")
+                return true;
+
+            if (item.rare == ModContent.RarityType<AntaresRarity>())
+            {
+                AntaresRarity.Draw(item, line);
+                return false; // 阻止原版绘制
+            }
+
+            return true;
+        }
 
         // ══════════════════════════════════════════════════════════════
         //   ModifyWeaponDamage — 伤害倍率（godMode 开启时生效）
@@ -87,7 +106,7 @@ namespace 武器test
         //   生成2支扇形散射箭，各自独立追踪/破甲/分裂
         // ══════════════════════════════════════════════════════════════
         public override bool Shoot(Item item, Player player, EntitySource_ItemUse_WithAmmo source,
-    Vector2 position, Vector2 velocity, int type, int damage, float knockback)
+            Vector2 position, Vector2 velocity, int type, int damage, float knockback)
         {
             if (item.type != ItemID.Phantasm || !IsGodMode(player))
                 return true;

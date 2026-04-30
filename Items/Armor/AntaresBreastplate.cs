@@ -2,6 +2,7 @@ using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
 using 武器test.Common.Players;
+using 武器test.Common.Systems;
 
 namespace 武器test.Items.Armor
 {
@@ -62,7 +63,9 @@ namespace 武器test.Items.Armor
             Item.width   = 26;
             Item.height  = 22;
             Item.value   = 1000000;
-            Item.rare    = 10;
+            Item.rare    = ItemRarityID.Red;
+            if (CalamityCompatSystem.CalamityLoaded)
+                Item.rare = CalamityCompatSystem.CalamityRarity;
             Item.defense = Defense;
         }
 
@@ -95,7 +98,6 @@ namespace 武器test.Items.Armor
         {
             Recipe recipe = Recipe.Create(Type);
 
-            // 添加所有大师模式圣物（Master Trophies）
             recipe.AddIngredient(4924); // 克苏鲁之眼
             recipe.AddIngredient(4925); // 世界吞噬怪
             recipe.AddIngredient(4926); // 克苏鲁之脑
@@ -125,7 +127,7 @@ namespace 武器test.Items.Armor
             recipe.AddIngredient(4950); // 史莱姆皇后
             recipe.AddIngredient(5110); // 独眼巨鹿
 
-            recipe.AddTile(TileID.LunarCraftingStation); // 远古操纵机
+            recipe.AddTile(TileID.LunarCraftingStation);
             recipe.Register();
         }
     }

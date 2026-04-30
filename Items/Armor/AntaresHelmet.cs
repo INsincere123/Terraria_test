@@ -2,6 +2,7 @@ using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
 using 武器test.Common.Players;
+using 武器test.Common.Systems;
 
 namespace 武器test.Items.Armor
 {
@@ -71,7 +72,9 @@ namespace 武器test.Items.Armor
             Item.width = 22;
             Item.height = 20;
             Item.value = 1000000;
-            Item.rare = 10;
+            Item.rare = ItemRarityID.Red;
+            if (CalamityCompatSystem.CalamityLoaded)
+                Item.rare = CalamityCompatSystem.CalamityRarity;
             Item.defense = Defense;
         }
 
@@ -83,13 +86,17 @@ namespace 武器test.Items.Armor
         // 套装激活时每帧调用，标记 ModPlayer 启用套装效果
         public override void UpdateArmorSet(Player player)
         {
-            // 读取当前绑定的第一个按键，没有绑定时显示 "未绑定"
             string key = AntaresKeybinds.GravityWellKey.GetAssignedKeys().Count > 0
                 ? AntaresKeybinds.GravityWellKey.GetAssignedKeys()[0]
                 : "未绑定";
 
-            player.setBonus = $"致命伤害后复活（冷却2分钟），恢复50%生命值，无敌3秒\n免疫秒杀，若单次伤害大于你的最大生命值，则此伤害为1\n按下 [{key}] 激活引力井，持续拉取周围敌人";
+            string calamityBonus = CalamityCompatSystem.CalamityLoaded
+                ? "\n灾厄兼容：移除跨职业召唤伤害惩罚"
+                : "";
+
+            player.setBonus = $"致命伤害后复活（冷却2分钟），恢复50%生命值，无敌3秒\n免疫秒杀，若单次伤害大于你的最大生命值，则此伤害为1\n按下 [{key}] 激活引力井，持续拉取周围敌人{calamityBonus}";
             player.GetModPlayer<AntaresArmorPlayer>().wearingFullSet = true;
+            CalamityCompatSystem.DisableSummonPenalty(player);
         }
 
         public override void UpdateEquip(Player player)
@@ -121,7 +128,6 @@ namespace 武器test.Items.Armor
         {
             Recipe recipe = Recipe.Create(Type);
 
-            // 添加所有大师模式圣物（Master Trophies）
             recipe.AddIngredient(4924); // 克苏鲁之眼
             recipe.AddIngredient(4925); // 世界吞噬怪
             recipe.AddIngredient(4926); // 克苏鲁之脑
@@ -151,7 +157,7 @@ namespace 武器test.Items.Armor
             recipe.AddIngredient(4950); // 史莱姆皇后
             recipe.AddIngredient(5110); // 独眼巨鹿
 
-            recipe.AddTile(TileID.LunarCraftingStation); // 远古操纵机
+            recipe.AddTile(TileID.LunarCraftingStation);
             recipe.Register();
         }
     }

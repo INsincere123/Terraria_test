@@ -1,6 +1,8 @@
 using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
+using 武器test.Common.Systems;
+using 武器test.Rarities;
 
 namespace 武器test.Items
 {
@@ -14,7 +16,7 @@ namespace 武器test.Items
             Item.useAnimation = 20;
             Item.useStyle = ItemUseStyleID.HoldUp;
             Item.value = Item.buyPrice(0, 10, 0, 0);
-            Item.rare = ItemRarityID.Red;
+            Item.rare = ModContent.RarityType<AntaresRarity>();
             Item.UseSound = SoundID.Item4;
             Item.autoReuse = false;
         }
@@ -30,7 +32,6 @@ namespace 武器test.Items
         {
             Recipe recipe = Recipe.Create(Type);
 
-            // 添加所有大师模式圣物（Master Trophies）
             recipe.AddIngredient(4924); // 克苏鲁之眼
             recipe.AddIngredient(4925); // 世界吞噬怪
             recipe.AddIngredient(4926); // 克苏鲁之脑
@@ -60,7 +61,7 @@ namespace 武器test.Items
             recipe.AddIngredient(4950); // 史莱姆皇后
             recipe.AddIngredient(5110); // 独眼巨鹿
 
-            recipe.AddTile(TileID.LunarCraftingStation); // 远古操纵机
+            recipe.AddTile(TileID.LunarCraftingStation);
             recipe.Register();
         }
     }

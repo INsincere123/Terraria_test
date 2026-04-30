@@ -5,6 +5,7 @@ using Terraria.DataStructures;
 using Terraria.ID;
 using Terraria.ModLoader;
 using 武器test.Items.Accessories.Dashes;
+using 武器test.Common.Systems;
 
 namespace 武器test.Items.Accessories
 {
@@ -142,7 +143,9 @@ namespace 武器test.Items.Accessories
 			Item.width     = 30;
 			Item.height    = 30;
 			Item.value     = Item.sellPrice(gold: 20);
-			Item.rare      = ItemRarityID.Red;
+			Item.rare = ItemRarityID.Red;
+			if (CalamityCompatSystem.CalamityLoaded)
+				Item.rare = CalamityCompatSystem.CalamityRarity;
 			Item.accessory = true;
 		}
 
