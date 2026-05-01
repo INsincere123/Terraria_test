@@ -43,8 +43,8 @@ namespace 武器test.Common.Players
         // ║  其余参数（速度/索敌范围/段距等）见 DragonSegment.cs ║
         // ╚══════════════════════════════════════════════════════╝
 
-        public const int   DragonDamage    = 1000;
-        public const float DragonKnockback = 3f;
+        public const int   DragonDamage    = 1100;
+        public const float DragonKnockback = 4.6f;
 
         // ══════════════════════════════════════════════════════
 

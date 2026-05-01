@@ -63,8 +63,8 @@ namespace 武器test.Projectiles.Minions
         public const int TailRow      = 2;
 
         // ── 链结构 ──
-        public const float SegmentDist     = 34f;
-        public const float RotationDamping = 0.1f;
+        public const float SegmentDist     = 68f;
+        public const float RotationDamping = 0.2f;
 
         // ── Idle 悬浮 ──
         public const float IdleOffsetX     = 60f;
@@ -103,8 +103,7 @@ namespace 武器test.Projectiles.Minions
         private bool  IsHead       => SegmentIndex == 0;
         private bool  IsTail       => SegmentIndex == 2;
 
-        public override string Texture =>
-            $"Terraria/Images/Projectile_{ProjectileID.LunaticCultistPet}";
+        public override string Texture => "武器test/Projectiles/Minions/DragonSegment";
 
         public override void SetStaticDefaults()
         {
@@ -307,7 +306,7 @@ namespace 武器test.Projectiles.Minions
         // ══════════════════════════════════════════════════════════════
         private void DriveFollowers()
         {
-            DragonSegment[] followers = new DragonSegment[5];
+            DragonSegment[] followers = new DragonSegment[3];
 
             for (int i = 0; i < Main.maxProjectiles; i++)
             {
@@ -317,11 +316,11 @@ namespace 武器test.Projectiles.Minions
                 if (p.whoAmI == Projectile.whoAmI) continue;
 
                 int idx = (int)p.ai[1];
-                if (idx >= 1 && idx <= 4 && followers[idx] == null)
+                if (idx >= 1 && idx <= 2 && followers[idx] == null)
                     followers[idx] = (DragonSegment)p.ModProjectile;
             }
 
-            for (int idx = 1; idx <= 4; idx++)
+            for (int idx = 1; idx <= 2; idx++)
             {
                 DragonSegment seg = followers[idx];
                 if (seg == null) continue;
@@ -329,7 +328,7 @@ namespace 武器test.Projectiles.Minions
                 Projectile prev;
                 if (idx == 1)
                 {
-                    prev = Projectile;  // 连接1 跟随头
+                    prev = Projectile;  // 身体跟随头
                 }
                 else
                 {
@@ -338,7 +337,7 @@ namespace 武器test.Projectiles.Minions
                     prev = prevSeg.Projectile;
                 }
 
-                // 身体节点用 velocity 前瞻让跟随更紧贴；尾巴不用，避免超前
+                // 身体用 velocity 前瞻让跟随更紧贴；尾巴不用，避免超前
                 seg.SegmentMove(prev, useVelocityLookahead: !seg.IsTail);
             }
         }
@@ -391,10 +390,8 @@ namespace 武器test.Projectiles.Minions
             );
 
             Vector2 origin = new Vector2(FrameWidth / 2f, FrameHeight / 2f);
-            SpriteEffects effect = Projectile.spriteDirection == -1
-                ? SpriteEffects.FlipHorizontally
-                : SpriteEffects.None;
 
+            // rotation 已经是速度方向角，直接用即可表达正确朝向
             Main.EntitySpriteDraw(
                 tex,
                 Projectile.Center - Main.screenPosition,
@@ -403,7 +400,7 @@ namespace 武器test.Projectiles.Minions
                 Projectile.rotation,
                 origin,
                 Projectile.scale,
-                effect,
+                SpriteEffects.None,
                 0
             );
             return false;
