@@ -81,7 +81,7 @@ namespace TestMod.Common.GlobalProjectiles
         //   原本用于所有普通召唤物的无差别追踪,但存在弊端:
         //   对"保持距离发射射弹"的召唤物(如星尘细胞)会导致贴敌不开枪。
         //
-        //   已由新的三分类系统替代,见 MyGlobalProjectile.MinionClassify.cs:
+        //   已由新的三分类系统替代,见 TestGlobalProjectile.MinionClassify.cs:
         //     · 冲撞型  → ApplyContactMinionTracking
         //     · 射击型本体 → 保持 vanilla
         //     · MinionShot → ApplyHighTierTracking

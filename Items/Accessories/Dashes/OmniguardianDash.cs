@@ -41,14 +41,14 @@ namespace TestMod.Items.Accessories.Dashes
 
 		// 撞击伤害
 		public const int   ContactDamage     = 1350;
-		public const float ContactKnockback  = 12f;
+		public const float ContactKnockback  = 15f;
 		public const int   ContactCritDenom  = 4;   // 1/4 = 25% 暴击
 		public const int   MaxHitsPerDash    = 8;
 
 		// 无敌帧
-		public const int   StartIFrames    = 12;
-		public const int   ActiveIFrames   = 6;
-		public const int   ContactIFrames  = 16;
+		public const int   StartIFrames    = 16;
+		public const int   ActiveIFrames   = 10;
+		public const int   ContactIFrames  = 30;
 
 		// 视觉效果
 		public const int   TrailDustType    = DustID.GoldFlame;

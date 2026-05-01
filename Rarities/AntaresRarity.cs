@@ -54,7 +54,7 @@ namespace TestMod.Rarities
         // ── 物品栏图标颜色（静态，取两色中间值）────────────────
         public override Color RarityColor => Color.Lerp(ColorA, ColorB, 0.5f) * 2f;
 
-        // ── 主绘制入口（由 MyGlobalItem.PreDrawTooltipLine 调用）
+        // ── 主绘制入口（由 TestGlobalItem.PreDrawTooltipLine 调用）
         public static void Draw(Item item, DrawableTooltipLine line)
         {
             Draw(item, Main.spriteBatch, line.Text, line.X, line.Y,

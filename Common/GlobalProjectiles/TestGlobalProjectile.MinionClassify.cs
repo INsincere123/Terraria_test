@@ -35,7 +35,7 @@ namespace TestMod.Common.GlobalProjectiles
         //     · 星尘龙全系 (ProjectileID.Sets.StardustDragon)
         //     · 乌鸦      (PreAI 完全接管)
         //     · 沙漠虎三形态 (龙头级追踪)
-        //     · 蜘蛛三形态  (MyGlobalProjectile.Spider.cs)
+        //     · 蜘蛛三形态  (TestGlobalProjectile.Spider.cs)
         //     · 泰拉棱镜   (特定高阶追踪参数)
         // ═══════════════════════════════════════════════════════════════════
 

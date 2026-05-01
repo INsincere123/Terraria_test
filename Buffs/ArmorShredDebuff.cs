@@ -5,8 +5,8 @@ namespace TestMod.Buffs
 {
     /// <summary>
     /// 破甲debuff：每层减少10点护甲，最多10层
-    /// 层数存在 MyGlobalNPC 的字典里，本类只作为"在场"标记
-    /// 实际减甲逻辑在 MyGlobalNPC.ModifyIncomingHit 里处理
+    /// 层数存在 TestGlobalNPC 的字典里，本类只作为"在场"标记
+    /// 实际减甲逻辑在 TestGlobalNPC.ModifyIncomingHit 里处理
     /// </summary>
     public class ArmorShredDebuff : ModBuff
     {
