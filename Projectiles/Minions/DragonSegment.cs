@@ -63,8 +63,8 @@ namespace 武器test.Projectiles.Minions
         public const int TailRow      = 2;
 
         // ── 链结构 ──
-        public const float SegmentDist     = 68f;
-        public const float RotationDamping = 0.2f;
+        public const float SegmentDist     = 69f;
+        public const float RotationDamping = 0.15f;
 
         // ── Idle 悬浮 ──
         public const float IdleOffsetX     = 60f;

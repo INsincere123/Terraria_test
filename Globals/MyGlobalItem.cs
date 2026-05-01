@@ -60,9 +60,9 @@ namespace 武器test
             if (item.type == ItemID.Phantasm)
                 damage *= 3.6f;
 
-            // ☀️ 破晓之光 ×12
+            // ☀️ 破晓之光 ×14
             else if (item.type == ItemID.DayBreak)
-                damage *= 12f;
+                damage *= 14f;
 
             // 星云烈焰 ×1.8
             else if (item.type == ItemID.NebulaBlaze)
@@ -75,15 +75,12 @@ namespace 武器test
                 else if (item.type == ItemID.StardustCellStaff) damage *= 18f;
                 else if (item.type == ItemID.MoonlordTurretStaff) damage *= 15f;
                 else if (item.type == ItemID.RainbowCrystalStaff) damage *= 15f;
+                else if (item.type == ItemID.EmpressBlade) damage *= 15f;
             }
-
-            // ✨ 泰拉棱镜 ×15
-            else if (item.type == ItemID.EmpressBlade)
-                damage *= 15f;
-
-            // 🪢 万花筒 ×13
+            
+            // 🪢 万花筒 ×6.3
             else if (item.type == ItemID.RainbowWhip)
-                damage *= 13f;
+                damage *= 6.3f;
         }
 
         // ══════════════════════════════════════════════════════════════
