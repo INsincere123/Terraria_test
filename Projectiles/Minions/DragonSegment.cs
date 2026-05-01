@@ -73,11 +73,11 @@ namespace 武器test.Projectiles.Minions
         public const float HoverAccelMid   = 0.12f;
         public const float HoverAccelNear  = 0.06f;
         public const float HoverDamping    = 0.96f;
-        public const float TeleportDist    = 3000f;
+        public const float TeleportDist    = 16f * 110;
 
         // ── 攻击 ──
-        public const float SearchRange        = 16f * 50;
-        public const float BreakRange         = 16f * 70;
+        public const float SearchRange        = 16f * 70;
+        public const float BreakRange         = 16f * 100;
         public const float AttackBaseAccel    = 0.18f;
         public const float AttackAccelLerp    = 0.3f;
         // 追击速度
