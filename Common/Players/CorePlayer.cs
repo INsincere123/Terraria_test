@@ -15,6 +15,12 @@ namespace TestMod.Common.Players
         // 暴击伤害加成系数（由 godModeBuff2 驱动，0.5 = +50%）
         public float critDamageBonus = 0f;
 
+        // ── 受击伤害乘区（默认 1f = 不生效，赋值后在结算最终伤害时相乘，独立乘区）──
+        // 使用方法：在 UpdateAccessory / UpdateEquip 里设置，默认 0.75f 即减少 25%
+        // 示例：player.GetModPlayer<CorePlayer>().projDamageMultiplier = 0.75f;
+        public float projDamageMultiplier = 1f;     // 弹幕伤害乘区
+        public float npcDamageMultiplier  = 1f;     // NPC 伤害乘区
+
         // ── 上一帧开关状态，用于检测切换瞬间 ────────────────
         private bool _prevGodModeBuff = false;
 
@@ -46,6 +52,10 @@ namespace TestMod.Common.Players
 
         public override void ResetEffects()
         {
+            // ── 受击伤害乘区重置 ─────────────────────────────────
+            projDamageMultiplier = 1f;
+            npcDamageMultiplier  = 1f;
+
             // ══════════════════════════════════════════════════════════
             // Buff1：小幅强化
             // ══════════════════════════════════════════════════════════
@@ -157,9 +167,8 @@ namespace TestMod.Common.Players
         // ██████████████████████████████████████████████████████████████
         public override void ModifyHitNPC(NPC target, ref NPC.HitModifiers modifiers)
         {
-            if (critDamageBonus <= 0f) return;
-
-            modifiers.CritDamage += critDamageBonus;
+            if (critDamageBonus > 0f)
+                modifiers.CritDamage += critDamageBonus;
         }
 
         // ██████████████████████████████████████████████████████████████
@@ -168,9 +177,28 @@ namespace TestMod.Common.Players
         // ██████████████████████████████████████████████████████████████
         public override void ModifyHitNPCWithProj(Projectile proj, NPC target, ref NPC.HitModifiers modifiers)
         {
-            if (critDamageBonus <= 0f) return;
+            if (critDamageBonus > 0f)
+                modifiers.CritDamage += critDamageBonus;
+        }
 
-            modifiers.CritDamage += critDamageBonus;
+        // ██████████████████████████████████████████████████████████████
+        //   受击伤害乘区 — 弹幕伤害
+        //   默认 1f 不生效，赋值 0.75f 即减少 25% 弹幕伤害
+        // ██████████████████████████████████████████████████████████████
+        public override void ModifyHitByProjectile(Projectile proj, ref Player.HurtModifiers modifiers)
+        {
+            if (projDamageMultiplier != 1f)
+                modifiers.FinalDamage *= projDamageMultiplier;
+        }
+
+        // ██████████████████████████████████████████████████████████████
+        //   受击伤害乘区 — NPC 伤害
+        //   默认 1f 不生效，赋值 0.75f 即减少 25% NPC 伤害
+        // ██████████████████████████████████████████████████████████████
+        public override void ModifyHitByNPC(NPC npc, ref Player.HurtModifiers modifiers)
+        {
+            if (npcDamageMultiplier != 1f)
+                modifiers.FinalDamage *= npcDamageMultiplier;
         }
     }
 }

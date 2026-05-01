@@ -7,6 +7,7 @@ using Terraria.ModLoader;
 using TestMod.Items.Accessories.Dashes;
 using TestMod.Common.Systems;
 using TestMod.Buffs;
+using TestMod.Rarities;
 
 namespace TestMod.Items.Accessories
 {
@@ -143,8 +144,8 @@ namespace TestMod.Items.Accessories
 		{
 			Item.width     = 30;
 			Item.height    = 30;
-			Item.value     = Item.sellPrice(gold: 20);
-			Item.rare = ItemRarityID.Red;
+			Item.value     = Item.sellPrice(platinum: 100);
+			Item.rare = ModContent.RarityType<AntaresRarity>();
 			if (CalamityCompatSystem.CalamityLoaded)
 				Item.rare = CalamityCompatSystem.CalamityRarity;
 			Item.accessory = true;
