@@ -42,7 +42,7 @@ namespace 武器test.Items.Armor
         // ║    无视秒杀伤害，逻辑见 AntaresArmorPlayer         ║
         // ╚══════════════════════════════════════════════════════╝
 
-        public const int Defense = 100;
+        public const int Defense = 60;
 
         public const float DamageBonus = 0.33f;
         public const int CritBonus = 12;

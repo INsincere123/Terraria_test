@@ -37,7 +37,7 @@ namespace 武器test.Items.Armor
         // ║    MoveSpeedBonus       +X% 移动速度                 ║
         // ╚══════════════════════════════════════════════════════╝
 
-        public const int   Defense              = 60;
+        public const int   Defense              = 100;
 
         public const float DamageBonus          = 0.33f;
         public const int   CritBonus            = 12;

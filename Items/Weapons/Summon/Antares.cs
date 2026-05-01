@@ -5,6 +5,7 @@ using Terraria.ID;
 using Terraria.ModLoader;
 using 武器test.Buffs;
 using 武器test.Projectiles.Minions;
+using 武器test.Rarities;
 
 namespace 武器test.Items.Weapons.Summon
 {
@@ -33,7 +34,7 @@ namespace 武器test.Items.Weapons.Summon
             Item.DamageType = DamageClass.Summon;
             Item.useStyle = ItemUseStyleID.Swing;
             Item.UseSound = SoundID.Item44;
-            Item.rare = ItemRarityID.Yellow;
+            Item.rare = ModContent.RarityType<AntaresRarity>();
             Item.value = Item.buyPrice(gold: 20);
             Item.noMelee = true;
             Item.autoReuse = true;
