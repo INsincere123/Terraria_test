@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Terraria.ModLoader;
 using Terraria.ModLoader.Core;
 
-namespace 武器test.Items.Accessories.Dashes
+namespace TestMod.Items.Accessories.Dashes
 {
 	// ============================================================================
 	//  PlayerDashManager  ——  Dash 注册管理器 (灾厄同款架构)

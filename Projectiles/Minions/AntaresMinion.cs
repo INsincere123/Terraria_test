@@ -7,10 +7,10 @@ using Terraria.Audio;
 using Terraria.GameContent;
 using Terraria.ID;
 using Terraria.ModLoader;
-using 武器test.Buffs;
-using 武器test.Common.Players;
+using TestMod.Buffs;
+using TestMod.Common.Players;
 
-namespace 武器test.Projectiles.Minions
+namespace TestMod.Projectiles.Minions
 {
     public class AntaresMinion : ModProjectile
     {

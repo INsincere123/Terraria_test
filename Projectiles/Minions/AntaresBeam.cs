@@ -6,7 +6,7 @@ using Terraria.GameContent;
 using Terraria.ID;
 using Terraria.ModLoader;
 
-namespace 武器test.Projectiles.Minions
+namespace TestMod.Projectiles.Minions
 {
     public class AntaresBeam : ModProjectile
     {

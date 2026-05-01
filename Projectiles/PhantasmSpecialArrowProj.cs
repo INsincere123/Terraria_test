@@ -3,8 +3,10 @@ using Terraria.ID;
 using Terraria.ModLoader;
 using Microsoft.Xna.Framework;
 using System;
+using TestMod.Common.GlobalNPCs;
+using TestMod.Common.GlobalProjectiles;
 
-namespace 武器test.Projectiles
+namespace TestMod.Projectiles
 {
     /// <summary>
     /// 幻影弓强化专用弹射物
@@ -108,8 +110,8 @@ namespace 武器test.Projectiles
             Projectile.ai[0] = 10f;
 
             // 破甲debuff叠加（最多10层）
-            if (MyGlobalNPC.GetArmorShredStacks(target.whoAmI) < 10)
-                MyGlobalNPC.AddArmorShredStack(target.whoAmI);
+            if (TestGlobalNPC.GetArmorShredStacks(target.whoAmI) < 10)
+                TestGlobalNPC.AddArmorShredStack(target.whoAmI);
 
             target.AddBuff(ModContent.BuffType<Buffs.ArmorShredDebuff>(), 180);
         }

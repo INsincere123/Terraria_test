@@ -4,11 +4,11 @@ using Terraria;
 using Terraria.Audio;
 using Terraria.ID;
 using Terraria.ModLoader;
-using 武器test.Buffs;
-using 武器test.Common.Systems;
-using 武器test.Items.Armor;
+using TestMod.Buffs;
+using TestMod.Common.Systems;
+using TestMod.Items.Armor;
 
-namespace 武器test.Common.Players
+namespace TestMod.Common.Players
 {
     // 处理需要跨 tick 状态的盔甲效果：
     // 1. 百分比生命/法力加成（需要在 PostUpdateMiscEffects 读取最终基础值）

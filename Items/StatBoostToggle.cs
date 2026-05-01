@@ -1,12 +1,13 @@
 using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
-using 武器test.Common.Systems;
-using 武器test.Rarities;
+using TestMod.Common.Systems;
+using TestMod.Rarities;
+using TestMod.Common.Players;
 
-namespace 武器test.Items
+namespace TestMod.Items
 {
-    public class BuffToggleItem2 : ModItem
+    public class StatBoostToggle : ModItem
     {
         public override void SetDefaults()
         {
@@ -23,8 +24,8 @@ namespace 武器test.Items
 
         public override bool? UseItem(Player player)
         {
-            player.GetModPlayer<MyPlayer>().godModeBuff2 =
-                !player.GetModPlayer<MyPlayer>().godModeBuff2;
+            player.GetModPlayer<CorePlayer>().godModeBuff =
+                !player.GetModPlayer<CorePlayer>().godModeBuff;
             return true;
         }
 

@@ -7,7 +7,7 @@ using Terraria.GameContent;
 using Terraria.ModLoader;
 using Terraria.UI.Chat;
 
-namespace 武器test.Rarities
+namespace TestMod.Rarities
 {
     public class AntaresRarity : ModRarity
     {

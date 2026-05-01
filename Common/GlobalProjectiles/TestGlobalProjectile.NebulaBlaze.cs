@@ -2,9 +2,9 @@ using Terraria;
 //using Terraria.ID;
 using Microsoft.Xna.Framework;
 
-namespace 武器test
+namespace TestMod.Common.GlobalProjectiles
 {
-    public partial class MyGlobalProjectile
+    public partial class TestGlobalProjectile
     {
         // 标记该弹射物是否已经完成了环射生成，避免每帧重复触发
         // 利用 localAI[2] 作为标记位（原版星云烈焰不使用 localAI[2]）

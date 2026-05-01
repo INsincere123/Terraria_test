@@ -1,9 +1,9 @@
 using Terraria;
 using Terraria.ModLoader;
-using 武器test.Common.Players;
-using 武器test.Projectiles.Minions;
+using TestMod.Common.Players;
+using TestMod.Projectiles.Minions;
 
-namespace 武器test.Buffs
+namespace TestMod.Buffs
 {
     public class AntaresBuff : ModBuff
     {

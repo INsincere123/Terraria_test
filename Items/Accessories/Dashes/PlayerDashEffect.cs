@@ -1,7 +1,7 @@
 using Terraria;
 using Terraria.ModLoader;
 
-namespace 武器test.Items.Accessories.Dashes
+namespace TestMod.Items.Accessories.Dashes
 {
 	// ============================================================================
 	//  PlayerDashEffect  ——  灾厄风格的 dash 抽象基类

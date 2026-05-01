@@ -3,10 +3,10 @@ using Terraria;
 using Terraria.DataStructures;
 using Terraria.ID;
 using Terraria.ModLoader;
-using 武器test.Buffs;
-using 武器test.Projectiles.Minions;
+using TestMod.Buffs;
+using TestMod.Projectiles.Minions;
 
-namespace 武器test.Items.Weapons.Summon
+namespace TestMod.Items.Weapons.Summon
 {
     /// <summary>
     /// 雷之呼吸·壹式召唤杖

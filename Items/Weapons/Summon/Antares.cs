@@ -3,11 +3,11 @@ using Terraria;
 using Terraria.DataStructures;
 using Terraria.ID;
 using Terraria.ModLoader;
-using 武器test.Buffs;
-using 武器test.Projectiles.Minions;
-using 武器test.Rarities;
+using TestMod.Buffs;
+using TestMod.Projectiles.Minions;
+using TestMod.Rarities;
 
-namespace 武器test.Items.Weapons.Summon
+namespace TestMod.Items.Weapons.Summon
 {
     // 心宿二 Antares（移植自灾厄 Mod，解耦版）
     // 说明:

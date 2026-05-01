@@ -3,13 +3,14 @@ using Terraria.ID;
 using Terraria.ModLoader;
 using System;
 using System.Collections.Generic;
+using TestMod.Common.Players;
 
-namespace 武器test
+namespace TestMod.Common.GlobalNPCs
 {
     /// <summary>
     /// 全局 NPC 钩子：破甲debuff层数管理 + debuff跳伤强化
     /// </summary>
-    public class MyGlobalNPC : GlobalNPC
+    public class TestGlobalNPC : GlobalNPC
     {
         private const int BuffID_Celled    = BuffID.StardustMinionBleed; // 星尘细胞 debuff
         private const int BuffID_Daybroken = BuffID.Daybreak; // 破晓之光 debuff
@@ -57,7 +58,7 @@ namespace 武器test
             for (int i = 0; i < Main.maxPlayers; i++)
             {
                 Player p = Main.player[i];
-                if (p.active && p.GetModPlayer<MyPlayer>().godModeBuff)
+                if (p.active && p.GetModPlayer<CorePlayer>().godModeBuff)
                 {
                     anyGodMode = true;
                     break;

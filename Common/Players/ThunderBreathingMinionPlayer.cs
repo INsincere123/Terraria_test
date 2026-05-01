@@ -1,6 +1,6 @@
 using Terraria.ModLoader;
 
-namespace 武器test.Common.Players
+namespace TestMod.Common.Players
 {
     public class ThunderBreathingMinionPlayer : ModPlayer
     {

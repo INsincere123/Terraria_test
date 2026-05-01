@@ -2,7 +2,7 @@ using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
 
-namespace 武器test.Buffs
+namespace TestMod.Buffs
 {
     // 复活冷却 debuff —— 存在期间无法再次触发复活
     // 持续时间由 AntaresHelmet.ReviveCooldown 控制

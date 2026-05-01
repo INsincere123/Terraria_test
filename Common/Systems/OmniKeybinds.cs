@@ -1,6 +1,6 @@
 using Terraria.ModLoader;
 
-namespace 武器test.Items.Accessories.Dashes
+namespace TestMod.Common.Systems
 {
 	// ============================================================================
 	//  OmniKeybinds  ——  键位注册

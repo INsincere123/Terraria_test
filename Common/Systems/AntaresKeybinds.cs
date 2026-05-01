@@ -1,6 +1,6 @@
 using Terraria.ModLoader;
 
-namespace 武器test.Items.Armor
+namespace TestMod.Common.Systems
 {
     // ============================================================================
     //  AntaresKeybinds  ——  心宿二套装键位注册

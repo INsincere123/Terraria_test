@@ -2,7 +2,7 @@ using System.Reflection;
 using Terraria;
 using Terraria.ModLoader;
 
-namespace 武器test.Common.Systems
+namespace TestMod.Common.Systems
 {
     public class CalamityCompatSystem : ModSystem
     {

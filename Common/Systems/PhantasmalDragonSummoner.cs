@@ -1,9 +1,9 @@
 using Microsoft.Xna.Framework;
 using Terraria;
 using Terraria.ModLoader;
-using 武器test.Projectiles.Minions;
+using TestMod.Projectiles.Minions;
 
-namespace 武器test.Common.Systems
+namespace TestMod.Common.Systems
 {
     /// <summary>
     /// 幻影龙独立召唤系统

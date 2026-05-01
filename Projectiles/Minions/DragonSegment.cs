@@ -5,7 +5,7 @@ using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
 
-namespace 武器test.Projectiles.Minions
+namespace TestMod.Projectiles.Minions
 {
     // ╔══════════════════════════════════════════════════════╗
     // ║          幻影龙单段统一类 · 参数调整区域             ║
@@ -103,7 +103,7 @@ namespace 武器test.Projectiles.Minions
         private bool  IsHead       => SegmentIndex == 0;
         private bool  IsTail       => SegmentIndex == 2;
 
-        public override string Texture => "武器test/Projectiles/Minions/DragonSegment";
+        public override string Texture => "TestMod/Projectiles/Minions/DragonSegment";
 
         public override void SetStaticDefaults()
         {

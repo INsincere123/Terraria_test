@@ -2,9 +2,9 @@ using Terraria;
 using Terraria.ID;
 using Microsoft.Xna.Framework;
 
-namespace 武器test
+namespace TestMod.Common.GlobalProjectiles
 {
-    public partial class MyGlobalProjectile
+    public partial class TestGlobalProjectile
     {
         // ══════════════════════════════════════════════════════════════
         //   幻影弓命中效果：链式跳跃 + 范围爆炸 + 粒子特效

@@ -3,9 +3,9 @@ using Terraria.ID;
 using Microsoft.Xna.Framework;
 using System;
 
-namespace 武器test
+namespace TestMod.Common.GlobalProjectiles
 {
-    public partial class MyGlobalProjectile
+    public partial class TestGlobalProjectile
     {
         // ══════════════════════════════════════════════════════════════
         //   乌鸦法杖召唤物 AI（忠实移植自灾厄 PowerfulRaven）

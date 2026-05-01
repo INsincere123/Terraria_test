@@ -8,10 +8,10 @@ using Terraria.Audio;
 using Terraria.GameContent;
 using Terraria.ID;
 using Terraria.ModLoader;
-using 武器test.Buffs;
-using 武器test.Common.Players;
+using TestMod.Buffs;
+using TestMod.Common.Players;
 
-namespace 武器test.Projectiles.Minions
+namespace TestMod.Projectiles.Minions
 {
     /// <summary>
     /// 雷之呼吸·壹式召唤杖 的仆从 ——「雷之剑士」

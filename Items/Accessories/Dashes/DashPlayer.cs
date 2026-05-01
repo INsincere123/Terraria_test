@@ -2,8 +2,9 @@ using System;
 using Microsoft.Xna.Framework;
 using Terraria;
 using Terraria.ModLoader;
+using TestMod.Common.Systems;
 
-namespace 武器test.Items.Accessories.Dashes
+namespace TestMod.Items.Accessories.Dashes
 {
 	// ============================================================================
 	//  DashPlayer  ——  冲刺生命周期驱动器 (键位触发版)

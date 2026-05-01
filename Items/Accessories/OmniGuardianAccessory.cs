@@ -4,10 +4,11 @@ using Terraria;
 using Terraria.DataStructures;
 using Terraria.ID;
 using Terraria.ModLoader;
-using 武器test.Items.Accessories.Dashes;
-using 武器test.Common.Systems;
+using TestMod.Items.Accessories.Dashes;
+using TestMod.Common.Systems;
+using TestMod.Buffs;
 
-namespace 武器test.Items.Accessories
+namespace TestMod.Items.Accessories
 {
 	// ============================================================================
 	//  OmniGuardianAccessory  ——  综合守护饰品 (天界星盘风格翅膀)

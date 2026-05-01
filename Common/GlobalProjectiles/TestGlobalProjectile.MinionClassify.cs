@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using Terraria;
 using Terraria.ID;
 
-namespace 武器test
+namespace TestMod.Common.GlobalProjectiles
 {
-    public partial class MyGlobalProjectile
+    public partial class TestGlobalProjectile
     {
         // ═══════════════════════════════════════════════════════════════════
         //   召唤物分类系统

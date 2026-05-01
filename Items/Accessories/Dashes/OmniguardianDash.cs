@@ -5,7 +5,7 @@ using Terraria.Audio;
 using Terraria.ID;
 using Terraria.ModLoader;
 
-namespace 武器test.Items.Accessories.Dashes
+namespace TestMod.Items.Accessories.Dashes
 {
 	// ============================================================================
 	//  OmniguardianDash  ——  比 AsgardianAegisDash 更强的全向冲刺 (保留惯性版)

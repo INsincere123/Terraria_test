@@ -2,7 +2,7 @@ using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
 
-namespace 武器test.Items.Accessories
+namespace TestMod.Buffs
 {
 	// ============================================================================
 	//  GravityNormalizerBuff  ——  重力正常化 Buff

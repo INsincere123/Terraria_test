@@ -2,9 +2,9 @@ using Terraria;
 using Microsoft.Xna.Framework;
 using System;
 
-namespace 武器test
+namespace TestMod.Common.GlobalProjectiles
 {
-    public partial class MyGlobalProjectile
+    public partial class TestGlobalProjectile
     {
         // ══════════════════════════════════════════════════════════════
         //   星尘龙专属追踪：激进索敌 + 目标锁定 + 速度预测

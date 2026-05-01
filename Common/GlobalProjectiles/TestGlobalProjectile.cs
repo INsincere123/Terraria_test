@@ -4,14 +4,16 @@ using Terraria.ModLoader;
 //using Microsoft.Xna.Framework;
 //using System;
 using System.Collections.Generic;
+using TestMod.Buffs;
+using TestMod.Common.Players;
 
-namespace 武器test
+namespace TestMod.Common.GlobalProjectiles
 {
     /// <summary>
     /// 全局弹射物钩子：武器强化的核心处理类
     /// 包含追踪增强、伤害修正、命中特效三大功能
     /// </summary>
-    public partial class MyGlobalProjectile : GlobalProjectile
+    public partial class TestGlobalProjectile : GlobalProjectile
     {
         public override bool InstancePerEntity => true;
 
@@ -83,7 +85,7 @@ namespace 武器test
             Player player = Main.player[projectile.owner];
             if (!player.active) return;
 
-            bool godMode = player.GetModPlayer<MyPlayer>().godModeBuff;
+            bool godMode = player.GetModPlayer<CorePlayer>().godModeBuff;
 
             // ─────────────── 专属处理分支 (优先级最高) ───────────────
 
@@ -150,7 +152,7 @@ namespace 武器test
             //     万花筒范围扩大
             if (projectile.type == ProjectileID.RainbowWhip)
             {
-                if (player.active && player.GetModPlayer<MyPlayer>().godModeBuff)
+                if (player.active && player.GetModPlayer<CorePlayer>().godModeBuff)
                 {
                     if (!_whipRangeSet)
                     {
@@ -171,7 +173,7 @@ namespace 武器test
             if (projectile.owner < 0 || projectile.owner >= Main.maxPlayers) return;
 
             Player player = Main.player[projectile.owner];
-            if (!player.active || !player.GetModPlayer<MyPlayer>().godModeBuff) return;
+            if (!player.active || !player.GetModPlayer<CorePlayer>().godModeBuff) return;
 
             // 🐉 星尘龙 ×8
             if (ProjectileID.Sets.StardustDragon[projectile.type])
@@ -219,7 +221,7 @@ namespace 武器test
             }
 
             // ─────────────── 以下为 godMode 专属效果 ───────────────
-            if (!player.GetModPlayer<MyPlayer>().godModeBuff) return;
+            if (!player.GetModPlayer<CorePlayer>().godModeBuff) return;
 
             // 🏹 幻影弓强化箭：链式跳跃 + 范围爆炸（绕过无敌帧）
             if (projectile.type == ModContent.ProjectileType<Projectiles.PhantasmSpecialArrowProj>())

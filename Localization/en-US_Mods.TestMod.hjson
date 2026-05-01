@@ -1,5 +1,5 @@
 Items: {
-	BuffToggleItem: {
+	StatBoostToggle: {
 		DisplayName: 成神之路
 		Tooltip:
 			'''
@@ -9,7 +9,7 @@ Items: {
 			'''
 	}
 
-	BuffToggleItem2: {
+	GodModeToggle: {
 		DisplayName: 你已成神
 		Tooltip: 全属性大幅强化，再次使用可关闭
 	}
@@ -66,12 +66,12 @@ Buffs: {
 	}
 
 	DarkMarkBuff: {
-		Description: Mods.武器test.Buffs.DarkMarkBuff.Description
+		Description: Mods.TestMod.Buffs.DarkMarkBuff.Description
 		DisplayName: Dark Mark Buff
 	}
 
 	ArmorShredDebuff: {
-		Description: Mods.武器test.Buffs.ArmorShredDebuff.Description
+		Description: Mods.TestMod.Buffs.ArmorShredDebuff.Description
 		DisplayName: Armor Shred Debuff
 	}
 

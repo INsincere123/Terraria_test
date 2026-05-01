@@ -3,14 +3,15 @@ using Terraria.ID;
 using Terraria.ModLoader;
 using Terraria.DataStructures;
 using Microsoft.Xna.Framework;
-using 武器test.Rarities;
+using TestMod.Rarities;
+using TestMod.Common.Players;
 
-namespace 武器test
+namespace TestMod.Common.GlobalItems
 {
     /// <summary>
     /// 全局物品钩子：武器面板强化（伤害、击退、发射逻辑）
     /// </summary>
-    public class MyGlobalItem : GlobalItem
+    public class TestGlobalItem : GlobalItem
     {
         // ══════════════════════════════════════════════════════════════
         //   SetDefaults — 固定数值调整（不受 godMode 开关影响）
@@ -29,7 +30,7 @@ namespace 武器test
 
         /// <summary>神模开关检查</summary>
         private bool IsGodMode(Player player) =>
-            player?.active == true && player.GetModPlayer<MyPlayer>().godModeBuff;
+            player?.active == true && player.GetModPlayer<CorePlayer>().godModeBuff;
 
         // ══════════════════════════════════════════════════════════════
         //   PreDrawTooltipLine — 拦截物品名称行，替换为自定义稀有度绘制

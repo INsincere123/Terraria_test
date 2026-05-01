@@ -1,10 +1,10 @@
 using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
-using 武器test.Common.Players;
-using 武器test.Common.Systems;
+using TestMod.Common.Players;
+using TestMod.Common.Systems;
 
-namespace 武器test.Items.Armor
+namespace TestMod.Items.Armor
 {
     [AutoloadEquip(EquipType.Legs)]
     public class AntaresLeggings : ModItem

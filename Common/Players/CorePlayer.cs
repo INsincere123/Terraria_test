@@ -3,11 +3,11 @@ using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
 using Microsoft.Xna.Framework; // MathHelper
-using 武器test.Common.Systems;
+using TestMod.Common.Systems;
 
-namespace 武器test
+namespace TestMod.Common.Players
 {
-    public class MyPlayer : ModPlayer
+    public class CorePlayer : ModPlayer
     {
         public bool godModeBuff  = false; // 开关1
         public bool godModeBuff2 = false; // 开关2

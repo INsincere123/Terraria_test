@@ -1,7 +1,7 @@
 using Terraria;
 using Terraria.ModLoader;
 
-namespace 武器test.Buffs
+namespace TestMod.Buffs
 {
     /// <summary>
     /// 破甲debuff：每层减少10点护甲，最多10层

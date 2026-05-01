@@ -1,7 +1,7 @@
 using Terraria;
 using Terraria.ModLoader;
 
-namespace 武器test
+namespace TestMod.Buffs
 {
     [Autoload(true)]
     public class DarkMarkBuff : ModBuff
