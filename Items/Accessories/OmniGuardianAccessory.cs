@@ -70,7 +70,7 @@ namespace TestMod.Items.Accessories
 		public const float RunSpeedCap          = 18.0f; // 奔跑速度上限
 
 		// ---------- 翅膀参数 ----------
-		public const int   WingTimeMax            = 1800;   // 翅膀飞行时间上限 (因开了 empressBrooch 实际无限)
+		public const int   WingTimeMax            = 3600;   // 翅膀飞行时间上限 (因开了 empressBrooch 实际无限)
 		public const float HorizontalFlightSpeed  = 20f;    // 水平飞行速度
 		public const float HorizontalAccelMult    = 1.2f;     // 水平飞行加速度倍率
 		public const float AscentWhenFalling      = 1.2f;   // 下落时的上升力
@@ -80,8 +80,8 @@ namespace TestMod.Items.Accessories
 		public const float ConstantAscend         = 0.1f;   // 持续上升力
 
 		// ---------- 悬浮参数 (按下键悬浮) ----------
-		public const float HoverHorizontalSpeed = 10.0f;     // 悬浮时的水平速度
-		public const float HoverAccRunSpeed     = 3.0f;     // 悬浮时的水平加速度倍率
+		public const float HoverHorizontalSpeed = 7.5f;     // 悬浮时的水平速度
+		public const float HoverAccRunSpeed     = 1.5f;     // 悬浮时的水平加速度倍率
 
 		// ---------- 上升加速 (按上键, 喷气背包风格) ----------
 		public const float UpBoostMultiplier = 5f;          // 5 倍 (原版女皇之翼为 1.5 倍)

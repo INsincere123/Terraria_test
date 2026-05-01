@@ -68,6 +68,20 @@ Items: {
 			免疫击退并减少25%弹幕伤害
 			'''
 	}
+
+	SupercritPotion: {
+		Tooltip:
+			'''
+			超出100%暴击的部分转换为暴击伤害
+			每1%的暴击率转换为2%的暴击伤害
+			'''
+		DisplayName: 超暴击药水
+	}
+
+	SupercritGoggles: {
+		Tooltip: 提高25%暴击率并获得超暴击buff
+		DisplayName: 超暴击护目镜
+	}
 }
 
 Buffs: {
@@ -109,6 +123,11 @@ Buffs: {
 	AntaresGravityWellBuff: {
 		Description: 敌人被你强行拉过来
 		DisplayName: 引力井
+	}
+
+	SupercritBuff: {
+		DisplayName: 超暴击
+		Description: 溢出 100% 的暴击率转化为额外暴击伤害
 	}
 }
 
