@@ -82,6 +82,11 @@ Items: {
 		Tooltip: 提高25%暴击率并获得超暴击buff
 		DisplayName: 超暴击护目镜
 	}
+
+	AshenSeal: {
+		Tooltip: 每点防御力增加1%伤害，但将防御力清零
+		DisplayName: 焚骸圣印
+	}
 }
 
 Buffs: {
