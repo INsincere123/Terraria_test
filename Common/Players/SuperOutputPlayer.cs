@@ -29,7 +29,7 @@ namespace TestMod.Common.Players
             SuperOutputActive = false;
         }
 
-        public override void PostUpdateEquips()
+        public override void PostUpdateMiscEffects()
         {
             if (!SuperOutputActive)
                 return;
