@@ -87,6 +87,11 @@ Items: {
 		Tooltip: 每点防御力增加1%伤害，但将防御力清零
 		DisplayName: 焚骸圣印
 	}
+
+	TimeStopRing: {
+		DisplayName: Time Stop Ring
+		Tooltip: ""
+	}
 }
 
 Buffs: {
@@ -96,12 +101,12 @@ Buffs: {
 	}
 
 	DarkMarkBuff: {
-		Description: Mods.TestMod.Buffs.DarkMarkBuff.Description
+		Description: ""
 		DisplayName: Dark Mark Buff
 	}
 
 	ArmorShredDebuff: {
-		Description: Mods.TestMod.Buffs.ArmorShredDebuff.Description
+		Description: ""
 		DisplayName: Armor Shred Debuff
 	}
 
@@ -134,6 +139,16 @@ Buffs: {
 		DisplayName: 超暴击
 		Description: 溢出 100% 的暴击率转化为额外暴击伤害
 	}
+
+	TimeStopCDBuff: {
+		DisplayName: 时停冷却
+		Description: ""
+	}
+
+	TimeStoppedBuff: {
+		DisplayName: 砸瓦鲁多
+		Description: ""
+	}
 }
 
 Projectiles: {
@@ -150,4 +165,5 @@ Keybinds: {
 	"Antares Gravity Well.DisplayName": 引力井
 	PreciseFlightSlowdown.DisplayName: 减速以精确走位
 	PreciseFlightToggle.DisplayName: 精确飞行
+	"Activate Time Stop.DisplayName": 时停
 }

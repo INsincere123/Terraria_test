@@ -44,6 +44,11 @@ namespace TestMod.Common.GlobalProjectiles
         // ══════════════════════════════════════════════════════════════
         public override bool PreAI(Projectile projectile)
         {
+            // ⏱ 时停拦截：在所有 AI 处理之前。
+            // 仅冻结敌方弹幕（hostile && !friendly），玩家弹幕完全不受影响。
+            if (TryFreezeOnTimeStop(projectile))
+                return false;
+
             if (projectile.type != ProjectileID.Raven) return true;
             if (projectile.owner < 0 || projectile.owner >= Main.maxPlayers) return true;
 
@@ -116,7 +121,7 @@ namespace TestMod.Common.GlobalProjectiles
                 ApplyNebulaBlazeBoostedTracking(projectile);
             }
             // ☀️ 破晓之光矛（仅飞行中追踪，插入敌人后不再干预）
-            else if (projectile.type == 636)
+            else if (projectile.type == ProjectileID.Daybreak)
             {
                 if (!godMode || projectile.ai[0] != 0) return;
                 ApplyDaybreakTracking(projectile);
@@ -189,7 +194,7 @@ namespace TestMod.Common.GlobalProjectiles
             else if (projectile.type == ProjectileID.MoonlordTurretLaser)
                 modifiers.SourceDamage *= 13f;
             // 🌈 七彩水晶本体 + 爆炸 ×10
-            else if (projectile.type == 643 || projectile.type == 644)
+            else if (projectile.type == ProjectileID.RainbowCrystal || projectile.type == ProjectileID.RainbowCrystalExplosion)
                 modifiers.SourceDamage *= 10f;
 
             // 🪢 万花筒衰减（用独立 if，确保鞭子能同时应用其他倍率）
@@ -228,7 +233,7 @@ namespace TestMod.Common.GlobalProjectiles
                 HandlePhantasmArrowHit(target, damageDone);
 
             // ☀️ 破晓之光矛：太阳爆发特效（每根矛只触发一次）
-            if (projectile.type == 636 && !_daybreakBurstFiredSet.Contains(projectile.whoAmI))
+            if (projectile.type == ProjectileID.Daybreak && !_daybreakBurstFiredSet.Contains(projectile.whoAmI))
             {
                 _daybreakBurstFiredSet.Add(projectile.whoAmI);
                 HandleDaybreakBurst(target, damageDone);
@@ -265,7 +270,7 @@ namespace TestMod.Common.GlobalProjectiles
         // ══════════════════════════════════════════════════════════════
         public override void OnKill(Projectile projectile, int timeLeft)
         {
-            if (projectile.type == 636)
+            if (projectile.type == ProjectileID.Daybreak)
                 _daybreakBurstFiredSet.Remove(projectile.whoAmI);
         }
     }
