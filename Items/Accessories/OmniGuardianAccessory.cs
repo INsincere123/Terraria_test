@@ -1,327 +1,209 @@
-using System;
-using Microsoft.Xna.Framework;
 using Terraria;
-using Terraria.DataStructures;
 using Terraria.ID;
 using Terraria.ModLoader;
-using TestMod.Items.Accessories.Dashes;
+using TestMod.Items.Accessories.Effects;
 using TestMod.Common.Systems;
 using TestMod.Buffs;
 using TestMod.Rarities;
 
 namespace TestMod.Items.Accessories
 {
-	// ============================================================================
-	//  OmniGuardianAccessory  ——  综合守护饰品 (天界星盘风格翅膀)
-	// ----------------------------------------------------------------------------
-	//  飞行行为:
-	//    - 完美悬浮 (按下键)  = PreUpdateMovement 中保持 velocity.Y = -0.01f
-	//                            (极小负值: 视觉上完全静止, 但 vanilla 仍判定在飞行)
-	//                            如果设为 0 会被 vanilla 判定为站立 -> 触发"虚空跑步"
-	//    - 上升加速 (按上键)  = 在 VerticalWingSpeeds 中放大上升参数
-	//                            和 喷气背包 / 女皇之翼 同一套机制
-	//    - 无限飞行           = player.empressBrooch (御翼徽章效果)
-	//
-	//  其它功能:
-	//    [1] AsgardianAegis 风格冲刺 (独立文件 OmniguardianDash.cs)
-	//    [2] 鞋子奔跑 + 移速
-	//    [3] Radiance & RampartOfDeities 综合生存效果
-	//    [4] 大量 debuff 免疫
-	//    [5] 免疫击退、火块、熔岩
-	//    [6] 全方位属性加成 (伤害 / 暴击 / 攻速 / 穿甲 / 最大HP / 最大MP / 召唤栏 / 哨兵栏 / 防御 / 免伤 / 再生 / 移速)
-	//    [7] 三重闪避:
-	//          - 神圣套护甲闪避    (100% 闪避一次, 30 秒冷却, vanilla 全自动管理)
-	//          - 黑带闪避          (10% 几率, 无冷却)
-	//          - 自定义额外闪避    (StatisVoidSash 风格, 概率+冷却可调)
-	//
-	//  本饰品被识别为 翅膀类 装备, 会占用翅膀槽位, 无法同时装备其他翅膀。
-	//  需要的贴图:
-	//    - OmniGuardianAccessory.png       (物品图标)
-	//    - OmniGuardianAccessory_Wings.png (翅膀贴图)
-	// ============================================================================
+    // ============================================================================
+    //  OmniGuardianAccessory  ——  综合守护饰品 (天界星盘风格翅膀)
+    // ----------------------------------------------------------------------------
+    //  这个饰品现在是 "Effects 模块组合" 的演示:
+    //   - 翅膀飞行系统          —— 继承 OmniWingItem 自动获得
+    //   - 攻击属性              —— CombatStatsEffect
+    //   - 防御 / HP / MP        —— DefensiveStatsEffect
+    //   - 召唤栏 / 哨兵栏       —— SummonStatsEffect
+    //   - 三重闪避              —— TripleDodgeEffect
+    //   - 综合生存              —— SurvivalEffect
+    //   - 全套 debuff 免疫      —— DebuffImmunityEffect
+    //   - 地面移动 + 鞋子       —— MoveSpeedEffect
+    //   - 快速下落              —— FastFallEffect
+    //   - 自定义冲刺            —— CustomDashEffect
+    //   - 药水增强              —— PotionEffect
+    //   - 常驻 buff             —— BuffApplyEffect
+    //
+    //  数值在下方"调节区"内集中调整, 想要做"轻量翅膀 / 仅生存护符"等组合,
+    //  只需新建饰品, 选择性调用其中几个模块即可。
+    //
+    //  贴图:
+    //    - OmniGuardianAccessory.png
+    //    - OmniGuardianAccessory_Wings.png
+    // ============================================================================
 
-	[AutoloadEquip(EquipType.Wings)]
-	public class OmniGuardianAccessory : ModItem
-	{
-		// ========================================================================
-		// =====                  数值调节区 (可自由修改)                     =====
-		// ========================================================================
+    [AutoloadEquip(EquipType.Wings)]
+    public class OmniGuardianAccessory : OmniWingItem
+    {
+        // ========================================================================
+        // =====                  数值调节区 (可自由修改)                     =====
+        // ========================================================================
 
-		// ---------- 攻击属性 ----------
-		public const float DamageBonus       = 1.00f;  // +100% 伤害 (所有职业)
-		public const int   CritBonus         = 35;      // +35% 暴击率 (所有职业)
-		public const float AttackSpeedBonus  = 0.35f;  // +35% 攻速 (所有职业)
-		public const int   ArmorPenetration  = 24;     // +24 穿甲 (所有职业)
+        // ---------- 翅膀飞行 ----------
+        // 参考: vanilla 月光仙翼 1800 / 火神之翼 1500 / 女皇之翼 1800; 飞行时间单位是 tick (60 tick = 1秒)
+        protected override WingFlightConfig WingsConfig => new WingFlightConfig {
+            FlyTime              = 3600,   // 翅膀总飞行时间 tick (3600 = 60秒, 因开了 InfiniteFlight 实际无限)
+            HorizontalSpeed      = 20f,    // 水平最大飞行速度 (vanilla 月光仙翼 9, 女皇之翼 9.5; 20 已经很离谱)
+            HorizontalAccelMult  = 1.2f,   // 水平加速度倍率 (1.0 = 不加速, 越高起步越快)
+            AscentWhenFalling    = 1.2f,   // 下落时按住跳跃的上升力 (vanilla 大多 0.85f, 越高越能"翻盘")
+            AscentWhenRising     = 0.1f,   // 已经在上升时按住跳跃的额外加速度
+            MaxCanAscendMult     = 0.8f,   // 当前 Y 速 / 最大上升速度 < 此倍率时才能继续加速 (越接近 1 越能持续顶上去)
+            MaxAscentMult        = 3f,     // 最大上升速度倍率 (vanilla 大多 1.5; 3 = 翻倍上升)
+            ConstantAscend       = 0.1f,   // 持续向上的恒定力 (越高越"飘", 越低越像滑翔)
+            HoverHorizontalSpeed = 7.5f,   // 按下键悬浮时的水平速度 (vanilla 女皇之翼 6.25)
+            HoverAccelMult       = 1.5f,   // 按下键悬浮时的水平加速度倍率
+            UpBoostMultiplier    = 5f,     // 按上+跳跃 时的上升加速倍率 (1.0=禁用, vanilla 女皇之翼 1.5, 5 = 喷气背包级)
+            InfiniteFlight       = true,   // empressBrooch 御翼徽章: 飞行不消耗 FlyTime
+            EnablePerfectHover   = true,   // 按下+跳跃 视觉完全静止悬停 (内部 velocity.Y = -0.0001f, 不会卡虚空跑步 bug)
+        };
 
-		// ---------- 防御属性 ----------
-		public const float MaxLifeBonus         = 1f;    // +100% 最大生命值 (1f = 100%, 0.1f = 10%)
-		public const float MaxManaBonus         = 1f;    // +100% 最大法力值
-		public const float DamageReductionBonus = 0.15f;  // +15% 免伤
-		public const int   DefenseBonus         = 15;    // +15 防御
-		public const int   LifeRegenBaseBonus   = 30;    // +15 HP/s 基础再生 (lifeRegen 单位为 1/2 HP/s)
-		public const float ManaRegenBonus       = 1.0f;  // +1.0 倍法力恢复 (作用于 manaRegenBonus)
+        // ---------- 攻击属性 ----------
+        // 作用职业默认 Generic (所有职业); 想做职业专属饰品请改 CombatStatsConfig.ClassType
+        public const float DamageBonus       = 1.00f; // 伤害加成 (1.0f = +100% 翻倍, 0.1f = +10%)
+        public const int   CritBonus         = 35;    // 暴击率加成 (单位是百分点, 35 = +35%)
+        public const float AttackSpeedBonus  = 0.35f; // 攻速加成 (0.35f = +35% 攻速)
+        public const int   ArmorPenetration  = 24;    // 穿甲值 (直接抵消怪物的对应防御)
 
-		// ---------- 召唤属性 ----------
-		public const int   ExtraMinionSlots     = 8;    // +8 召唤栏位
-		public const int   ExtraSentrySlots     = 3;    // +3 哨兵栏位
+        // ---------- 防御属性 ----------
+        // MaxLife / MaxMana 基于 statLifeMax2 计算, 与其它 +最大生命 饰品按百分比正确叠加
+        public const float MaxLifeBonus         = 1f;     // 最大生命加成 (1f = +100% 翻倍, 0.1f = +10%)
+        public const float MaxManaBonus         = 1f;     // 最大法力加成 (同上)
+        public const float DamageReductionBonus = 0.15f;  // 免伤百分比 (0.15f = -15% 受伤; vanilla 上限约 0.5)
+        public const int   DefenseBonus         = 15;     // 固定防御加成 (每点 ≈ -0.5 受伤)
+        public const int   LifeRegenPerSec      = 15;     // 基础生命再生 HP/秒 (人类直觉单位, 模块内部自动 ×2 转 vanilla 1/2 HP/s)
+        public const float ManaRegenBonus       = 1.0f;   // 法力恢复倍率 (1.0f = +100% 恢复速度, 模块内部自动 ×100)
 
-		// ---------- 移动属性 ----------
-		public const float MoveSpeedBonus       = 0.10f; // +10% 移动速度
-		public const float RunSpeedCap          = 18.0f; // 奔跑速度上限
+        // ---------- 召唤属性 ----------
+        public const int   ExtraMinionSlots = 8;  // 额外召唤栏位 (vanilla 默认仅 1, 8 = 共 9 个仆从)
+        public const int   ExtraSentrySlots = 3;  // 额外哨兵栏位 (vanilla 默认 1)
 
-		// ---------- 翅膀参数 ----------
-		public const int   WingTimeMax            = 3600;   // 翅膀飞行时间上限 (因开了 empressBrooch 实际无限)
-		public const float HorizontalFlightSpeed  = 20f;    // 水平飞行速度
-		public const float HorizontalAccelMult    = 1.2f;     // 水平飞行加速度倍率
-		public const float AscentWhenFalling      = 1.2f;   // 下落时的上升力
-		public const float AscentWhenRising       = 0.1f;   // 上升时的额外加速度
-		public const float MaxCanAscendMult       = 0.8f;   // 最大可加速上升的倍率
-		public const float MaxAscentMult          = 3f;     // 最大上升速度倍率
-		public const float ConstantAscend         = 0.1f;   // 持续上升力
+        // ---------- 移动 ----------
+        public const float MoveSpeedBonus = 0.10f;  // 地面移速加成 (0.10f = +10%)
+        public const float RunSpeedCap    = 18.0f;  // 奔跑速度上限 (vanilla 默认 6.0, 火神靴 9.0; 18 = 三倍火神靴)
 
-		// ---------- 悬浮参数 (按下键悬浮) ----------
-		public const float HoverHorizontalSpeed = 7.5f;     // 悬浮时的水平速度
-		public const float HoverAccRunSpeed     = 1.5f;     // 悬浮时的水平加速度倍率
+        // ---------- 药水 ----------
+        // 治疗最终值 = (原始治疗 + Flat) × Mult; 例: 大治疗药水原 150 -> (150+50)×5 = 1000
+        public const int   PotionHealFlatBonus = 50; // 固定加值 HP (在乘法前应用; 0 = 不加成)
+        public const float PotionHealMultBonus = 5f; // 治疗倍率 (1f = 不变, 2f = 翻倍, 5f = 五倍)
 
-		// ---------- 上升加速 (按上键, 喷气背包风格) ----------
-		public const float UpBoostMultiplier = 5f;          // 5 倍 (原版女皇之翼为 1.5 倍)
+        // ---------- 生存 ----------
+        public const float LowHpDamageReduction     = 0.35f; // HP < 50% 时叠加的额外免伤 (0.35f = +35%)
+        public const int   DebuffDefensePerStack    = 20;    // 身上每个 debuff 增加的防御 (越多 debuff 越铁)
+        public const int   DebuffRegenPerStack      = 10;    // 身上每个 debuff 增加的再生 (单位 1/2 HP/s, 10 = +5 HP/s)
+        public const int   LostHpRegenMin           = 10;    // 满血时的最低再生 HP/s
+        public const int   LostHpRegenMax           = 100;   // 0 血时的最高再生 HP/s (按当前血量百分比线性插值)
+        public const int   ExtraDebuffTimeReduction = 2;     // 每帧额外减少的 debuff tick 数 (1 = 减半衰减, 2 = 三分之一时长, 越大消得越快)
+        public const int   ExtraImmuneFrames        = 10;    // 受伤后追加的无敌帧 tick (vanilla 默认 ~30, 加 10 = 多 ~17%)
 
-		// ---------- 药水治疗效果 ----------
-		// 额外治疗量 (固定值, 叠加在原治疗量之后): 0 = 不增加
-		// 例如: 大治疗药水原本治疗 150, 设 50 后变为 200
-		public const int   PotionHealFlatBonus = 50;
-		// 治疗量乘数 (百分比加成): 1.0f = 不加成, 1.5f = 治疗量 +50%, 2.0f = 翻倍
-		// 乘法在加法之后应用: 最终 = (原治疗量 + FlatBonus) × MultBonus
-		public const float PotionHealMultBonus = 5f;
+        // ---------- 快速下落 ----------
+        // 触发条件: 按住下键 + 不按跳跃 + 正在下落 (与翅膀悬浮条件互斥, 不会冲突)
+        public const float ExtraFallSpeed   = 30f; // 按下键时的最大下落速度 (vanilla 默认 maxFallSpeed = 10f)
+        public const float FallGravityBoost = 2f;  // 按下键时的重力倍率 (1.0f = 不加速, 2.0f = 立即顶到上限)
 
-		// ---------- 冲刺参数 ----------
-		// 使用 AsgardianAegis 风格的自定义冲刺 (见 OmniguardianDash.cs)
-		// 冲刺详细数值在 OmniguardianDash.cs 顶部调节
-		public const bool EnableAegisDash = true;
+        // ---------- 闪避 ----------
+        // 三重闪避: 神圣套(100%/30s, vanilla自动管理) + 黑带(10%几率, 永久) + 自定义额外闪避(下方)
+        public const int   ExtraDodgeChanceDenominator = 10;     // 自定义闪避几率分母 (10 = 1/10 = 10%; 设 0 禁用; 越大概率越低)
+        public const int   ExtraDodgeCooldownTicks     = 60 * 15; // 自定义闪避触发后的冷却 (60 tick = 1秒, 这里 15 秒)
 
-		// ---------- 生存效果 ----------
-		public const float LowHpDamageReduction     = 0.35f;  // 生命 < 50% 时额外免伤
-		public const int   DebuffDefensePerStack    = 20;     // 每个 debuff 增加的防御
-		public const int   DebuffRegenPerStack      = 10;      // 每个 debuff 增加的再生 (1/2 HP/s 单位)
-		public const int   LostHpRegenMin           = 10;      // 失血再生最低 HP/s
-		public const int   LostHpRegenMax           = 100;     // 失血再生最高 HP/s
-		public const int   ExtraDebuffTimeReduction = 2;      // 每帧额外减少的 debuff tick 数
-		public const int   ExtraImmuneFrames        = 10;     // 额外受伤无敌帧
+        // ========================================================================
 
-		// ---------- 快速下落 (InterstellarStompers 风格) ----------
-		// 按"下"键时 (非飞行状态) 提高最大下落速度
-		// vanilla 默认 maxFallSpeed = 10f
-		public const float ExtraFallSpeed   = 30f;  // 按下键时的最大下落速度上限
-		public const float FallGravityBoost = 2f; // 按下键时的重力倍率 (加速达到上限, 1.0f = 不加速)
+        public override void SetDefaults()
+        {
+            base.SetDefaults();
+            Item.value = Item.sellPrice(platinum: 100);
+            Item.rare  = ModContent.RarityType<AntaresRarity>();
+            if (CalamityCompatSystem.CalamityLoaded)
+                Item.rare = CalamityCompatSystem.CalamityRarity;
+        }
 
-		// ---------- 闪避 ----------
-		public const bool  EnableHallowedShadowDodge  = true;   // 启用神圣套护甲闪避 (100% 闪避一次, 30秒冷却)
-		public const bool  EnableBlackBeltDodge       = true;   // 启用原版黑带闪避 (10% 几率, 无冷却)
-		public const int   ExtraDodgeChanceDenominator = 10;      // 1/5 = 20% 额外闪避概率
-		                                                          // 设为 0 表示禁用; 数值越大概率越低
-		public const int   ExtraDodgeCooldownTicks     = 60 * 15; // 额外闪避的冷却 (15 秒)
+        public override void UpdateAccessory(Player player, bool hideVisual)
+        {
+            // [0] 应用翅膀飞行 + 完美悬浮 (基类提供)
+            base.UpdateAccessory(player, hideVisual);
 
-		// ========================================================================
+            // [1] 攻击属性
+            CombatStatsEffect.Apply(player, new CombatStatsConfig {
+                Damage           = DamageBonus,
+                Crit             = CritBonus,
+                AttackSpeed      = AttackSpeedBonus,
+                ArmorPenetration = ArmorPenetration,
+            });
 
-		public override void SetStaticDefaults()
-		{
-			// =================================================================
-			// 注册原版翅膀属性 —— 启用按下键的 vanilla 悬浮基础设施 (取消重力)
-			// 真正的"完美悬停"在 OmniGuardianPlayer.PreUpdateMovement 实现
-			// =================================================================
-			int wingSlot = EquipLoader.GetEquipSlot(Mod, Name, EquipType.Wings);
+            // [2] 防御 / HP / MP
+            DefensiveStatsEffect.Apply(player, new DefensiveStatsConfig {
+                MaxLifeBonus    = MaxLifeBonus,
+                MaxManaBonus    = MaxManaBonus,
+                DamageReduction = DamageReductionBonus,
+                Defense         = DefenseBonus,
+                LifeRegenPerSec = LifeRegenPerSec,
+                ManaRegenMult   = ManaRegenBonus,
+            });
 
-			ArmorIDs.Wing.Sets.Stats[wingSlot] = new WingStats(
-				flyTime: WingTimeMax,
-				flySpeedOverride: RunSpeedCap,
-				hasHoldDownHoverFeatures: true,
-				hoverFlySpeedOverride: HoverHorizontalSpeed,
-				hoverAccelerationMultiplier: HoverAccRunSpeed
-			);
-		}
+            // [3] 召唤栏 / 哨兵栏
+            SummonStatsEffect.Apply(player, ExtraMinionSlots, ExtraSentrySlots);
 
-		public override void SetDefaults()
-		{
-			Item.width     = 30;
-			Item.height    = 30;
-			Item.value     = Item.sellPrice(platinum: 100);
-			Item.rare = ModContent.RarityType<AntaresRarity>();
-			if (CalamityCompatSystem.CalamityLoaded)
-				Item.rare = CalamityCompatSystem.CalamityRarity;
-			Item.accessory = true;
-		}
+            // [4] 移动 + 鞋子
+            MoveSpeedEffect.Apply(player, new MoveSpeedConfig {
+                MoveSpeed           = MoveSpeedBonus,
+                RunSpeedCap         = RunSpeedCap,
+                IceSkate            = true,
+                WaterWalk           = true,
+                FireBlockImmune     = true,
+                LavaImmune          = true,
+                LavaImmuneTimeBonus = 420,
+                NoKnockback         = true,
+                LongInvince         = true,
+            });
 
-		// ========================================================================
-		// 翅膀飞行参数重写
-		// ========================================================================
+            // [5] 快速下落
+            FastFallEffect.Apply(player, ExtraFallSpeed, FallGravityBoost);
 
-		public override void HorizontalWingSpeeds(Player player, ref float speed, ref float acceleration)
-		{
-			speed         = HorizontalFlightSpeed;
-			acceleration *= HorizontalAccelMult;
-		}
+            // [6] 三重闪避
+            TripleDodgeEffect.Apply(player, new TripleDodgeConfig {
+                EnableHallowedShadow   = true,
+                EnableBlackBelt        = true,
+                EnableExtra            = true,
+                ExtraChanceDenominator = ExtraDodgeChanceDenominator,
+                ExtraCooldownTicks     = ExtraDodgeCooldownTicks,
+            });
 
-		public override void VerticalWingSpeeds(Player player,
-			ref float ascentWhenFalling,
-			ref float ascentWhenRising,
-			ref float maxCanAscendMultiplier,
-			ref float maxAscentMultiplier,
-			ref float constantAscend)
-		{
-			ascentWhenFalling      = AscentWhenFalling;
-			ascentWhenRising       = AscentWhenRising;
-			maxCanAscendMultiplier = MaxCanAscendMult;
-			maxAscentMultiplier    = MaxAscentMult;
-			constantAscend         = ConstantAscend;
+            // [7] 综合生存
+            SurvivalEffect.Apply(player, new SurvivalConfig {
+                EnableLowHpReduction    = true,
+                LowHpDamageReduction    = LowHpDamageReduction,
+                EnableDebuffStack       = true,
+                DebuffDefensePerStack   = DebuffDefensePerStack,
+                DebuffRegenPerStack     = DebuffRegenPerStack,
+                EnableLostHpRegen       = true,
+                LostHpRegenMin          = LostHpRegenMin,
+                LostHpRegenMax          = LostHpRegenMax,
+                EnableDebuffDecay       = true,
+                DebuffTimeReduction     = ExtraDebuffTimeReduction,
+                EnableExtraImmuneFrames = true,
+                ExtraImmuneFrames       = ExtraImmuneFrames,
+            });
 
-			// =================================================================
-			// 上升加速 (按上键) —— 喷气背包 / 女皇之翼 风格
-			// =================================================================
-			if (player.controlUp && player.controlJump)
-			{
-				ascentWhenRising    *= UpBoostMultiplier;
-				maxAscentMultiplier *= UpBoostMultiplier;
-				constantAscend      *= UpBoostMultiplier;
-			}
-		}
+            // [8] 药水
+            PotionEffect.Apply(player, new PotionConfig {
+                EnablePhilosophersStone = true,
+                HealFlatBonus           = PotionHealFlatBonus,
+                HealMultBonus           = PotionHealMultBonus,
+            });
 
-		// ========================================================================
-		// 穿戴时每帧执行的所有效果
-		// ========================================================================
+            // [9] 全套 debuff 免疫
+            DebuffImmunityEffect.ApplyAll(player);
 
-		public override void UpdateAccessory(Player player, bool hideVisual)
-		{
-			var mp = player.GetModPlayer<OmniGuardianPlayer>();
-			mp.Equipped = true;
+            // [10] 常驻 buff
+            player.AddBuff(BuffID.Honey, 2);                                  // 蜂蜜 buff
+            player.AddBuff(ModContent.BuffType<GravityNormalizerBuff>(), 2);  // 重力正常化 buff
+            player.AddBuff(BuffID.WellFed3, 2);
+            player.AddBuff(BuffID.DryadsWard, 2);
+            player.AddBuff(BuffID.NebulaUpMana3, 2);
 
-			// ===== 攻击属性 =====
-			player.GetDamage(DamageClass.Generic)            += DamageBonus;
-			player.GetCritChance(DamageClass.Generic)        += CritBonus;
-			player.GetAttackSpeed(DamageClass.Generic)       += AttackSpeedBonus;
-			player.GetArmorPenetration(DamageClass.Generic)  += ArmorPenetration;
-
-			// ===== 生命/法力/防御 =====
-			// 基于 statLifeMax2 计算: 这样能与其它 +最大生命 饰品正确叠加百分比
-			player.statLifeMax2 += (int)(player.statLifeMax2 * MaxLifeBonus);
-			player.statManaMax2 += (int)(player.statManaMax2 * MaxManaBonus);
-			player.endurance    += DamageReductionBonus;
-			player.statDefense  += DefenseBonus;
-			player.lifeRegen    += LifeRegenBaseBonus;
-			player.manaRegenBonus += (int)(ManaRegenBonus * 100); // 单位是百分比 * 100
-
-			// ===== 耐药性 CD 缩减 (哲学家之石效果, CD × 0.75 缩短 25%) =====
-			player.pStone = true;
-
-			// ===== 常驻 Buff =====
-			player.AddBuff(BuffID.Honey, 2);                                  // 蜂蜜 buff
-			player.AddBuff(ModContent.BuffType<GravityNormalizerBuff>(), 2);  // 重力正常化 buff
-			player.AddBuff(BuffID.WellFed3, 2);
-			player.AddBuff(BuffID.DryadsWard, 2);
-			player.AddBuff(BuffID.NebulaUpMana3, 2);
-			player.maxMinions += ExtraMinionSlots;
-			player.maxTurrets += ExtraSentrySlots;
-
-			// ===== 移动 =====
-			player.moveSpeed += MoveSpeedBonus;
-
-			// ===== 无限飞行 (御翼徽章效果) =====
-			player.empressBrooch = true;
-
-			// ===== 鞋子效果 =====
-			if (player.accRunSpeed < RunSpeedCap)
-				player.accRunSpeed = RunSpeedCap;
-			player.iceSkate    = true;    // 冰鞋
-			player.waterWalk   = true;    // 水上行走
-			player.fireWalk    = true;    // 免疫火块
-			player.lavaImmune  = true;    // 免疫熔岩
-			player.lavaMax    += 420;     // 增加熔岩免疫上限
-			player.noKnockback = true;    // 免疫击退
-			player.longInvince = true;    // 延长无敌帧时间
-
-			// ===== 冲刺 (灾厄风格 dash 框架, 见 Dashes/ 文件夹) =====
-			// 灾厄做法: 设 ActiveDashId + dashType=0 (禁用 vanilla 双击 dash, 避免冲突)
-			if (EnableAegisDash)
-			{
-				player.GetModPlayer<DashPlayer>().ActiveDashId = "OmniguardianDash";
-				player.dashType = 0;
-			}
-
-			// =====================================================================
-			// 闪避三件套 (vanilla 内部互斥, 一次受伤至多触发一种, 优先级按顺序)
-			// =====================================================================
-
-			// 1. 神圣套护甲闪避 (100% 闪避一次, 30秒冷却, vanilla 自动管理 cooldown)
-			if (EnableHallowedShadowDodge && player.shadowDodgeTimer <= 0)
-				player.shadowDodge = true;
-
-			// 2. 黑带闪避 (10% 几率, 无冷却)
-			if (EnableBlackBeltDodge)
-				player.blackBelt = true;
-
-			// 3. 自定义额外闪避在 OmniGuardianPlayer.FreeDodge 实现
-
-			// ====================================================================
-			// =====                Debuff 免疫列表 (可自由增删)              =====
-			// ====================================================================
-			player.buffImmune[BuffID.Poisoned]          = true; // 20  中毒
-			// BuffID.PotionSickness (21) 单独处理: 见数值调节区 PotionSicknessDurationMult
-			player.buffImmune[BuffID.Darkness]          = true; // 22  黑暗
-			player.buffImmune[BuffID.Cursed]            = true; // 23  诅咒
-			player.buffImmune[BuffID.OnFire]            = true; // 24  着火了！
-			player.buffImmune[BuffID.Bleeding]          = true; // 30  流血
-			player.buffImmune[BuffID.Confused]          = true; // 31  困惑
-			player.buffImmune[BuffID.Slow]              = true; // 32  缓慢
-			player.buffImmune[BuffID.Weak]              = true; // 33  虚弱
-			player.buffImmune[BuffID.Silenced]          = true; // 35  沉默
-			player.buffImmune[BuffID.BrokenArmor]       = true; // 36  破损盔甲
-			player.buffImmune[BuffID.Horrified]         = true; // 37  惊恐
-			player.buffImmune[BuffID.TheTongue]         = true; // 38  狂卷之舌
-			player.buffImmune[BuffID.CursedInferno]     = true; // 39  诅咒狱火
-			player.buffImmune[BuffID.Frostburn]         = true; // 44  霜冻
-			player.buffImmune[BuffID.Chilled]           = true; // 46  冷冻
-			player.buffImmune[BuffID.Frozen]            = true; // 47  冰冻
-			player.buffImmune[BuffID.Burning]           = true; // 67  燃烧
-			player.buffImmune[BuffID.Suffocation]       = true; // 68  窒息
-			player.buffImmune[BuffID.Ichor]             = true; // 69  灵液
-			player.buffImmune[BuffID.Venom]             = true; // 70  酸性毒液
-			player.buffImmune[BuffID.Midas]             = true; // 72  迈达斯
-			player.buffImmune[BuffID.Blackout]          = true; // 80  黑视
-			player.buffImmune[BuffID.ChaosState]        = true; // 88  混沌状态
-			player.buffImmune[BuffID.ManaSickness]      = true; // 94  耐魔性
-			player.buffImmune[BuffID.Wet]               = true; // 103 潮湿
-			player.buffImmune[BuffID.Lovestruck]        = true; // 119 热恋
-			player.buffImmune[BuffID.Stinky]            = true; // 120 恶臭
-			player.buffImmune[BuffID.Slimed]            = true; // 137 史莱姆
-			player.buffImmune[BuffID.Electrified]       = true; // 144 带电
-			player.buffImmune[BuffID.MoonLeech]         = true; // 145 月噬
-			player.buffImmune[BuffID.Rabies]            = true; // 148 野性咬噬
-			player.buffImmune[BuffID.Webbed]            = true; // 149 被网住
-			player.buffImmune[BuffID.ShadowFlame]       = true; // 153 暗影焰
-			player.buffImmune[BuffID.Stoned]            = true; // 156 石化
-			player.buffImmune[BuffID.Dazed]             = true; // 160 眩晕
-			player.buffImmune[BuffID.Obstructed]        = true; // 163 遮挡
-			player.buffImmune[BuffID.VortexDebuff]      = true; // 164 扭曲
-			player.buffImmune[BuffID.BoneJavelin]       = true; // 169 穿透
-			player.buffImmune[BuffID.StardustMinionBleed] = true; // 183 细胞附着
-			player.buffImmune[BuffID.DryadsWardDebuff]  = true; // 186 树妖祸害
-			player.buffImmune[BuffID.Daybreak]          = true; // 189 破晓
-			player.buffImmune[BuffID.WindPushed]        = true; // 194 强风
-			player.buffImmune[BuffID.WitheredArmor]     = true; // 195 枯萎盔甲
-			player.buffImmune[BuffID.WitheredWeapon]    = true; // 196 枯萎武器
-			player.buffImmune[BuffID.OgreSpit]          = true; // 197 分泌物
-			player.buffImmune[BuffID.NoBuilding]        = true; // 199 创意震撼
-			player.buffImmune[BuffID.BetsysCurse]       = true; // 203 双足翼龙诅咒
-			player.buffImmune[BuffID.Oiled]             = true; // 204 涂油
-			player.buffImmune[BuffID.GelBalloonBuff]    = true; // 320 闪耀史莱姆
-			player.buffImmune[BuffID.OnFire3]           = true; // 323 狱炎
-			player.buffImmune[BuffID.Frostburn2]        = true; // 324 冻伤
-			player.buffImmune[BuffID.NeutralHunger]     = true; // 332 稍饿
-			player.buffImmune[BuffID.Hunger]            = true; // 333 饥饿
-			player.buffImmune[BuffID.Starving]          = true; // 334 极饿
-			player.buffImmune[BuffID.BloodButcherer]    = true; // 344 血腥屠宰
-			player.buffImmune[BuffID.Shimmer]           = true; // 353 微光闪烁
-			// 添加更多: player.buffImmune[BuffID.???] = true;
-		}
+            // [11] 自定义冲刺 (灾厄风格)
+            CustomDashEffect.Apply(player, "OmniguardianDash");
+        }
 
         public override void AddRecipes()
         {
@@ -357,158 +239,8 @@ namespace TestMod.Items.Accessories
             recipe.AddIngredient(4950); // 史莱姆皇后
             recipe.AddIngredient(5110); // 独眼巨鹿
 
-            recipe.AddTile(TileID.LunarCraftingStation); // 远古操纵机
+            recipe.AddTile(TileID.LunarCraftingStation);
             recipe.Register();
         }
-	}
-
-	// ============================================================================
-	//                          ModPlayer 处理类
-	// ============================================================================
-
-	public class OmniGuardianPlayer : ModPlayer
-	{
-		public bool Equipped;
-		public int  ExtraDodgeCooldown; // 额外闪避的内部冷却计时
-
-		public override void ResetEffects()
-		{
-			Equipped = false;
-		}
-
-		// 冷却需要持续衰减
-		public override void PostUpdate()
-		{
-			if (ExtraDodgeCooldown > 0)
-				ExtraDodgeCooldown--;
-		}
-
-		// =================================================
-		// 快速下落 (InterstellarStompers 风格)
-		// 修改 maxFallSpeed 和 gravity 须在 PostUpdateRunSpeeds 里:
-		//   maxFallSpeed 在第 20245 行重置, PostUpdateRunSpeeds (22220) 在此之后
-		//   velocity.Y > maxFallSpeed 的限制在第 22305 行, 也在 PostUpdateRunSpeeds 之后
-		// =================================================
-		public override void PostUpdateRunSpeeds()
-		{
-			if (!Equipped) return;
-
-			// 按下键 + 正在下落 + 没有按跳跃键 (飞行时用翅膀悬停逻辑, 不干扰)
-			if (Player.controlDown && !Player.controlJump && Player.velocity.Y > 0f)
-			{
-				Player.maxFallSpeed = OmniGuardianAccessory.ExtraFallSpeed;
-				Player.gravity     *= OmniGuardianAccessory.FallGravityBoost;
-				Player.GoingDownWithGrapple = true;	// 下落中按下键时完全无视平台 (不会踩上去再穿过)
-			}
-		}
-
-		// =================================================
-		// 完美悬浮 —— 在所有 velocity 计算结束后保持 Y 极微小负值
-		// 关键: 不能设为 0!
-		//   - vanilla 检测 velocity.Y == 0f 会判定为"在地面" -> 触发跑步动画 + 翅膀停扇 (虚空跑步)
-		//   - 用 -0.001f 极小负值: 视觉上完全静止, 但 vanilla 仍认为在飞行
-		// 仅修改 Y 分量, 水平 (X) 完全不受干扰
-		// =================================================
-		public override void PreUpdateMovement()
-		{
-			if (!Equipped) return;
-
-			// 条件: 飞行中 (有翅膀逻辑生效) + 按住下键 + 按住跳跃键
-			if (Player.wingsLogic > 0 && Player.controlDown && Player.controlJump)
-			{
-				Player.velocity.Y = -0.0001f;       // 极微小向上速度: 维持飞行状态, 视觉静止
-				Player.gfxOffY    = 0f;           // 防止视觉抖动
-				Player.fallStart  = (int)(Player.position.Y / 16f); // 防止跌落伤害
-			}
-		}
-
-		public override void UpdateLifeRegen()
-		{
-			if (!Equipped) return;
-
-			float lostFraction = 1f - ((float)Player.statLife / Math.Max(1, Player.statLifeMax2));
-			if (lostFraction < 0f) lostFraction = 0f;
-			if (lostFraction > 1f) lostFraction = 1f;
-
-			int minR = OmniGuardianAccessory.LostHpRegenMin;
-			int maxR = OmniGuardianAccessory.LostHpRegenMax;
-			int bonus = minR + (int)Math.Round(lostFraction * (maxR - minR));
-
-			Player.lifeRegen += bonus * 2; // lifeRegen 单位是 1/2 HP/s
-		}
-
-		public override void PostUpdateMiscEffects()
-		{
-			if (!Equipped) return;
-
-			// debuff 计数 + 加速衰减
-			int debuffCount = 0;
-			for (int i = 0; i < Player.MaxBuffs; i++)
-			{
-				int bt = Player.buffType[i];
-				if (bt <= 0) continue;
-				if (Main.debuff[bt])
-				{
-					debuffCount++;
-					Player.buffTime[i] -= OmniGuardianAccessory.ExtraDebuffTimeReduction;
-					if (Player.buffTime[i] < 1) Player.buffTime[i] = 1;
-				}
-			}
-
-			if (debuffCount > 0)
-			{
-				Player.statDefense += debuffCount * OmniGuardianAccessory.DebuffDefensePerStack;
-				Player.lifeRegen   += debuffCount * OmniGuardianAccessory.DebuffRegenPerStack;
-			}
-
-			if (Player.statLife < Player.statLifeMax2 / 2)
-			{
-				Player.endurance += OmniGuardianAccessory.LowHpDamageReduction;
-			}
-
-			if (OmniGuardianAccessory.ExtraImmuneFrames > 0 && Player.immune && Player.immuneTime > 0)
-			{
-				if (Player.immuneTime < OmniGuardianAccessory.ExtraImmuneFrames + 1)
-				{
-					Player.immuneTime += OmniGuardianAccessory.ExtraImmuneFrames;
-				}
-			}
-		}
-
-		// =================================================
-		// 自定义闪避: 在受伤前判定, 命中则跳过本次伤害
-		// 神圣套闪避 (shadowDodge) 和黑带闪避 (blackBelt) 都由 vanilla 自动处理
-		// 这里再额外加一层独立的概率闪避
-		// =================================================
-		// =================================================
-		// 药水治疗效果提升
-		// 先加固定值, 再乘倍率: 最终 = (原值 + FlatBonus) × MultBonus
-		// =================================================
-		public override void GetHealLife(Item item, bool quickHeal, ref int healValue)
-		{
-			if (!Equipped) return;
-
-			healValue += OmniGuardianAccessory.PotionHealFlatBonus;
-			healValue  = (int)(healValue * OmniGuardianAccessory.PotionHealMultBonus);
-		}
-
-		public override bool FreeDodge(Player.HurtInfo info)
-		{
-			if (!Equipped) return false;
-			if (OmniGuardianAccessory.ExtraDodgeChanceDenominator <= 0) return false;
-			if (ExtraDodgeCooldown > 0) return false;
-
-			if (Main.rand.Next(OmniGuardianAccessory.ExtraDodgeChanceDenominator) == 0)
-			{
-				ExtraDodgeCooldown = OmniGuardianAccessory.ExtraDodgeCooldownTicks;
-
-				// 触发原版忍者闪避动画 (黑带的视觉效果, 自带粒子)
-				Player.SetImmuneTimeForAllTypes(Player.longInvince ? 80 : 40);
-				Player.NinjaDodge();
-				return true; // 跳过这次伤害
-			}
-
-			return false;
-		}
-	}
+    }
 }
