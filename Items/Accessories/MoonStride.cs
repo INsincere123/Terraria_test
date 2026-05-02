@@ -6,11 +6,15 @@ using System.Collections.Generic;
 using TestMod.Rarities;
 using System.Linq;
 using TestMod.Buffs;
+using TestMod.Items.Accessories.Effects;
 
 namespace TestMod.Items.Accessories
 {
     public class MoonStride : ModItem
     {
+        public const float MoveSpeedBonus = 0.15f;  // 地面移速加成 (0.15f = +15%)
+        public const float RunSpeedCap    = 11.0f;  // 奔跑速度上限 (vanilla 默认 6.0, 火神靴 9.0; 18 = 三倍火神靴)
+
         public override void SetDefaults()
         {
             Item.width = 32;
@@ -26,13 +30,20 @@ namespace TestMod.Items.Accessories
             // 精确飞行（按 G 开关，按住 RightShift 减速）
             player.GetModPlayer<PreciseFlightPlayer>().allowToggle = true;
 
-            // 防击退
-            player.noKnockback = true;
-
             // 减少 25% 弹幕伤害（独立乘区）
             player.GetModPlayer<CorePlayer>().projDamageMultiplier = 0.75f;
-
-            player.moveSpeed += 0.15f; // 增加 15% 移动速度
+            
+            MoveSpeedEffect.Apply(player, new MoveSpeedConfig {
+                MoveSpeed           = MoveSpeedBonus,
+                RunSpeedCap         = RunSpeedCap,
+                IceSkate            = true,
+                WaterWalk           = true,
+                FireBlockImmune     = true,
+                LavaImmune          = true,
+                LavaImmuneTimeBonus = 420,
+                NoKnockback         = true,
+                LongInvince         = false,
+            });
 
             player.AddBuff(ModContent.BuffType<GravityNormalizerBuff>(), 2);  // 重力正常化 buff
         }
