@@ -162,6 +162,26 @@ namespace TestMod.Common.Players
         }
 
         // ====================================================================
+        // PostUpdateRunSpeeds 调用时机比 PreUpdateMovement 更晚，
+        // 在这里设置穿平台标志才不会被原版重置。
+        // ====================================================================
+        public override void PostUpdateRunSpeeds()
+        {
+            if (!ActiveThisFrame)
+                return;
+
+            // 沿重力方向输入时穿透平台。velocity.Y 已经在 PreUpdateMovement 里设好。
+            bool wantsDown = (Player.gravDir > 0f && Player.controlDown) ||
+                             (Player.gravDir < 0f && Player.controlUp);
+
+            if (wantsDown && Player.velocity.Y * Player.gravDir > 0f)
+            {
+                Player.GoingDownWithGrapple = true;
+                Player.stairFall = true;
+            }
+        }
+
+        // ====================================================================
         // 防止"惯性"残留：在飞行状态结束后，如果原版逻辑在 PostUpdate 给 velocity 加了奇怪的值，
         // 也不需要清理，因为下一帧又会被覆写。这里不需要 PostUpdate。
         // ====================================================================
