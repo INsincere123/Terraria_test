@@ -46,7 +46,7 @@ namespace TestMod.Items.Accessories.Dashes
 		public const int   MaxHitsPerDash    = 16;
 
 		// 无敌帧
-		public const int   StartIFrames    = 18;
+		public const int   StartIFrames    = 22;    // 起始无敌帧 (从冲刺开始算起, 固定长度)
 		public const int   ActiveIFrames   = 12;
 		public const int   ContactIFrames  = 30;
 

@@ -3,6 +3,7 @@ using Terraria.ID;
 using Terraria.ModLoader;
 using TestMod.Common.Players;
 using TestMod.Common.Systems;
+using TestMod.Items.Accessories.Effects;
 
 namespace TestMod.Items.Armor
 {
@@ -91,12 +92,16 @@ namespace TestMod.Items.Armor
                 : "未绑定";
 
             string calamityBonus = CalamityCompatSystem.CalamityLoaded
-                ? "\n灾厄兼容：移除跨职业召唤伤害惩罚"
+                ? "\n灾厄：移除跨职业召唤伤害惩罚"
                 : "";
 
-            player.setBonus = $"致命伤害后复活（冷却2分钟），恢复50%生命值，无敌3秒\n免疫秒杀，若单次伤害大于你的最大生命值，则此伤害为1\n按下 [{key}] 激活引力井，持续拉取周围敌人{calamityBonus}";
+            player.setBonus = $"致命伤害后复活，恢复50%生命值，无敌3秒\n免疫秒杀，若单次伤害大于你的最大生命值，则此伤害为1\n按下 [{key}] 激活引力井，持续拉取周围敌人\n命中敌人时发射追加弹幕，造成19%额外伤害{calamityBonus}";
             player.GetModPlayer<AntaresArmorPlayer>().wearingFullSet = true;
             CalamityCompatSystem.DisableSummonPenalty(player);
+
+            // 激活追加攻击
+            OnHitEffectsPlayer.Activate<SubhandOnHitEffect>(player);
+            SubhandOnHitEffect.KeepCannonAlive(player);
         }
 
         public override void UpdateEquip(Player player)

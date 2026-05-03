@@ -76,6 +76,11 @@ Items: {
 		DisplayName: 时停戒指
 		Tooltip: ""
 	}
+
+	Offhand: {
+		DisplayName: 磁球
+		Tooltip: 召唤磁球，命中敌人时发射追加弹幕，造成19%额外伤害
+	}
 }
 
 Buffs: {
@@ -142,6 +147,7 @@ Projectiles: {
 	AntaresMinion.DisplayName: Antares Minion
 	ZenitsuMinion.DisplayName: 一闪
 	DragonSegment.DisplayName: 火龙
+	SubhandCannon.DisplayName: Subhand Cannon
 }
 
 Keybinds: {
