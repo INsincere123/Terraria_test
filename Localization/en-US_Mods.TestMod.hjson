@@ -60,13 +60,7 @@ Items: {
 
 	MoonStride: {
 		DisplayName: 逐月踏空靴
-		Tooltip:
-			'''
-			踏空而行、凌空虚步
-			按下 [TOGGLE] 开启/关闭精确飞行
-			按住 [SLOW] 减速以精确走位
-			免疫击退并减少25%弹幕伤害
-			'''
+		Tooltip: ""
 	}
 
 	SupercritPotion: {

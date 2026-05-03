@@ -1,3 +1,5 @@
 displayName = test
 author = test
 version = 0.2
+modReferences = Luminance
+buildIgnore = *.csproj, *.user, obj\*, bin\*, .vs\*, .git\*, Luminance.dll, Luminance.pdb, Luminance.xml, TestMod.code-workspace

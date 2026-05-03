@@ -8,9 +8,16 @@
 		
 	</PropertyGroup>
 
+	<!-- 让 .fx 文件不被排除，tModLoader 构建系统能扫描到并触发 Luminance 编译 -->
+	<ItemGroup>
+		<None Remove="Assets\AutoloadedEffects\Filters\TimeStopFilter.fx" />
+	</ItemGroup>
+
 	<!-- References -->
 	<ItemGroup>
-		
+		<Reference Include="Luminance">
+			<HintPath>Luminance.dll</HintPath>
+		</Reference>
 	</ItemGroup>
 
 </Project>

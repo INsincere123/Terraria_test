@@ -15,8 +15,8 @@ namespace TestMod.Common.Systems
 
         public override void Load()
         {
-            // 默认绑定到 H 键，玩家可在游戏内重映射
-            TimeStopKey = KeybindLoader.RegisterKeybind(Mod, "Activate Time Stop", Keys.H);
+            // 默认绑定到 X 键，玩家可在游戏内重映射
+            TimeStopKey = KeybindLoader.RegisterKeybind(Mod, "Activate Time Stop", "X");
         }
 
         public override void Unload()

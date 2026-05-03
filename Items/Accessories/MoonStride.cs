@@ -1,12 +1,12 @@
 using TestMod.Common.Players;
+using TestMod.Common.Systems;
+using TestMod.Items.Accessories.Effects;
+using TestMod.Buffs;
+using TestMod.Rarities;
 using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
 using System.Collections.Generic;
-using TestMod.Rarities;
-using System.Linq;
-using TestMod.Buffs;
-using TestMod.Items.Accessories.Effects;
 
 namespace TestMod.Items.Accessories
 {
@@ -32,7 +32,7 @@ namespace TestMod.Items.Accessories
 
             // 减少 25% 弹幕伤害（独立乘区）
             player.GetModPlayer<CorePlayer>().projDamageMultiplier = 0.75f;
-            
+
             MoveSpeedEffect.Apply(player, new MoveSpeedConfig {
                 MoveSpeed           = MoveSpeedBonus,
                 RunSpeedCap         = RunSpeedCap,
@@ -48,26 +48,21 @@ namespace TestMod.Items.Accessories
             player.AddBuff(ModContent.BuffType<GravityNormalizerBuff>(), 2);  // 重力正常化 buff
         }
 
-
         public override void ModifyTooltips(List<TooltipLine> tooltips)
         {
-            string toggleKey = PreciseFlightKeybinds.ToggleHotkey.GetAssignedKeys().FirstOrDefault() ?? "未绑定";
-            string slowKey = PreciseFlightKeybinds.SlowdownHotkey.GetAssignedKeys().FirstOrDefault() ?? "未绑定";
+            string toggleKey = KeybindUtils.GetKeyText(PreciseFlightKeybinds.ToggleHotkey);
+            string slowKey   = KeybindUtils.GetKeyText(PreciseFlightKeybinds.SlowdownHotkey);
 
-            foreach (TooltipLine line in tooltips)
-            {
-                if (line.Text.Contains("[TOGGLE]") || line.Text.Contains("[SLOW]"))
-                {
-                    line.Text = line.Text
-                        .Replace("[TOGGLE]", toggleKey)
-                        .Replace("[SLOW]", slowKey);
-                }
-            }
+            tooltips.Add(new TooltipLine(Mod, "MoonStrideDesc",
+                $"踏空而行、凌空虚步\n" +
+                $"按下 [{toggleKey}] 开启/关闭精确飞行\n" +
+                $"按住 [{slowKey}] 减速以精确走位\n" +
+                $"免疫击退并减少25%弹幕伤害"));
         }
 
         public override void AddRecipes()
         {
-            Recipe recipe = CreateRecipe(); 
+            Recipe recipe = CreateRecipe();
             recipe.AddIngredient(ItemID.RocketBoots);          // 火箭靴 128
             recipe.AddIngredient(ItemID.EmpressFlightBooster); // 翱翔之证 4989
             // ── 翅膀材料 ──
@@ -99,12 +94,9 @@ namespace TestMod.Items.Accessories
             recipe.AddIngredient(ItemID.WingsSolar);           // 日耀之翼 3468
             recipe.AddIngredient(ItemID.WingsStardust);        // 星尘之翼 3471
             recipe.AddIngredient(ItemID.LongRainbowTrailWings);       // 天界星盘 4954
-
-            // ── 合成站（根据需要调整）──
-            recipe.AddTile(TileID.LunarCraftingStation);               
-
+            // ── 合成站 ──
+            recipe.AddTile(TileID.LunarCraftingStation);
             recipe.Register();
         }
-
     }
 }
