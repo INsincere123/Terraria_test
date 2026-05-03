@@ -152,3 +152,13 @@ Keybinds: {
 	"Activate Time Stop.DisplayName": 时停
 	"Omniguardian Blink.DisplayName": 短冲刺
 }
+
+Prefixes: {
+	RefinementMeleeSwingPrefix.DisplayName: 炼化
+	RefinementMeleeOtherPrefix.DisplayName: 炼化
+	RefinementRangedPrefix.DisplayName: 炼化
+	RefinementMagicPrefix.DisplayName: 炼化
+	RefinementSummonPrefix.DisplayName: 炼化
+	RefinementWhipPrefix.DisplayName: 炼化
+	FusionPrefix.DisplayName: 融合
+}
