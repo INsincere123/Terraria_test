@@ -83,7 +83,7 @@ Items: {
 	}
 
 	TimeStopRing: {
-		DisplayName: Time Stop Ring
+		DisplayName: 时停戒指
 		Tooltip: ""
 	}
 }
