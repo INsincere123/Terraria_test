@@ -167,4 +167,7 @@ Prefixes: {
 	RefinementSummonPrefix.DisplayName: 炼化
 	RefinementWhipPrefix.DisplayName: 炼化
 	FusionPrefix.DisplayName: 融合
+	RefinementSummonNoKBPrefix.DisplayName: 炼化
+	RefinementRangedNoKBPrefix.DisplayName: 炼化
+	RefinementMagicNoKBPrefix.DisplayName: 炼化
 }

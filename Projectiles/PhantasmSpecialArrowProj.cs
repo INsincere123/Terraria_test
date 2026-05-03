@@ -2,7 +2,6 @@ using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
 using Microsoft.Xna.Framework;
-using System;
 using TestMod.Common.GlobalNPCs;
 using TestMod.Common.GlobalProjectiles;
 
@@ -10,12 +9,15 @@ namespace TestMod.Projectiles
 {
     /// <summary>
     /// 幻影弓强化专用弹射物
-    /// 特性：穿墙 / 穿5个 / 平滑追踪 / 破甲debuff / 独立无敌帧防骗伤
+    /// 特性：穿墙 / 无线穿透 / 平滑追踪 / 破甲debuff / 独立无敌帧防骗伤
     /// 触发原版幻影箭：每帧设置 player.phantasmTime = 2
     /// </summary>
     public class PhantasmSpecialArrowProj : ModProjectile
     {
         public override string Texture => "Terraria/Images/Projectile_935"; // 借用夜明箭贴图
+
+        public const int TimeLeft = (int)(60 * 5.4f);   // 存活时间（帧）
+        public const int TrackingDelay = 6;              // 生成后多少帧开始追踪
 
         public override void SetStaticDefaults()
         {
@@ -32,7 +34,7 @@ namespace TestMod.Projectiles
             Projectile.arrow       = true;      // 标记为箭矢，激活幻影弓等弓的特殊逻辑
             Projectile.tileCollide = false;     // 穿墙
             Projectile.penetrate   = -1;        // 无限穿透
-            Projectile.timeLeft    = 300;       // 5秒存活
+            Projectile.timeLeft    = TimeLeft;
             Projectile.light       = 0.5f;      // 发出微弱光晕（范围 0~1）
             Projectile.extraUpdates = 1;        // 每帧更新 2 次（速度加倍，追踪更流畅）
 
@@ -46,6 +48,13 @@ namespace TestMod.Projectiles
         // ══════════════════════════════════════════════════════════════
         public override void AI()
         {
+            // 速度上限：防止 shootSpeedMult 词缀倍率过大时初速失控
+            // 保持略高于追踪稳定速度（22f），保留初速的"冲劲"感
+            const float maxSpeed = 27f;
+            float curSpeed = Projectile.velocity.Length();
+            if (curSpeed > maxSpeed)
+                Projectile.velocity = Projectile.velocity / curSpeed * maxSpeed;
+
             // 触发原版幻影箭生成逻辑（参考灾厄 RiftburstBow）
             Main.player[Projectile.owner].phantasmTime = 2;
 
@@ -58,7 +67,7 @@ namespace TestMod.Projectiles
             {
                 Projectile.ai[0]--;
             }
-            else if (Projectile.timeLeft < 295) // 生成后5帧才开始追踪，保留散射方向
+            else if (Projectile.timeLeft < TimeLeft - TrackingDelay) // 生成后5帧才开始追踪，保留散射方向
             {
                 int targetIndex = FindNearestTargetNotOnCooldown(1800f);
                 if (targetIndex >= 0)
@@ -72,7 +81,7 @@ namespace TestMod.Projectiles
                         toTarget.Normalize();
 
                         const float desiredSpeed = 22f;
-                        const float lerpAmount   = 0.08f; // 平滑转向，不急转
+                        const float lerpAmount   = 0.09f; // 平滑转向，不急转
 
                         Projectile.velocity = Vector2.Lerp(
                             Projectile.velocity,
@@ -87,17 +96,7 @@ namespace TestMod.Projectiles
                 }
             }
 
-            // 粒子尾迹
-            if (Main.netMode != NetmodeID.Server && Main.rand.NextBool(3))
-            {
-                Dust dust = Dust.NewDustDirect(
-                    Projectile.position, Projectile.width, Projectile.height,
-                    DustID.BlueFairy,
-                    Projectile.velocity.X * -0.2f,
-                    Projectile.velocity.Y * -0.2f,
-                    0, Color.MediumPurple, 0.8f);
-                dust.noGravity = true;
-            }
+
         }
 
         // ══════════════════════════════════════════════════════════════
@@ -116,22 +115,7 @@ namespace TestMod.Projectiles
             target.AddBuff(ModContent.BuffType<Buffs.ArmorShredDebuff>(), 180);
         }
 
-        // ══════════════════════════════════════════════════════════════
-        //   OnKill — 消失爆炸粒子（仅客户端）
-        // ══════════════════════════════════════════════════════════════
-        public override void OnKill(int timeLeft)
-        {
-            if (Main.netMode == NetmodeID.Server) return;
 
-            for (int i = 0; i < 8; i++)
-            {
-                float angle = MathHelper.TwoPi / 8f * i;
-                Vector2 vel = new Vector2(
-                    (float)Math.Cos(angle) * Main.rand.NextFloat(2f, 5f),
-                    (float)Math.Sin(angle) * Main.rand.NextFloat(2f, 5f));
-                Dust.NewDustPerfect(Projectile.Center, DustID.BlueFairy, vel, 0, Color.Cyan, 1.2f);
-            }
-        }
 
         /// <summary>
         /// 找最近的可追踪 NPC，跳过命中冷却中的敌人

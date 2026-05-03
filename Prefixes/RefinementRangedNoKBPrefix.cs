@@ -5,33 +5,31 @@ using Terraria.ModLoader;
 namespace TestMod.Prefixes
 {
     /// <summary>
-    /// 武器前缀"炼化" —— 召唤非鞭类（召唤法杖、哨兵）
-    /// 召唤武器不能暴击，不消耗持续魔力，无 critBonus / manaMult / scaleMult / shootSpeedMult
-    /// Category 借用 Magic 池（原版机制），靠 CanRoll 排除魔法和鞭子
+    /// 武器前缀"炼化" —— 远程无击退类（部分弓、枪、发射器）
+    /// 与 RefinementRangedPrefix 互斥：仅适用于 knockBack == 0 的远程武器
+    /// 无 knockbackMult，避免原版验证拒绝前缀
     /// </summary>
-    public class RefinementSummonPrefix : ModPrefix
+    public class RefinementRangedNoKBPrefix : ModPrefix
     {
         // ============================================================
         // ====================【可调参数 - 慢慢测试】===================
         // ============================================================
 
         public const float DamageMult         = 1.66f;  // 伤害倍率
-        public const float KnockbackMult      = 1.15f;  // 击退倍率
-        public const float UseTimeMult        = 0.30f;  // 使用时间倍率（召唤只用一次，影响召唤动画速度）
-        public const int   ArmorPenetration   = 20;     // 护甲穿透（1.4.5 召唤专属属性）
+        public const float UseTimeMult        = 0.80f;  // 使用时间倍率（越小越快）
+        public const float ShootSpeedMult     = 6.0f;   // 投射物初速度倍率（远程专属）
+        public const int   CritBonus          = 20;     // 暴击率加成（%）
+        public const int   ArmorPenetration   = 10;     // 护甲穿透
 
         public const float ReforgeValueMult   = 20.0f;
 
         // ============================================================
 
-        // 借用 Magic 前缀池（与召唤武器共用，靠 CanRoll 隔离魔法武器）
-        public override PrefixCategory Category => PrefixCategory.Magic;
+        public override PrefixCategory Category => PrefixCategory.Ranged;
 
         public override bool CanRoll(Item item)
-            // 召唤武器 且 不是鞭子 且 有击退（无击退版本由 RefinementSummonNoKBPrefix 处理）
-            => item.CountsAsClass(DamageClass.Summon)
-            && !item.CountsAsClass(DamageClass.SummonMeleeSpeed)
-            && item.knockBack > 0f;
+            // 远程武器 且 无击退（与 RefinementRangedPrefix 互斥）
+            => item.CountsAsClass(DamageClass.Ranged) && item.knockBack == 0f;
 
         public override void SetStats(
             ref float damageMult,
@@ -42,11 +40,11 @@ namespace TestMod.Prefixes
             ref float manaMult,
             ref int   critBonus)
         {
-            damageMult    = DamageMult;
-            knockbackMult = KnockbackMult;
-            useTimeMult   = UseTimeMult;
-            // critBonus 不赋值：召唤伤害不能暴击
-            // manaMult  不赋值：召唤武器召唤后不持续消耗魔力
+            damageMult     = DamageMult;
+            // knockbackMult 不赋值：无击退武器原版验证会拒绝整个前缀
+            useTimeMult    = UseTimeMult;
+            shootSpeedMult = ShootSpeedMult;
+            critBonus      = CritBonus;
         }
 
         public override void Apply(Item item)

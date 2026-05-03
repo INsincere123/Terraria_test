@@ -53,7 +53,15 @@ namespace TestMod.Projectiles
             toMouse.Normalize();
 
             Projectile.velocity = toMouse * 0.1f; // 极小速度只用于确定朝向
-            Projectile.position = mountedCenter - Projectile.Size / 2f;
+
+            // 沿瞄准方向偏移，让弓贴图落在手持位置而非人物中心
+            // forwardOffset = 沿瞄准方向前伸距离（像素）
+            // sideOffset    = 垂直瞄准方向的侧向偏移（像素，正值偏向持弓手一侧）
+            const float forwardOffset = 10f;
+            const float sideOffset    = 4f;
+            Vector2 perpendicular = new Vector2(-toMouse.Y, toMouse.X);
+            Vector2 holdOffset    = toMouse * forwardOffset + perpendicular * sideOffset * Projectile.spriteDirection;
+            Projectile.position   = mountedCenter + holdOffset - Projectile.Size / 2f;
             Projectile.rotation = toMouse.ToRotation() + (Projectile.spriteDirection == -1 ? MathHelper.Pi : 0f);
             Projectile.spriteDirection = Projectile.direction;
             Projectile.timeLeft = 2;

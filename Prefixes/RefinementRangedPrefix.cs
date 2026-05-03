@@ -28,7 +28,8 @@ namespace TestMod.Prefixes
         public override PrefixCategory Category => PrefixCategory.Ranged;
 
         public override bool CanRoll(Item item)
-            => item.CountsAsClass(DamageClass.Ranged);
+            // 有击退的远程武器（无击退版本由 RefinementRangedNoKBPrefix 处理）
+            => item.CountsAsClass(DamageClass.Ranged) && item.knockBack > 0f;
 
         public override void SetStats(
             ref float damageMult,

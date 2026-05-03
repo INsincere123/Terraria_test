@@ -30,10 +30,11 @@ namespace TestMod.Prefixes
         public override PrefixCategory Category => PrefixCategory.Magic;
 
         public override bool CanRoll(Item item)
-            // 魔法武器 且 mana > 3 且 不是召唤武器（防止串入召唤池）
+            // 魔法武器 且 mana > 3 且 不是召唤武器 且 有击退（无击退版本由 RefinementMagicNoKBPrefix 处理）
             => item.CountsAsClass(DamageClass.Magic)
             && !item.CountsAsClass(DamageClass.Summon)
-            && item.mana > 3;
+            && item.mana > 3
+            && item.knockBack > 0f;
 
         public override void SetStats(
             ref float damageMult,

@@ -37,17 +37,15 @@ namespace TestMod.Common.GlobalProjectiles
                 }
             }
 
-            // 爆炸粒子特效
+            // 命中粒子：小范围从中心散开
             if (Main.netMode != NetmodeID.Server)
             {
-                for (int i = 0; i < 12; i++)
+                for (int i = 0; i < 5; i++)
                 {
-                    float angle = MathHelper.TwoPi / 12f * i;
-                    Vector2 vel = new Vector2(
-                        (float)System.Math.Cos(angle) * Main.rand.NextFloat(3f, 7f),
-                        (float)System.Math.Sin(angle) * Main.rand.NextFloat(3f, 7f));
-                    Dust.NewDustPerfect(target.Center, DustID.BlueFairy, vel, 0,
-                        Color.Cyan, Main.rand.NextFloat(1f, 1.8f));
+                    Vector2 vel = Main.rand.NextVector2Circular(2f, 2f);
+                    Dust dust = Dust.NewDustPerfect(target.Center, DustID.Enchanted_Pink, vel, 0,
+                        Color.Cyan, Main.rand.NextFloat(0.6f, 1.2f));
+                    dust.noGravity = true;
                 }
             }
         }

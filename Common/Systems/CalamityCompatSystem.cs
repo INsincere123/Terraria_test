@@ -97,22 +97,25 @@ namespace TestMod.Common.Systems
                 ModContent.PrefixType<RefinementMeleeOtherPrefix>()
             });
 
-            // 远程
+            // 远程（有击退 + 无击退互斥，CanRoll 自动过滤）
             TryAppendTier(reforgeChangeType, "RangedPrefixTiers", new[]
             {
-                ModContent.PrefixType<RefinementRangedPrefix>()
+                ModContent.PrefixType<RefinementRangedPrefix>(),
+                ModContent.PrefixType<RefinementRangedNoKBPrefix>()
             });
 
-            // 魔法
+            // 魔法（有击退 + 无击退互斥，CanRoll 自动过滤）
             TryAppendTier(reforgeChangeType, "MagicPrefixTiers", new[]
             {
-                ModContent.PrefixType<RefinementMagicPrefix>()
+                ModContent.PrefixType<RefinementMagicPrefix>(),
+                ModContent.PrefixType<RefinementMagicNoKBPrefix>()
             });
 
-            // 召唤（非鞭）
+            // 召唤非鞭（有击退 + 无击退互斥，CanRoll 自动过滤）
             TryAppendTier(reforgeChangeType, "SummonPrefixTiers", new[]
             {
-                ModContent.PrefixType<RefinementSummonPrefix>()
+                ModContent.PrefixType<RefinementSummonPrefix>(),
+                ModContent.PrefixType<RefinementSummonNoKBPrefix>()
             });
         }
 
