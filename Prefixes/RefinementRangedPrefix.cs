@@ -15,7 +15,7 @@ namespace TestMod.Prefixes
         // ============================================================
 
         public const float DamageMult         = 1.66f;  // 伤害倍率
-        public const float KnockbackMult      = 1.10f;  // 击退倍率
+        public const float KnockbackMult      = 1.15f;  // 击退倍率
         public const float UseTimeMult        = 0.80f;  // 使用时间倍率（越小越快）
         public const float ShootSpeedMult     = 6.0f;  // 投射物初速度倍率（远程专属）
         public const int   CritBonus          = 20;     // 暴击率加成（%）

@@ -18,7 +18,7 @@ namespace TestMod.Prefixes
         // 不需要的参数：注释掉 SetStats/Apply/GetTooltipLines 里对应行
 
         public const float DamageMult         = 1.66f;  // 伤害倍率
-        public const float KnockbackMult      = 1.10f;  // 击退倍率
+        public const float KnockbackMult      = 1.15f;  // 击退倍率
         public const float UseTimeMult        = 0.80f;  // 使用时间倍率（越小越快）
         public const float ScaleMult          = 1.50f;  // 武器大小倍率（影响挥动范围）
         public const int   CritBonus          = 20;     // 暴击率加成（%）
