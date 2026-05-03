@@ -96,7 +96,7 @@ namespace TestMod.Items.Accessories
         public const int   LostHpRegenMin           = 10;    // 满血时的最低再生 HP/s
         public const int   LostHpRegenMax           = 100;   // 0 血时的最高再生 HP/s (按当前血量百分比线性插值)
         public const int   ExtraDebuffTimeReduction = 2;     // 每帧额外减少的 debuff tick 数 (1 = 减半衰减, 2 = 三分之一时长, 越大消得越快)
-        public const int   ExtraImmuneFrames        = 10;    // 受伤后追加的无敌帧 tick (vanilla 默认 ~30, 加 10 = 多 ~17%)
+        public const int   ExtraImmuneFrames        = 90;    // 受伤后追加的无敌帧 tick (vanilla 默认 ~30, 加 10 = 多 ~17%)
 
         // ---------- 快速下落 ----------
         // 触发条件: 按住下键 + 不按跳跃 + 正在下落 (与翅膀悬浮条件互斥, 不会冲突)

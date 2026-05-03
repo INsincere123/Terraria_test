@@ -37,26 +37,26 @@ namespace TestMod.Items.Accessories.Effects
     public struct SurvivalConfig
     {
         // [1] 低血量额外免伤
-        public bool  EnableLowHpReduction;
+        public bool EnableLowHpReduction;
         public float LowHpDamageReduction;   // 0.35f = +35% 免伤 (HP < 50% 时)
 
         // [2] Debuff 堆叠加防御 / 再生
         public bool EnableDebuffStack;
-        public int  DebuffDefensePerStack;
-        public int  DebuffRegenPerStack;     // 单位是 1/2 HP/s (vanilla lifeRegen 原生单位)
+        public int DebuffDefensePerStack;
+        public int DebuffRegenPerStack;     // 单位是 1/2 HP/s (vanilla lifeRegen 原生单位)
 
         // [3] 失血再生 (HP 越低再生越高)
         public bool EnableLostHpRegen;
-        public int  LostHpRegenMin;          // 单位 HP/s
-        public int  LostHpRegenMax;
+        public int LostHpRegenMin;          // 单位 HP/s
+        public int LostHpRegenMax;
 
         // [4] Debuff 时间加速衰减
         public bool EnableDebuffDecay;
-        public int  DebuffTimeReduction;     // 每帧多减的 tick
+        public int DebuffTimeReduction;     // 每帧多减的 tick
 
         // [5] 受伤额外无敌帧
         public bool EnableExtraImmuneFrames;
-        public int  ExtraImmuneFrames;
+        public int ExtraImmuneFrames;
     }
 
     public static class SurvivalEffect
@@ -67,34 +67,34 @@ namespace TestMod.Items.Accessories.Effects
 
             if (cfg.EnableLowHpReduction)
             {
-                mp.EnableSurvivalLowHp           = true;
+                mp.EnableSurvivalLowHp = true;
                 mp.Survival_LowHpDamageReduction = cfg.LowHpDamageReduction;
             }
 
             if (cfg.EnableDebuffStack)
             {
-                mp.EnableSurvivalDebuffStack         = true;
-                mp.Survival_DebuffDefensePerStack    = cfg.DebuffDefensePerStack;
-                mp.Survival_DebuffRegenPerStack      = cfg.DebuffRegenPerStack;
+                mp.EnableSurvivalDebuffStack = true;
+                mp.Survival_DebuffDefensePerStack = cfg.DebuffDefensePerStack;
+                mp.Survival_DebuffRegenPerStack = cfg.DebuffRegenPerStack;
             }
 
             if (cfg.EnableLostHpRegen)
             {
-                mp.EnableSurvivalRegen      = true;
-                mp.Survival_LostHpRegenMin  = cfg.LostHpRegenMin;
-                mp.Survival_LostHpRegenMax  = cfg.LostHpRegenMax;
+                mp.EnableSurvivalRegen = true;
+                mp.Survival_LostHpRegenMin = cfg.LostHpRegenMin;
+                mp.Survival_LostHpRegenMax = cfg.LostHpRegenMax;
             }
 
             if (cfg.EnableDebuffDecay)
             {
-                mp.EnableSurvivalDebuffDecay     = true;
-                mp.Survival_DebuffTimeReduction  = cfg.DebuffTimeReduction;
+                mp.EnableSurvivalDebuffDecay = true;
+                mp.Survival_DebuffTimeReduction = cfg.DebuffTimeReduction;
             }
 
             if (cfg.EnableExtraImmuneFrames)
             {
-                mp.EnableSurvivalImmuneFrames  = true;
-                mp.Survival_ExtraImmuneFrames  = cfg.ExtraImmuneFrames;
+                mp.EnableSurvivalImmuneFrames = true;
+                mp.Survival_ExtraImmuneFrames = cfg.ExtraImmuneFrames;
             }
         }
 
@@ -146,7 +146,7 @@ namespace TestMod.Items.Accessories.Effects
             if (mp.EnableSurvivalDebuffStack && debuffCount > 0)
             {
                 player.statDefense += debuffCount * mp.Survival_DebuffDefensePerStack;
-                player.lifeRegen   += debuffCount * mp.Survival_DebuffRegenPerStack;
+                player.lifeRegen += debuffCount * mp.Survival_DebuffRegenPerStack;
             }
 
             // ===== 低血量额外免伤 =====
@@ -156,14 +156,17 @@ namespace TestMod.Items.Accessories.Effects
             }
 
             // ===== 额外受伤无敌帧 =====
-            if (mp.EnableSurvivalImmuneFrames && mp.Survival_ExtraImmuneFrames > 0
-                && player.immune && player.immuneTime > 0)
-            {
-                if (player.immuneTime < mp.Survival_ExtraImmuneFrames + 1)
-                {
-                    player.immuneTime += mp.Survival_ExtraImmuneFrames;
-                }
-            }
+            // 已移至 OnHurt，见 SurvivalEffect.OnHurt()
+        }
+        // =====================================================================
+        // 由 OmniEffectsPlayer.OnHurt 调用
+        // —— 受伤瞬间追加无敌帧（只触发一次，不会每帧续期）
+        // =====================================================================
+        public static void OnHurt(Player player, OmniEffectsPlayer mp)
+        {
+            if (!mp.EnableSurvivalImmuneFrames || mp.Survival_ExtraImmuneFrames <= 0) return;
+
+            player.SetImmuneTimeForAllTypes(player.immuneTime + mp.Survival_ExtraImmuneFrames);
         }
     }
 }

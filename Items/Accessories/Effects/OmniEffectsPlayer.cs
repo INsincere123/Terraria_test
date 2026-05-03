@@ -28,34 +28,34 @@ namespace TestMod.Items.Accessories.Effects
         public bool EnableSurvivalImmuneFrames;// 启用额外无敌帧
 
         // ===== 内部计时器 / 持久状态 =====
-        public int  ExtraDodgeCooldown;        // 自定义额外闪避的冷却 tick
+        public int ExtraDodgeCooldown;        // 自定义额外闪避的冷却 tick
 
         // ===== 配置参数 (由饰品在 UpdateAccessory 时写入, 让模块知道用什么数值) =====
         public float FastFall_MaxFallSpeed;
         public float FastFall_GravityBoost;
 
-        public int   ExtraDodge_ChanceDenominator;
-        public int   ExtraDodge_CooldownTicks;
+        public int ExtraDodge_ChanceDenominator;
+        public int ExtraDodge_CooldownTicks;
 
-        public int   Survival_LostHpRegenMin;
-        public int   Survival_LostHpRegenMax;
-        public int   Survival_DebuffDefensePerStack;
-        public int   Survival_DebuffRegenPerStack;
-        public int   Survival_DebuffTimeReduction;
+        public int Survival_LostHpRegenMin;
+        public int Survival_LostHpRegenMax;
+        public int Survival_DebuffDefensePerStack;
+        public int Survival_DebuffRegenPerStack;
+        public int Survival_DebuffTimeReduction;
         public float Survival_LowHpDamageReduction;
-        public int   Survival_ExtraImmuneFrames;
+        public int Survival_ExtraImmuneFrames;
 
-        public int   Potion_HealFlatBonus;
+        public int Potion_HealFlatBonus;
         public float Potion_HealMultBonus;
 
         public override void ResetEffects()
         {
-            EnableFastFall            = false;
-            EnableTripleDodgeExtra    = false;
-            EnablePerfectHover        = false;
-            EnableSurvivalRegen       = false;
+            EnableFastFall = false;
+            EnableTripleDodgeExtra = false;
+            EnablePerfectHover = false;
+            EnableSurvivalRegen = false;
             EnableSurvivalDebuffStack = false;
-            EnableSurvivalLowHp       = false;
+            EnableSurvivalLowHp = false;
             EnableSurvivalDebuffDecay = false;
             EnableSurvivalImmuneFrames = false;
 
@@ -101,6 +101,11 @@ namespace TestMod.Items.Accessories.Effects
         public override void GetHealLife(Item item, bool quickHeal, ref int healValue)
         {
             PotionEffect.OnGetHealLife(this, ref healValue);
+        }
+
+        public override void PostHurt(Player.HurtInfo info)
+        {
+            SurvivalEffect.OnHurt(Player, this);
         }
     }
 }
