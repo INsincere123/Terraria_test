@@ -30,17 +30,7 @@ Items: {
 
 	OmniGuardianAccessory: {
 		DisplayName: 神之心
-		Tooltip:
-			'''
-			获得超级翅膀、奔跑效果
-			获得冲刺效果
-			超坚硬躯体，超强生存能力，三重闪避
-			全方位属性加成
-			免疫所有原版debuff
-			不受太空低重力影响
-			耐药性降低25%，治疗效果提高
-			泰拉大陆在你眼中都是蝼蚁，去挑战愤怒的突变体吧
-			'''
+		Tooltip: ""
 	}
 
 	AntaresBreastplate: {
@@ -155,9 +145,10 @@ Projectiles: {
 }
 
 Keybinds: {
-	"Omniguardian Dash.DisplayName": 神之冲刺
+	"Omniguardian Dash.DisplayName": 长冲刺
 	"Antares Gravity Well.DisplayName": 引力井
 	PreciseFlightSlowdown.DisplayName: 减速以精确走位
 	PreciseFlightToggle.DisplayName: 精确飞行
 	"Activate Time Stop.DisplayName": 时停
+	"Omniguardian Blink.DisplayName": 短冲刺
 }

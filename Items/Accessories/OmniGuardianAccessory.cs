@@ -5,6 +5,8 @@ using TestMod.Items.Accessories.Effects;
 using TestMod.Common.Systems;
 using TestMod.Buffs;
 using TestMod.Rarities;
+using TestMod.Items.Accessories.Dashes;
+using System.Collections.Generic;
 
 namespace TestMod.Items.Accessories
 {
@@ -202,7 +204,24 @@ namespace TestMod.Items.Accessories
             player.AddBuff(BuffID.NebulaUpMana3, 2);
 
             // [11] 自定义冲刺 (灾厄风格)
-            CustomDashEffect.Apply(player, "OmniguardianDash");
+            player.GetModPlayer<DashPlayer>().ActiveDashId  = "LongDash";   // 长冲刺 (V键)
+            player.GetModPlayer<DashPlayer>().ActiveBlinkId = "ShortDash";  // 短冲刺 (C键)
+        }
+
+        public override void ModifyTooltips(List<TooltipLine> tooltips)
+        {
+            string longDashKey  = KeybindUtils.GetKeyText(OmniKeybinds.DashKey);
+            string shortDashKey = KeybindUtils.GetKeyText(OmniKeybinds.BlinkKey);
+
+            tooltips.Add(new TooltipLine(Mod, "OmniDesc",
+                $"获得超级翅膀、奔跑效果\n" +
+                $"获得冲刺效果 (长冲刺 [{longDashKey}] / 短冲刺 [{shortDashKey}])\n" +
+                $"超坚硬躯体，超强生存能力，三重闪避\n" +
+                $"全方位属性加成\n" +
+                $"免疫所有原版 debuff\n" +
+                $"不受太空低重力影响\n" +
+                $"耐药性降低 25%，治疗效果提高\n" +
+                $"泰拉大陆在你眼中都是蝼蚁，去挑战愤怒的突变体吧"));
         }
 
         public override void AddRecipes()

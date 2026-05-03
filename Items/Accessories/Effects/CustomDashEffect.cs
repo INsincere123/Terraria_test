@@ -14,7 +14,7 @@ namespace TestMod.Items.Accessories.Effects
     //
     //  使用示例:
     //
-    //    CustomDashEffect.Apply(player, "OmniguardianDash");
+    //    CustomDashEffect.Apply(player, "LongDash");
     //
     //  传入的 dashId 必须是 PlayerDashManager 中已注册的 dash 名字。
     // ============================================================================
