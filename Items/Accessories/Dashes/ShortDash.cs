@@ -43,7 +43,7 @@ namespace TestMod.Items.Accessories.Dashes
 
 		// 无敌帧
 		public const int StartIFrames   = 16;
-		public const int ActiveIFrames  = 10;
+		public const int ActiveIFrames  = 12;
 		public const int ContactIFrames = 30;
 
 		// 视觉 (蓝白系, 与长冲刺金火焰区分)
