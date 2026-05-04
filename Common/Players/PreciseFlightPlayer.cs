@@ -57,6 +57,8 @@ namespace TestMod.Common.Players
         /// <summary>本帧实际是否处于精确飞行状态（合并了 forceEnable / allowToggle+toggleState）。</summary>
         public bool ActiveThisFrame { get; private set; }
 
+        private bool _prevActive; // 上一帧是否激活，用于检测关闭瞬间
+
         // ====================================================================
         // 生命周期
         // ====================================================================
@@ -86,6 +88,12 @@ namespace TestMod.Common.Players
 
             // 计算本帧是否激活
             ActiveThisFrame = forceEnable || (allowToggle && toggleState);
+
+            // 关闭瞬间：填满飞行时间，避免精确飞行期间 wingTime 被清零导致关闭后无法飞行
+            if (_prevActive && !ActiveThisFrame)
+                Player.wingTime = Player.wingTimeMax;
+
+            _prevActive = ActiveThisFrame;
 
             // 如果 allowToggle 这一帧没人设（例如饰品取下来了），但 toggleState 还是 true，
             // 等下一次玩家戴上饰品时仍然保持开启。如果想让"取下饰品自动关闭"，
@@ -170,15 +178,11 @@ namespace TestMod.Common.Players
             if (!ActiveThisFrame)
                 return;
 
-            // 沿重力方向输入时穿透平台。velocity.Y 已经在 PreUpdateMovement 里设好。
-            bool wantsDown = (Player.gravDir > 0f && Player.controlDown) ||
-                             (Player.gravDir < 0f && Player.controlUp);
-
-            if (wantsDown && Player.velocity.Y * Player.gravDir > 0f)
-            {
-                Player.GoingDownWithGrapple = true;
-                Player.stairFall = true;
-            }
+            // 精确飞行激活期间始终无视平台，不依赖按键方向。
+            // GoingDownWithGrapple：告诉碰撞系统"正在穿过平台"，阻止平台捕获玩家。
+            // stairFall：禁用台阶/平台的停落逻辑。
+            Player.GoingDownWithGrapple = true;
+            Player.stairFall = true;
         }
 
         // ====================================================================

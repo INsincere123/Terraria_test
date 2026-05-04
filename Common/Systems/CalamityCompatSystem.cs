@@ -23,6 +23,8 @@ namespace TestMod.Common.Systems
 
         // ── 反射缓存 ─────────────────────────────────────────
         private static FieldInfo _fearmongerSetField;
+        private static FieldInfo _gSabatonField;          // CalamityPlayer.gSabaton
+        private static Type      _calPlayerType;
 
         public override void OnModLoad()
         {
@@ -33,13 +35,38 @@ namespace TestMod.Common.Systems
             if (ModContent.TryFind<ModRarity>("CalamityMod", ApplyRarity, out var rarity))
                 CalamityRarity = rarity.Type;
 
-            // 缓存 fearmongerSet 反射字段
-            var calPlayerType = cal.Code.GetType("CalamityMod.CalPlayer.CalamityPlayer");
-            _fearmongerSetField = calPlayerType?.GetField("fearmongerSet",
+            // 缓存 CalamityPlayer 类型及所需字段
+            _calPlayerType      = cal.Code.GetType("CalamityMod.CalPlayer.CalamityPlayer");
+            _fearmongerSetField = _calPlayerType?.GetField("fearmongerSet",
+                BindingFlags.Public | BindingFlags.Instance);
+            _gSabatonField      = _calPlayerType?.GetField("gSabaton",
                 BindingFlags.Public | BindingFlags.Instance);
 
             // 向灾厄重铸等级表注入"炼化"前缀
             InjectRefinementPrefixTiers(cal);
+        }
+
+        // ── 快速下落兼容：设置 gSabaton 标志，激活灾厄 Stompers 加速逻辑 ─
+        // 灾厄会在自己的 PostUpdateRunSpeeds 里执行：
+        //   maxFallSpeed *= 2（加大上限）+ 如果在上升则 velocity.Y *= 0.7（快速转向下落）
+        // 这给出自然加速的手感，无需我们自己管理重力加速度。
+        public static void ActivateFastFall(Player player)
+        {
+            if (!CalamityLoaded || _gSabatonField == null || _calPlayerType == null) return;
+
+            var modPlayers = typeof(Player)
+                .GetField("modPlayers", BindingFlags.NonPublic | BindingFlags.Instance)
+                ?.GetValue(player) as ModPlayer[];
+            if (modPlayers == null) return;
+
+            foreach (var mp in modPlayers)
+            {
+                if (mp?.GetType() == _calPlayerType)
+                {
+                    _gSabatonField.SetValue(mp, true);
+                    return;
+                }
+            }
         }
 
         // ── 套装兼容：免疫跨职业召唤伤害惩罚 ─────────────────

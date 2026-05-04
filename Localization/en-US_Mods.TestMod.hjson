@@ -81,6 +81,11 @@ Items: {
 		DisplayName: 磁球
 		Tooltip: 召唤磁球，命中敌人时发射追加弹幕，造成19%额外伤害
 	}
+
+	TestWhip: {
+		Tooltip: ""
+		DisplayName: Test Whip
+	}
 }
 
 Buffs: {
@@ -138,6 +143,16 @@ Buffs: {
 		DisplayName: 砸瓦鲁多
 		Description: ""
 	}
+
+	TestWhipTagBuff: {
+		Description: Mods.TestMod.Buffs.TestWhipTagBuff.Description
+		DisplayName: Test Whip Tag Buff
+	}
+
+	TestWhipCooldownBuff: {
+		Description: Mods.TestMod.Buffs.TestWhipCooldownBuff.Description
+		DisplayName: Test Whip Cooldown Buff
+	}
 }
 
 Projectiles: {
@@ -148,6 +163,8 @@ Projectiles: {
 	ZenitsuMinion.DisplayName: 一闪
 	DragonSegment.DisplayName: 火龙
 	SubhandCannon.DisplayName: Subhand Cannon
+	TestWhipProj.DisplayName: Test Whip Proj
+	TestWhipExplosionProj.DisplayName: Test Whip Explosion Proj
 }
 
 Keybinds: {

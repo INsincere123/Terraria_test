@@ -162,6 +162,32 @@ namespace TestMod.Common.Players
         }
 
         // ██████████████████████████████████████████████████████████████
+        //   PostUpdateEquips — 将鞭子词缀的 scaleMult（Item.scale）
+        //   桥接到 whipRangeMultiplier，使鞭子范围随词缀正确变化。
+        //   原因：Item.scale 只影响近战 hitbox，对鞭子范围无效；
+        //         鞭子范围由 whipRangeMultiplier 驱动，需手动桥接。
+        // ██████████████████████████████████████████████████████████████
+        public override void PostUpdateEquips()
+        {
+            Item held = Player.HeldItem;
+
+            // 鞭子词缀 scaleMult 桥接：Item.scale → whipRangeMultiplier
+            if (held.DamageType == DamageClass.SummonMeleeSpeed
+                && held.shoot > 0
+                && ProjectileID.Sets.IsAWhip[held.shoot]
+                && held.scale != 1f)
+            {
+                Player.whipRangeMultiplier *= held.scale;
+            }
+
+            // godMode 开启时万花筒范围 ×1.5
+            if (godModeBuff && held.type == ItemID.RainbowWhip)
+            {
+                Player.whipRangeMultiplier *= 1.5f;
+            }
+        }
+
+        // ██████████████████████████████████████████████████████████████
         //   ModifyHitNPC — 近战/直接命中的暴击伤害加成
         //   只在暴击时生效，非暴击命中不影响
         // ██████████████████████████████████████████████████████████████

@@ -33,7 +33,6 @@ namespace TestMod.Common.GlobalProjectiles
         // 破晓之光追踪延迟计时器
         private int _daybreakTrackDelay = 0;
 
-        private bool _whipRangeSet = false;
 
         // ══════════════════════════════════════════════════════════════
         //   PreAI — 乌鸦专属：完全接管 vanilla AI（返回 false 跳过原版 AI）
@@ -152,22 +151,7 @@ namespace TestMod.Common.GlobalProjectiles
                 ApplyContactMinionTracking(projectile, player);
             }
 
-            // ─────────────── 独立判断 (不在 if-else 链内) ───────────────
-
-            //     万花筒范围扩大
-            if (projectile.type == ProjectileID.RainbowWhip)
-            {
-                if (player.active && player.GetModPlayer<CorePlayer>().godModeBuff)
-                {
-                    if (!_whipRangeSet)
-                    {
-                        var ws = projectile.WhipSettings;
-                        ws.RangeMultiplier *= 1.5f;
-                        projectile.WhipSettings = ws;
-                        _whipRangeSet = true;
-                    }
-                }
-            }
+            // 万花筒范围扩大已移至 CorePlayer.PostUpdateEquips，通过 whipRangeMultiplier 实现
         }
 
         // ══════════════════════════════════════════════════════════════
@@ -178,6 +162,10 @@ namespace TestMod.Common.GlobalProjectiles
             if (projectile.owner < 0 || projectile.owner >= Main.maxPlayers) return;
 
             Player player = Main.player[projectile.owner];
+
+            // 鞭子 tag 效果：不依赖 godMode
+            WhipTag_ModifyHitNPC(projectile, target, ref modifiers);
+
             if (!player.active || !player.GetModPlayer<CorePlayer>().godModeBuff) return;
 
             // 🐉 星尘龙 ×8
@@ -224,6 +212,9 @@ namespace TestMod.Common.GlobalProjectiles
             {
                 ApplyContactMinionBounce(projectile, target);
             }
+
+            // 🪢 鞭子 tag 效果：不依赖 godMode
+            WhipTag_OnHitNPC(projectile, target, hit, damageDone);
 
             // ─────────────── 以下为 godMode 专属效果 ───────────────
             if (!player.GetModPlayer<CorePlayer>().godModeBuff) return;
