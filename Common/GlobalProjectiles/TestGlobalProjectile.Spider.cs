@@ -34,7 +34,8 @@ namespace TestMod.Common.GlobalProjectiles
         public static bool IsSpiderMinion(int type) =>
             type == ProjectileID.VenomSpider       // 390
          || type == ProjectileID.JumperSpider      // 391
-         || type == ProjectileID.DangerousSpider;  // 392
+         || type == ProjectileID.DangerousSpider  // 392
+         || type == ProjectileID.AbigailMinion;
 
         // ═══════════════════════════════════════════════════════════════
         //   SetDefaults 子步骤：为蜘蛛启用独立无敌帧

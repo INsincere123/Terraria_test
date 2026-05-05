@@ -23,9 +23,20 @@ namespace TestMod.Common.GlobalItems
             {
                 item.damage = 51;
                 item.knockBack = 10;
-                item.useTime = 12;
-                item.useAnimation = 12;
+                item.useTime = 20;
+                item.useAnimation = 20;
             }
+
+            // 阿比盖尔之花：提升基础数值
+            if (item.type == ItemID.AbigailsFlower)
+            {
+                item.damage = 15;
+                item.knockBack = 2;
+                item.mana = 0;
+                item.useTime = 20;
+                item.useAnimation = 20;
+            }
+
         }
 
         /// <summary>神模开关检查</summary>

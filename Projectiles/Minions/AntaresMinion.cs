@@ -15,8 +15,14 @@ namespace TestMod.Projectiles.Minions
     public class AntaresMinion : ModProjectile
     {
         // ── 质变常量（槽位超过此值时触发全部质变效果） ──
+        // ── 质变常量（槽位超过此值时触发全部质变效果） ──
         private const int AscensionThreshold = 11;      // 触发质变的槽位门槛
         private const float AscensionDamageMultiplier = 2.2f;       // 质变后额外伤害倍率（在原有 damageMod 基础上再乘）
+        private const int AscensionThreshold2 = 21;     // 第二质变档位门槛
+        private const float AscensionDamageMultiplier2 = 5f;        // 第二质变伤害倍率（直接替换第一档）
+
+        private const int AscensionThreshold3 = 34;     // 第三质变档位门槛
+        private const float AscensionDamageMultiplier3 = 66f;   // 第三质变伤害倍率
 
         public Player Owner => Main.player[Projectile.owner];
         public AntaresMinionPlayer ModdedOwner => Owner.GetModPlayer<AntaresMinionPlayer>();
@@ -127,7 +133,7 @@ namespace TestMod.Projectiles.Minions
                 AscensionPulseTimer = 0f;  // 退出质变时重置，避免重入时立刻爆发
             }
         }
-        
+
         private void SpawnStarDust()
         {
             Vector2 center = Projectile.Center;
@@ -257,8 +263,12 @@ namespace TestMod.Projectiles.Minions
                 Vector2 velocity = new Vector2(25f, 0f).RotatedByRandom(MathHelper.Pi);
                 float damageMod = 1f + MathF.Pow(0.06f * Projectile.minionSlots, 1.5f);
 
-                // 质变加成：超过阈值后伤害再乘以 AscensionDamageMultiplier
-                if (ascended)
+                // 根据档位应用质变伤害倍率
+                if (Projectile.minionSlots > AscensionThreshold3)
+                    damageMod *= AscensionDamageMultiplier3;
+                else if (Projectile.minionSlots > AscensionThreshold2)
+                    damageMod *= AscensionDamageMultiplier2;
+                else if (ascended)
                     damageMod *= AscensionDamageMultiplier;
 
                 Projectile.NewProjectile(

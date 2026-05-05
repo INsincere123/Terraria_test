@@ -2,6 +2,7 @@ using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
 using TestMod.Projectiles;
+using TestMod.Rarities;
 
 namespace TestMod.Items.Weapons.Summon
 {
@@ -13,19 +14,20 @@ namespace TestMod.Items.Weapons.Summon
         public override void SetDefaults()
         {
             Item.DamageType = DamageClass.SummonMeleeSpeed;
-            Item.damage = 60;
-            Item.knockBack = 3f;
-            Item.useTime = 28;
-            Item.useAnimation = 28;
+            Item.damage = 233;
+            Item.knockBack = 10f;
+            Item.useTime = 30;
+            Item.useAnimation = 30;
             Item.shoot = ModContent.ProjectileType<TestWhipProj>();
             Item.shootSpeed = 3f;
             Item.useStyle = ItemUseStyleID.Swing;
             Item.UseSound = SoundID.Item152;
             Item.noMelee = true;
             Item.noUseGraphic = true;
-            Item.autoReuse = false;
-            Item.rare = ItemRarityID.LightRed;
-            Item.value = Item.buyPrice(gold: 10);
+            Item.autoReuse = true;
+            Item.rare = ModContent.RarityType<AntaresRarity>();
+            Item.value = Item.buyPrice(platinum: 10);
+            // WhipTagRegistry.cs里调整标记效果
         }
 
         // 接受近战词缀（锋利/传奇等）
@@ -33,10 +35,16 @@ namespace TestMod.Items.Weapons.Summon
 
         public override void AddRecipes()
         {
-            CreateRecipe()
-                .AddIngredient(ItemID.Wood, 10)
-                .AddTile(TileID.WorkBenches)
-                .Register();
+            Recipe recipe = Recipe.Create(Type);
+
+            recipe.AddIngredient(ItemID.PumpkingMasterTrophy); // 南瓜王
+            recipe.AddIngredient(ItemID.BetsyMasterTrophy); // 双足翼龙
+            recipe.AddIngredient(ItemID.FairyQueenMasterTrophy); // 光之女皇
+            recipe.AddIngredient(ItemID.FragmentStardust, 25);  // 星尘碎片
+            recipe.AddIngredient(ItemID.LunarBar, 25);  // 夜明锭
+
+            recipe.AddTile(TileID.LunarCraftingStation);
+            recipe.Register();
         }
     }
 }

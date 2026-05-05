@@ -66,10 +66,10 @@ namespace TestMod.Common.Systems
             Register(ModContent.BuffType<TestWhipTagBuff>(), new WhipTagData
             {
                 CritChance           = 50,
-                FlatDamage           = 10f,
+                FlatDamage           = 100f,
                 HasExplosion         = true,
                 ExplosionDamageRatio = 0.5f,
-                CooldownFrames       = 60,
+                CooldownFrames       = 30,
             });
 
             // ── 原版暗黑收割（仅加暴击，原版爆炸灵魂效果由 vanilla 自带） ──

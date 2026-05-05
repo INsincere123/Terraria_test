@@ -40,6 +40,11 @@ namespace TestMod.Common.GlobalNPCs
             {
                 npcLoot.Add(ItemDropRule.Common(ModContent.ItemType<AshenSeal>(), 4));  // 独眼巨鹿有1/4的概率掉落AshenSeal
             }
+
+            if (NPCID.Sets.DemonEyes[npc.type] || NPCID.Sets.Zombies[npc.type])
+            {
+                npcLoot.Add(ItemDropRule.Common(ItemID.AbigailsFlower, 15));  // 所有僵尸、恶魔眼都有1/10的概率掉落阿比盖尔之花
+            }
         }
 
         // ══════════════════════════════════════════════════════════════
