@@ -38,6 +38,22 @@ namespace TestMod.Common.Players
         public int TimeStopCooldown;
         public bool HasTimeStopAbility;
 
+        // ── 时缓状态 ──────────────────────────────────────────────
+        // 使用方式（饰品 / 按键触发）：
+        //   player.GetModPlayer<TimeStopPlayer>().HasTimeSlowAbility = true;
+        //   player.GetModPlayer<TimeStopPlayer>().TryActivateTimeSlow();
+        public bool TimeSlowActive;
+        public int  TimeSlowTimer;
+        public int  TimeSlowCooldown;
+        public bool HasTimeSlowAbility;
+
+        /// <summary>速度系数：0.3 = 敌人/射弹降至 30% 速度。</summary>
+        public float TimeSlowFactor   = 0.3f;
+        /// <summary>持续帧数（默认 5 秒）。</summary>
+        public int   TimeSlowDuration = 60 * 5;
+        /// <summary>冷却帧数（默认 20 秒）。</summary>
+        public int   TimeSlowCooldownMax = 60 * 20;
+
         // 圆洞当前半径（归一化）：从 1.5（覆盖整屏外）→ HoleRadius01（小圆）
         private float currentRadius01 = 1.5f;
         // 圆外灰化强度当前值：从 0 → MaxGrayStrength
@@ -73,10 +89,40 @@ namespace TestMod.Common.Players
                 Player.AddBuff(ModContent.BuffType<TimeStopCDBuff>(), TimeStopCooldown);
             }
 
+            // 时缓计时
+            if (TimeSlowActive)
+            {
+                TimeSlowTimer--;
+                if (TimeSlowTimer <= 0)
+                    EndTimeSlow();
+            }
+
+            if (TimeSlowCooldown > 0)
+                TimeSlowCooldown--;
+
             UpdateShaderFilter();
         }
 
         // ============ 激活与结束 ============
+
+        public bool TryActivateTimeSlow()
+        {
+            if (TimeSlowActive)   return false;
+            if (TimeStopActive)   return false;  // 时停期间不能叠时缓
+            if (TimeSlowCooldown > 0) return false;
+            if (!HasTimeSlowAbility) return false;
+
+            TimeSlowActive  = true;
+            TimeSlowTimer   = TimeSlowDuration;
+            TimeSlowCooldown = TimeSlowCooldownMax;
+            return true;
+        }
+
+        public void EndTimeSlow()
+        {
+            TimeSlowActive = false;
+            TimeSlowTimer  = 0;
+        }
 
         public bool TryActivateTimeStop()
         {
@@ -109,7 +155,12 @@ namespace TestMod.Common.Players
             if (TimeStopActive)
             {
                 TimeStopActive = false;
-                TimeStopTimer = 0;
+                TimeStopTimer  = 0;
+            }
+            if (TimeSlowActive)
+            {
+                TimeSlowActive = false;
+                TimeSlowTimer  = 0;
             }
             currentRadius01 = 1.5f;
             currentGrayStrength = 0f;

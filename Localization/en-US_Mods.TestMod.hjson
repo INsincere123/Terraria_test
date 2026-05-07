@@ -86,6 +86,11 @@ Items: {
 		Tooltip: ""
 		DisplayName: Test Whip
 	}
+
+	SlowField: {
+		Tooltip: 在你周围生成一个减速立场，减速敌方弹幕
+		DisplayName: 减速立场
+	}
 }
 
 Buffs: {

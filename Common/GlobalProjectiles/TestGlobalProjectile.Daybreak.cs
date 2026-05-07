@@ -12,14 +12,14 @@ namespace TestMod.Common.GlobalProjectiles
         // ══════════════════════════════════════════════════════════════
         private void ApplyDaybreakTracking(Projectile projectile)
         {
-            // 发射后前45帧保持原方向，不追踪
-            if (_daybreakTrackDelay < 45)
+            // 发射后前35帧保持原方向，不追踪
+            if (_daybreakTrackDelay < 35)
             {
                 _daybreakTrackDelay++;
                 return;
             }
 
-            const float trackRange      = 800f;
+            const float trackRange      = 1000f;
             const float minSpeed        = 36f;
             const float maxSpeed        = 60f;
             const float lerpAmount      = 0.1f;

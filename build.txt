@@ -1,5 +1,5 @@
 displayName = test
 author = test
-version = 0.2
+version = 0.3
 modReferences = Luminance
 buildIgnore = *.csproj, *.user, *.sln, *.md, obj\*, bin\*, .vs\*, .git\*, .claude\*, Luminance.dll, Luminance.pdb, Luminance.xml, TestMod.code-workspace, Properties\*, tree.txt, tree.bat, tree.py, .gitignore

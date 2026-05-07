@@ -1,3 +1,4 @@
+using Microsoft.Xna.Framework;
 using TestMod.Common.Players;
 using Terraria;
 using Terraria.ModLoader;
@@ -28,6 +29,30 @@ namespace TestMod.Common.GlobalNPCs
 
             TimeStopPlayer modPlayer = Main.LocalPlayer.GetModPlayer<TimeStopPlayer>();
             return modPlayer.TimeStopActive;
+        }
+
+        /// <summary>
+        /// 时缓 / 减速力场：AI 正常运行，PostAI 里缩放速度。
+        /// 时停已在 PreAI 返回 false，PostAI 不会被调用，两者不冲突。
+        /// </summary>
+        public override void PostAI(NPC npc)
+        {
+            if (npc.townNPC || npc.friendly) return;
+
+            // ── 全局时缓 ──────────────────────────────────────────
+            if (Main.LocalPlayer.active)
+            {
+                var mp = Main.LocalPlayer.GetModPlayer<TimeStopPlayer>();
+                if (mp.TimeSlowActive)
+                {
+                    npc.velocity *= mp.TimeSlowFactor;
+                    return;
+                }
+            }
+
+            // ── 减速力场（范围检测） ───────────────────────────────
+            if (SlowFieldPlayer.IsInAnySlowField(npc.Center, out float factor))
+                npc.velocity *= factor;
         }
 
         public override bool PreAI(NPC npc)

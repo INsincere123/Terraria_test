@@ -33,6 +33,12 @@ namespace TestMod.Common.GlobalProjectiles
         // 破晓之光追踪延迟计时器
         private int _daybreakTrackDelay = 0;
 
+        // ── 减速力场：保存/恢复速度，防止衰减 ──
+        // AI 每帧可能只改方向不改速度大小，若每帧乘 factor 会指数衰减。
+        // 做法：PreAI 恢复上帧保存的"未缩放速度"→ AI 正常跑 → PostAI 保存并缩放。
+        internal Microsoft.Xna.Framework.Vector2 _sfNaturalVelocity; // AI 跑完后的自然速度
+        internal bool _sfInField;
+
 
         // ══════════════════════════════════════════════════════════════
         //   PreAI — 乌鸦专属：完全接管 vanilla AI（返回 false 跳过原版 AI）
@@ -43,6 +49,9 @@ namespace TestMod.Common.GlobalProjectiles
         // ══════════════════════════════════════════════════════════════
         public override bool PreAI(Projectile projectile)
         {
+            // 减速力场：在 AI 跑之前恢复上帧保存的自然速度，防止衰减
+            SlowField_RestoreVelocity(projectile);
+
             // ⏱ 时停拦截：在所有 AI 处理之前。
             // 仅冻结敌方弹幕（hostile && !friendly），玩家弹幕完全不受影响。
             if (TryFreezeOnTimeStop(projectile))
@@ -152,6 +161,9 @@ namespace TestMod.Common.GlobalProjectiles
             }
 
             // 万花筒范围扩大已移至 CorePlayer.PostUpdateEquips，通过 whipRangeMultiplier 实现
+
+            // 时缓：PostAI 末尾缩放速度（AI 跑完后再缩，防止被覆盖）
+            ApplyTimeSlowToProjectile(projectile);
         }
 
         // ══════════════════════════════════════════════════════════════
