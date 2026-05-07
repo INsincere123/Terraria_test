@@ -14,8 +14,8 @@ namespace TestMod.Items.Accessories
     public class SlowField : ModItem
     {
         // ── 可调参数 ──────────────────────────────────────────────
-        public const float Radius     = 320f;  // 力场半径（像素）
-        public const float SlowFactor = 0.5f; // 速度系数（0.70 = 70% 速度）
+        public const float Radius     = 360f;  // 力场半径（像素）
+        public const float SlowFactor = 0.5f; // 速度系数（0.50 = 50% 速度）
 
         public override void SetDefaults()
         {
