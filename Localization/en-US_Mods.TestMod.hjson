@@ -96,6 +96,21 @@ Items: {
 		Tooltip: ""
 		DisplayName: Test Hook
 	}
+
+	ReflectShieldItem: {
+		Tooltip: ""
+		DisplayName: 反射
+	}
+
+	DRShieldItem: {
+		Tooltip: ""
+		DisplayName: 减伤
+	}
+
+	AbsorbShieldItem: {
+		Tooltip: ""
+		DisplayName: 格挡
+	}
 }
 
 Buffs: {
@@ -176,6 +191,8 @@ Projectiles: {
 	TestWhipProj.DisplayName: Test Whip Proj
 	TestWhipExplosionProj.DisplayName: Test Whip Explosion Proj
 	TestHookProj.DisplayName: Test Hook Proj
+	ReflectShieldOrb.DisplayName: Reflect Shield Orb
+	DRShieldOrb.DisplayName: D R Shield Orb
 }
 
 Keybinds: {

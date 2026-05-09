@@ -27,11 +27,23 @@ namespace TestMod.Items.Accessories.Effects
         public bool EnableSurvivalDebuffDecay; // 启用 debuff 时间加速衰减
         public bool EnableSurvivalImmuneFrames;// 启用额外无敌帧
         public bool EnableGrapple;             // 启用红木魔石钩爪效果
+        public bool EnableDRShield;            // 启用伤害减免护盾
+        public bool EnableReflectShield;       // 启用反射护盾
 
         // ===== 内部计时器 / 持久状态 =====
         public int ExtraDodgeCooldown;        // 自定义额外闪避的冷却 tick
         public bool GrappleDRActive;          // 钩爪伤害减免是否激活（钩中或松钩后1秒内）
         public int  GrappleDRTimer;           // 松钩后倒计时（60 = 1秒）
+        // DRShield 持久状态（冷却即使卸装备也继续倒数）
+        public float DRShieldRotationAngle;
+        public int   DRShieldRespawnCooldown;
+        // ReflectShield 持久状态
+        public float ReflectShieldRotationAngle;
+        public int   ReflectShieldRespawnCooldown;
+
+        // ===== 护盾配置参数（每帧由 Apply 写入）=====
+        public DRShieldConfig     DRShieldConfig;
+        public ReflectShieldConfig ReflectShieldConfig;
 
         // ===== 配置参数 (由饰品在 UpdateAccessory 时写入, 让模块知道用什么数值) =====
         public float FastFall_MaxFallSpeed;
@@ -61,7 +73,9 @@ namespace TestMod.Items.Accessories.Effects
             EnableSurvivalLowHp = false;
             EnableSurvivalDebuffDecay = false;
             EnableSurvivalImmuneFrames = false;
-            EnableGrapple = false;
+            EnableGrapple        = false;
+            EnableDRShield       = false;
+            EnableReflectShield  = false;
 
             // 药水加成每帧重置 (脱装备后立即失效)
             Potion_HealFlatBonus = 0;
@@ -73,6 +87,10 @@ namespace TestMod.Items.Accessories.Effects
         {
             if (ExtraDodgeCooldown > 0)
                 ExtraDodgeCooldown--;
+            if (DRShieldRespawnCooldown > 0)
+                DRShieldRespawnCooldown--;
+            if (ReflectShieldRespawnCooldown > 0)
+                ReflectShieldRespawnCooldown--;
         }
 
         // ===== 钩子分发 ===================================================
@@ -96,6 +114,8 @@ namespace TestMod.Items.Accessories.Effects
         {
             SurvivalEffect.UpdateMiscEffects(Player, this);
             GrappleEffect.UpdateMiscEffects(Player, this);
+            DRShieldEffect.UpdateMiscEffects(Player, this);
+            ReflectShieldEffect.UpdateMiscEffects(Player, this);
         }
 
         public override bool FreeDodge(Player.HurtInfo info)
