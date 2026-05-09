@@ -91,6 +91,11 @@ Items: {
 		Tooltip: 在你周围生成一个减速立场，减速敌方弹幕
 		DisplayName: 减速立场
 	}
+
+	TestHook: {
+		Tooltip: ""
+		DisplayName: Test Hook
+	}
 }
 
 Buffs: {
@@ -170,6 +175,7 @@ Projectiles: {
 	SubhandCannon.DisplayName: Subhand Cannon
 	TestWhipProj.DisplayName: Test Whip Proj
 	TestWhipExplosionProj.DisplayName: Test Whip Explosion Proj
+	TestHookProj.DisplayName: Test Hook Proj
 }
 
 Keybinds: {

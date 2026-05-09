@@ -26,9 +26,12 @@ namespace TestMod.Items.Accessories.Effects
         public bool EnableSurvivalLowHp;       // 启用低血量额外免伤
         public bool EnableSurvivalDebuffDecay; // 启用 debuff 时间加速衰减
         public bool EnableSurvivalImmuneFrames;// 启用额外无敌帧
+        public bool EnableGrapple;             // 启用红木魔石钩爪效果
 
         // ===== 内部计时器 / 持久状态 =====
         public int ExtraDodgeCooldown;        // 自定义额外闪避的冷却 tick
+        public bool GrappleDRActive;          // 钩爪伤害减免是否激活（钩中或松钩后1秒内）
+        public int  GrappleDRTimer;           // 松钩后倒计时（60 = 1秒）
 
         // ===== 配置参数 (由饰品在 UpdateAccessory 时写入, 让模块知道用什么数值) =====
         public float FastFall_MaxFallSpeed;
@@ -58,6 +61,7 @@ namespace TestMod.Items.Accessories.Effects
             EnableSurvivalLowHp = false;
             EnableSurvivalDebuffDecay = false;
             EnableSurvivalImmuneFrames = false;
+            EnableGrapple = false;
 
             // 药水加成每帧重置 (脱装备后立即失效)
             Potion_HealFlatBonus = 0;
@@ -91,6 +95,7 @@ namespace TestMod.Items.Accessories.Effects
         public override void PostUpdateMiscEffects()
         {
             SurvivalEffect.UpdateMiscEffects(Player, this);
+            GrappleEffect.UpdateMiscEffects(Player, this);
         }
 
         public override bool FreeDodge(Player.HurtInfo info)

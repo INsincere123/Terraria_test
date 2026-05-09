@@ -18,6 +18,13 @@ namespace TestMod.Common.GlobalItems
         // ══════════════════════════════════════════════════════════════
         public override void SetDefaults(Item item)
         {
+            // ──────────────────────────────────────────
+            //   钩爪：应用 Bobbit Hook 数据
+            // ──────────────────────────────────────────
+            // 紫晶钩（ID 1236）— 飞出速度沿用 Bobbit Hook
+            if (item.type == ItemID.AmethystHook)
+                item.shootSpeed = 25f;
+
             // 沙漠虎杖：提升基础数值
             if (item.type == ItemID.StormTigerStaff)
             {

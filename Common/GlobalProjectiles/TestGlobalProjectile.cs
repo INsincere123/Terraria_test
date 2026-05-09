@@ -1,11 +1,12 @@
 using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
-//using Microsoft.Xna.Framework;
-//using System;
+using Microsoft.Xna.Framework;
+using System;
 using System.Collections.Generic;
 using TestMod.Buffs;
 using TestMod.Common.Players;
+using TestMod.Items.Accessories.Effects;
 
 namespace TestMod.Common.GlobalProjectiles
 {
@@ -56,6 +57,9 @@ namespace TestMod.Common.GlobalProjectiles
             // 仅冻结敌方弹幕（hostile && !friendly），玩家弹幕完全不受影响。
             if (TryFreezeOnTimeStop(projectile))
                 return false;
+
+            // 红木魔石效果：钩爪飞行阶段速度 ×2
+            GrappleEffect.TryBoostLaunchSpeed(projectile);
 
             if (projectile.type != ProjectileID.Raven) return true;
             if (projectile.owner < 0 || projectile.owner >= Main.maxPlayers) return true;
