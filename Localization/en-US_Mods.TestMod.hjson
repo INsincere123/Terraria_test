@@ -111,6 +111,25 @@ Items: {
 		Tooltip: ""
 		DisplayName: 格挡
 	}
+
+	SwordQiSword: {
+		DisplayName: 泰拉棱镜
+		Tooltip:
+			'''
+			命中敌人后在目标处留下剑气，高速来回切割
+			重复命中同一目标可[c/FFD700:叠层]（上限100层），每次命中刷新持续时间
+
+			[c/FF8C00:伤害] 1-10层缓慢积累，11-20层急速飙升，20层后趋于稳定
+			[c/FF8C00:频率] 达到10层与20层时切割速度分别加快一次
+			[c/7B68EE:极限] 叠至100层时，衍生出对称的第二道剑气
+
+			剑气颜色随叠层变化：
+			· [c/CCCCCC:1-10层]  无色薄边
+			· [c/FFD700:11-20层] 金黄渐变[c/8A2BE2:蓝紫]
+			· [c/6495ED:20层以上] 冰蓝发光
+			剑气持续8秒
+			'''
+	}
 }
 
 Buffs: {
@@ -193,6 +212,7 @@ Projectiles: {
 	TestHookProj.DisplayName: Test Hook Proj
 	ReflectShieldOrb.DisplayName: Reflect Shield Orb
 	DRShieldOrb.DisplayName: D R Shield Orb
+	SwordQiProjectile.DisplayName: 泰拉切割
 }
 
 Keybinds: {

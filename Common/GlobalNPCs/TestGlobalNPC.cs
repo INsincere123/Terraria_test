@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using TestMod.Common.Players;
 using Terraria.GameContent.ItemDropRules;
 using TestMod.Items.Accessories;
+using TestMod.Items.Weapons;
 
 namespace TestMod.Common.GlobalNPCs
 {
@@ -36,6 +37,11 @@ namespace TestMod.Common.GlobalNPCs
         // ══════════════════════════════════════════════════════════════   
         public override void ModifyNPCLoot(NPC npc, NPCLoot npcLoot)
         {
+            if (npc.type == NPCID.HallowBoss) // 光之女皇
+            {
+                npcLoot.Add(ItemDropRule.Common(ModContent.ItemType<SwordQiSword>(), 4));  // 光之女皇有1/4的概率掉落 SwordQiSword
+            }
+
             if (npc.type == NPCID.Deerclops)
             {
                 npcLoot.Add(ItemDropRule.Common(ModContent.ItemType<AshenSeal>(), 4));  // 独眼巨鹿有1/4的概率掉落AshenSeal
