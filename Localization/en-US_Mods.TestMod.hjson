@@ -130,6 +130,11 @@ Items: {
 			剑气持续8秒
 			'''
 	}
+
+	BloodFeedKnife: {
+		DisplayName: Blood Feed Knife
+		Tooltip: ""
+	}
 }
 
 Buffs: {
@@ -197,6 +202,16 @@ Buffs: {
 		Description: Mods.TestMod.Buffs.TestWhipCooldownBuff.Description
 		DisplayName: Test Whip Cooldown Buff
 	}
+
+	BloodExhaustionBuff: {
+		DisplayName: Blood Exhaustion Buff
+		Description: Mods.TestMod.Buffs.BloodExhaustionBuff.Description
+	}
+
+	CrimsonBerserkBuff: {
+		DisplayName: Crimson Berserk Buff
+		Description: Mods.TestMod.Buffs.CrimsonBerserkBuff.Description
+	}
 }
 
 Projectiles: {
@@ -213,6 +228,7 @@ Projectiles: {
 	ReflectShieldOrb.DisplayName: Reflect Shield Orb
 	DRShieldOrb.DisplayName: D R Shield Orb
 	SwordQiProjectile.DisplayName: 泰拉切割
+	BloodFeedKnifeProj.DisplayName: Blood Feed Knife Proj
 }
 
 Keybinds: {
@@ -235,4 +251,7 @@ Prefixes: {
 	RefinementSummonNoKBPrefix.DisplayName: 炼化
 	RefinementRangedNoKBPrefix.DisplayName: 炼化
 	RefinementMagicNoKBPrefix.DisplayName: 炼化
+	RefinementPrefix.DisplayName: 炼化
 }
+
+DamageClasses.TrueDamageClass.DisplayName: 真实伤害

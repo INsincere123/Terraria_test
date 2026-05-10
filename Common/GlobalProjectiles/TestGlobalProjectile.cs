@@ -7,6 +7,8 @@ using System.Collections.Generic;
 using TestMod.Buffs;
 using TestMod.Common.Players;
 using TestMod.Items.Accessories.Effects;
+using TestMod.Items.DamageTypes;
+using TestMod.Projectiles.Melee;
 
 namespace TestMod.Common.GlobalProjectiles
 {
@@ -52,6 +54,9 @@ namespace TestMod.Common.GlobalProjectiles
         {
             // 减速力场：在 AI 跑之前恢复上帧保存的自然速度，防止衰减
             SlowField_RestoreVelocity(projectile);
+
+            // 暴走期间：在碰撞检测前强制弹幕无限穿透
+            BloodFeed_SetBerserkPenetrate(projectile);
 
             // ⏱ 时停拦截：在所有 AI 处理之前。
             // 仅冻结敌方弹幕（hostile && !friendly），玩家弹幕完全不受影响。
@@ -117,6 +122,11 @@ namespace TestMod.Common.GlobalProjectiles
             {
                 ApplyHighTierTracking(projectile, 18f, 90f, 0.32f, 0.45f);
             }
+            // 🔪 血饲匕首：中等追踪强度，速度随距离缩放，有惯性感
+            else if (projectile.type == ModContent.ProjectileType<BloodFeedKnifeProj>())
+            {
+                ApplyHighTierTracking(projectile, 10f, 20f, 0.14f, 0.22f);
+            }
             // 🐦‍⬛ 乌鸦(317) 由 PreAI 接管，此处不重复处理
             // 🐯 沙漠虎三形态(833=幼崽 / 834=成年 / 835=装甲)：龙头级别追踪
             else if (projectile.type == ProjectileID.StormTigerTier1 ||
@@ -178,6 +188,14 @@ namespace TestMod.Common.GlobalProjectiles
             if (projectile.owner < 0 || projectile.owner >= Main.maxPlayers) return;
 
             Player player = Main.player[projectile.owner];
+
+            // 真实伤害：无视防御（不依赖 godMode）
+            if (projectile.DamageType == TrueDamageClass.Instance)
+                modifiers.ScalingArmorPenetration += 1f;
+
+            // 暴走期间：弹幕无视防御
+            if (player.active && player.GetModPlayer<BloodFeedPlayer>().IsBerserk)
+                modifiers.ScalingArmorPenetration += 1f;
 
             // 鞭子 tag 效果：不依赖 godMode
             WhipTag_ModifyHitNPC(projectile, target, ref modifiers);
