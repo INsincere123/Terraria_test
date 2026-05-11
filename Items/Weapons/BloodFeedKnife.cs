@@ -32,7 +32,7 @@ namespace TestMod.Items.Weapons
             Item.height       = 32;
             Item.useTime      = 17;
             Item.useAnimation = 17;
-            Item.useStyle     = ItemUseStyleID.Shoot;
+            Item.useStyle     = ItemUseStyleID.Swing;
             Item.knockBack    = 3f;
             Item.crit         = 8;
             Item.noMelee      = true;  // 物品本身不造成近战判定，由弹幕打伤害

@@ -14,11 +14,18 @@ namespace TestMod.Items.DamageTypes
 
         public override StatInheritanceData GetModifierInheritance(DamageClass damageClass)
         {
+            // 数值继承：只继承通用加成（职业无关设计）
             if (damageClass == Generic)
                 return StatInheritanceData.Full;
 
             return StatInheritanceData.None;
         }
+
+        // 前缀继承：告知引擎按近战处理前缀资格，使哥布林工匠可以重铸此类武器
+        // 与 GetModifierInheritance 完全独立，不会引入近战伤害/暴击加成
+        // ChoosePrefix 会覆盖实际选中的词缀，此方法只负责"让重铸按钮出现"
+        public override bool GetPrefixInheritance(DamageClass damageClass)
+            => damageClass == DamageClass.Melee;
 
         public override bool UseStandardCritCalcs => true;
     }

@@ -27,7 +27,7 @@ namespace TestMod.Projectiles.Melee
         // 追踪参数在 TestGlobalProjectile.cs 的 PostAI 分发里调整：
         //   ApplyHighTierTracking(projectile, minSpeed:10f, maxSpeed:20f, lerpAmount:0.14f, extraCorrection:0.22f)
         public static int   Lifetime        = 180;   // 最大存活帧数（3秒）
-        public static float RotationSpeed   = 0.45f; // 自转速度（rad/帧）
+        public static float RotationSpeed   = 0.65f; // 自转速度（rad/帧）
         // ─────────────────────────────────────────────────────────────
 
         public override void SetDefaults()
@@ -41,7 +41,7 @@ namespace TestMod.Projectiles.Melee
             Projectile.penetrate   = 1;
             Projectile.timeLeft    = Lifetime;
             Projectile.DamageType  = TrueDamageClass.Instance;
-            Projectile.extraUpdates = 0;
+            Projectile.extraUpdates = 1;
 
             Projectile.ai[0] = -1f; // 未锁定状态
         }

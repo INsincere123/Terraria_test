@@ -27,8 +27,9 @@ namespace TestMod.Prefixes
         public const float ReforgeValueMult   = 20.0f;  // 重铸费用倍率
         // ─────────────────────────────────────────────────────────────
 
-        // AnyWeapon：不限制基础职业，由 CanRoll 负责过滤
-        public override PrefixCategory Category => PrefixCategory.AnyWeapon;
+        // Custom：默认不出现在任何武器的重铸池，只由 TestGlobalItem.ChoosePrefix 手动控制
+        // 防止炼化意外出现在原版近战/远程/魔法武器上
+        public override PrefixCategory Category => PrefixCategory.Custom;
 
         // 只允许应用到真实伤害类型武器（非饰品、有伤害值）
         public override bool CanRoll(Item item)
