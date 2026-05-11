@@ -4,6 +4,7 @@ using Terraria.ModLoader;
 using Microsoft.Xna.Framework;
 using TestMod.Common.GlobalNPCs;
 using TestMod.Common.GlobalProjectiles;
+using TestMod.Common.Utilities;
 
 namespace TestMod.Projectiles
 {
@@ -62,14 +63,16 @@ namespace TestMod.Projectiles
             Projectile.rotation = Projectile.velocity.ToRotation() + MathHelper.PiOver2;
 
             // ai[0] 是命中后的不追踪冷却计时器
-            // 命中时设为10帧，让箭矢穿过去后再寻找下一目标
             if (Projectile.ai[0] > 0)
             {
                 Projectile.ai[0]--;
             }
-            else if (Projectile.timeLeft < TimeLeft - TrackingDelay) // 生成后5帧才开始追踪，保留散射方向
+            else if (Projectile.timeLeft < TimeLeft - TrackingDelay) // 生成后6帧才开始追踪，保留散射方向
             {
-                int targetIndex = FindNearestTargetNotOnCooldown(1800f);
+                int targetIndex =
+                    TargetUtils.FindNearestTargetNotOnCooldown(
+                        Projectile.Center,
+                        3000f);
                 if (targetIndex >= 0)
                 {
                     NPC target = Main.npc[targetIndex];
@@ -81,7 +84,7 @@ namespace TestMod.Projectiles
                         toTarget.Normalize();
 
                         const float desiredSpeed = 22f;
-                        const float lerpAmount   = 0.09f; // 平滑转向，不急转
+                        const float lerpAmount   = 0.12f; // 平滑转向，不急转
 
                         Projectile.velocity = Vector2.Lerp(
                             Projectile.velocity,
@@ -116,30 +119,5 @@ namespace TestMod.Projectiles
         }
 
 
-
-        /// <summary>
-        /// 找最近的可追踪 NPC，跳过命中冷却中的敌人
-        /// 这样穿透后会自动转向下一个目标而不是粘着刚命中的同一个
-        /// </summary>
-        private int FindNearestTargetNotOnCooldown(float maxRange)
-        {
-            int bestIndex    = -1;
-            float bestDistSq = maxRange * maxRange;
-
-            for (int i = 0; i < Main.npc.Length; i++)
-            {
-                NPC npc = Main.npc[i];
-                if (!npc.CanBeChasedBy()) continue;
-                if (Projectile.localNPCImmunity[i] > 0) continue; // 跳过刚命中的
-
-                float distSq = Vector2.DistanceSquared(Projectile.Center, npc.Center);
-                if (distSq < bestDistSq)
-                {
-                    bestDistSq = distSq;
-                    bestIndex  = i;
-                }
-            }
-            return bestIndex;
-        }
     }
 }

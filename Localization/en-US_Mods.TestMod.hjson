@@ -132,7 +132,7 @@ Items: {
 	}
 
 	BloodFeedKnife: {
-		DisplayName: Blood Feed Knife
+		DisplayName: 血饲匕首
 		Tooltip: ""
 	}
 }
@@ -204,13 +204,13 @@ Buffs: {
 	}
 
 	BloodExhaustionBuff: {
-		DisplayName: Blood Exhaustion Buff
-		Description: Mods.TestMod.Buffs.BloodExhaustionBuff.Description
+		DisplayName: 虚脱
+		Description: 你因失血过多虚脱了
 	}
 
 	CrimsonBerserkBuff: {
-		DisplayName: Crimson Berserk Buff
-		Description: Mods.TestMod.Buffs.CrimsonBerserkBuff.Description
+		DisplayName: 暴走
+		Description: 失血中，但肾上腺素拉满了，你爆发出惊人力量
 	}
 }
 
@@ -228,7 +228,7 @@ Projectiles: {
 	ReflectShieldOrb.DisplayName: Reflect Shield Orb
 	DRShieldOrb.DisplayName: D R Shield Orb
 	SwordQiProjectile.DisplayName: 泰拉切割
-	BloodFeedKnifeProj.DisplayName: Blood Feed Knife Proj
+	BloodFeedKnifeProj.DisplayName: 血饲匕首
 }
 
 Keybinds: {

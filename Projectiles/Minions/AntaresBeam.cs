@@ -5,6 +5,7 @@ using Terraria;
 using Terraria.GameContent;
 using Terraria.ID;
 using Terraria.ModLoader;
+using TestMod.Common.Utilities;
 
 namespace TestMod.Projectiles.Minions
 {
@@ -22,12 +23,12 @@ namespace TestMod.Projectiles.Minions
             Projectile.width = 24;                           // 宽度24像素
             Projectile.height = 24;                          // 高度24像素
             Projectile.friendly = true;                      // 对玩家友好（不伤害玩家）
-            Projectile.timeLeft = 180;                       // 存活时间180帧（≈3秒）
+            Projectile.timeLeft = 200;                       // 存活时间200帧
             Projectile.DamageType = DamageClass.Summon;      // 伤害类型：召唤伤害
             Projectile.MaxUpdates = 2;                       // 每帧更新2次（加快移动和AI）
             Projectile.tileCollide = false;                  // 穿过方块（不碰撞）
             Projectile.usesLocalNPCImmunity = true;          // 使用局部NPC免疫
-            Projectile.localNPCHitCooldown = 20;             // 命中同一NPC的冷却时间20帧
+            Projectile.localNPCHitCooldown = 12;             // 命中同一NPC的冷却时间12帧
             Projectile.penetrate = 8;                        // 能穿透8个敌人
             //Projectile.stopsDealingDamageAfterPenetrateHits = true;  // 穿透次数用完后停止造成伤害
         }
@@ -46,7 +47,7 @@ namespace TestMod.Projectiles.Minions
             }
             else
             {
-                int targetIndex = FindNearestTargetNotOnCooldown(5000f);
+                int targetIndex = TargetUtils.FindNearestTargetNotOnCooldown(Projectile.Center, 5000f);
                 if (targetIndex >= 0)
                 {
                     NPC target = Main.npc[targetIndex];
@@ -128,29 +129,6 @@ namespace TestMod.Projectiles.Minions
             }
         }
 
-        /// <summary>
-        /// 找最近可追踪敌人，跳过还在无敌帧里的（幻影箭同款）
-        /// </summary>
-        private int FindNearestTargetNotOnCooldown(float maxRange)
-        {
-            int bestIndex = -1;
-            float bestDistSq = maxRange * maxRange;
-
-            for (int i = 0; i < Main.npc.Length; i++)
-            {
-                NPC npc = Main.npc[i];
-                if (!npc.CanBeChasedBy()) continue;
-                if (Projectile.localNPCImmunity[i] > 0) continue;
-
-                float distSq = Vector2.DistanceSquared(Projectile.Center, npc.Center);
-                if (distSq < bestDistSq)
-                {
-                    bestDistSq = distSq;
-                    bestIndex = i;
-                }
-            }
-            return bestIndex;
-        }
 
         public override bool PreDraw(ref Color lightColor)
         {

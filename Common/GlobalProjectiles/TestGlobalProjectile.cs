@@ -122,11 +122,6 @@ namespace TestMod.Common.GlobalProjectiles
             {
                 ApplyHighTierTracking(projectile, 18f, 90f, 0.32f, 0.45f);
             }
-            // 🔪 血饲匕首：中等追踪强度，速度随距离缩放，有惯性感
-            else if (projectile.type == ModContent.ProjectileType<BloodFeedKnifeProj>())
-            {
-                ApplyHighTierTracking(projectile, 10f, 20f, 0.14f, 0.22f);
-            }
             // 🐦‍⬛ 乌鸦(317) 由 PreAI 接管，此处不重复处理
             // 🐯 沙漠虎三形态(833=幼崽 / 834=成年 / 835=装甲)：龙头级别追踪
             else if (projectile.type == ProjectileID.StormTigerTier1 ||

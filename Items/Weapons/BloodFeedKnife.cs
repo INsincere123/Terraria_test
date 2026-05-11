@@ -18,8 +18,8 @@ namespace TestMod.Items.Weapons
         public override string Texture => "Terraria/Images/Item_3054";
 
         // ── 数值调节区 ────────────────────────────────────────────────
-        public static int   BaseDamage      = 80;    // 基础伤害（真实伤害，无视防御）
-        public static float ShootSpeed      = 23f;   // 弹幕初速度
+        public static int   BaseDamage      = 97;    // 基础伤害（真实伤害，无视防御）
+        public static float ShootSpeed      = 22f;   // 弹幕初速度
         public static int   HpCostFlat      = 7;    // 每次投掷固定消耗 HP
         public static float HpCostRatio     = 0.02f; // 每次投掷额外消耗当前最大HP × 此值
         // ─────────────────────────────────────────────────────────────

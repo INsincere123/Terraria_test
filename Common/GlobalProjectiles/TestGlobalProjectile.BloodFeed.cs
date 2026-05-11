@@ -8,7 +8,7 @@ namespace TestMod.Common.GlobalProjectiles
     public partial class TestGlobalProjectile : GlobalProjectile
     {
         // 由主文件 PreAI 调用，确保在碰撞检测前设置穿透
-        private void BloodFeed_SetBerserkPenetrate(Projectile projectile)
+        private static void BloodFeed_SetBerserkPenetrate(Projectile projectile)
         {
             if (!projectile.friendly || projectile.hostile) return;
             if (projectile.owner < 0 || projectile.owner >= Main.maxPlayers) return;
@@ -21,6 +21,7 @@ namespace TestMod.Common.GlobalProjectiles
 
             if (projectile.penetrate != -1)
                 projectile.penetrate = -1;
+                projectile.maxPenetrate = -1; // 同步最大穿透，防止被其他逻辑重置
         }
     }
 }
