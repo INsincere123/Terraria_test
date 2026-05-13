@@ -371,6 +371,32 @@ namespace TestMod.Common.GlobalItems
                 return WeightedRandomPrefix(rand, isSwing ? swingPool : otherPool);
             }
 
+            // ── 饰品 ──────────────────────────────────────────────────────
+            // 原版 20 个饰品词缀全部平等（无 ReducedNaturalChance 词缀），weight = 6
+            // 融合（自定义）weight = 1，概率恰好是普通词缀的 1/6
+            if (item.accessory)
+            {
+                int fusion = ModContent.GetInstance<Prefixes.FusionPrefix>().Type;
+                (int id, int weight)[] pool =
+                [
+                    // 防御类
+                    (PrefixID.Hard,    6), (PrefixID.Guarding, 6), (PrefixID.Armored, 6), (PrefixID.Warding,  6),
+                    // 魔力/暴击
+                    (PrefixID.Arcane,  6), (PrefixID.Precise,  6), (PrefixID.Lucky,   6),
+                    // 伤害
+                    (PrefixID.Jagged,  6), (PrefixID.Spiked,   6), (PrefixID.Angry,   6), (PrefixID.Menacing, 6),
+                    // 移速
+                    (PrefixID.Brisk,   6), (PrefixID.Fleeting, 6), (PrefixID.Hasty2,  6), (PrefixID.Quick2,   6),
+                    // 近战速度
+                    (PrefixID.Wild,    6), (PrefixID.Rash,     6), (PrefixID.Intrepid,6), (PrefixID.Violent,  6),
+                    // 最优
+                    (PrefixID.Legendary2, 6),
+                    // 融合（极稀有，约 1/121 ≈ 0.83%）
+                    (fusion,              1),
+                ];
+                return WeightedRandomPrefix(rand, pool);
+            }
+
             return -1; // 其余（Generic、自定义等）走原版逻辑
         }
 
