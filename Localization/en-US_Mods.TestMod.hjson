@@ -136,6 +136,29 @@ Items: {
 		Tooltip: ""
 	}
 
+	EnergyShieldItem: {
+		DisplayName: 能量护盾
+		Tooltip:
+			'''
+			装备后获得能量护盾，上限为 [c/50A0FF:20 + 6% 最大生命值]
+			护盾存活时 [c/50FF50:+5 防御力]，且[c/50FF50:免疫击退]
+			护盾吸收全部伤害；6 秒未受击后瞬间恢复满值
+			[c/AAAAAA:护盾破碎时不造成特殊效果]
+			'''
+	}
+
+	SuperEnergyShieldItem: {
+		DisplayName: 超能护盾
+		Tooltip:
+			'''
+			装备后获得能量护盾，上限为 [c/64C8FF:60 + 120% 防御力]
+			护盾存活时 [c/50FF50:+5% 减伤]、[c/50FF50:+4% 伤害]、[c/50FF50:+2% 暴击]，且免疫击退
+			护盾吸收全部伤害；5 秒未受击后 [c/FFD700:2 秒]渐进恢复满值
+			[c/FF6060:生命值跌破 30% 时：]获得 [c/FF6060:50% 最大生命 + 100% 防御]的紧急护盾
+			[c/AAAAAA:紧急护盾在 4.5 秒内衰减，冷却 120 秒]
+			'''
+	}
+
 	HuangQuanAltarItem: {
 		DisplayName: 黄泉馈灵塔
 		Tooltip:
@@ -239,6 +262,11 @@ Buffs: {
 	HuangQuanDamageBoostBuff: {
 		DisplayName: 黄泉·杀意
 		Description: "[c/FF8C00:全属性伤害提升 10%]"
+	}
+
+	SuperEnergyShieldCooldownBuff: {
+		DisplayName: 超能护盾冷却
+		Description: 紧急护盾正在冷却，无法再次触发
 	}
 }
 
