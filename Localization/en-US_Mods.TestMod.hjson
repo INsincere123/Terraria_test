@@ -135,6 +135,19 @@ Items: {
 		DisplayName: 血饲匕首
 		Tooltip: ""
 	}
+
+	HuangQuanAltarItem: {
+		DisplayName: 黄泉馈灵塔
+		Tooltip:
+			'''
+			放置后在周围 [c/9370DB:160 格]范围内形成黄泉光环
+			[c/AAAAAA:Boss 进入范围时激活所有效果：]
+			· 范围内[c/7FFF00:友方 NPC 或队友]阵亡后，短暂获得 [c/FF6060:汲命] 效果
+			· 范围内[c/FF4500:敌方 NPC] 被击杀后，短暂获得 [c/FF8C00:杀意] 效果
+			· 每 [c/FFD700:5 秒]对范围内所有敌方 NPC 造成 [c/FF4500:100] 点脉冲伤害
+			· 对 Boss 额外附加 [c/FF4500:500] 点平伤
+			'''
+	}
 }
 
 Buffs: {
@@ -212,6 +225,21 @@ Buffs: {
 		DisplayName: 暴走
 		Description: 失血中，但肾上腺素拉满了，你爆发出惊人力量
 	}
+
+	HuangQuanBuff: {
+		DisplayName: 黄泉
+		Description: 你处于黄泉馈灵塔的笼罩之下
+	}
+
+	HuangQuanLifestealBuff: {
+		DisplayName: 黄泉·汲命
+		Description: "[c/FF6060:命中时回复造成伤害 3% 的生命值（单次上限 35）]"
+	}
+
+	HuangQuanDamageBoostBuff: {
+		DisplayName: 黄泉·杀意
+		Description: "[c/FF8C00:全属性伤害提升 10%]"
+	}
 }
 
 Projectiles: {
@@ -255,3 +283,4 @@ Prefixes: {
 }
 
 DamageClasses.TrueDamageClass.DisplayName: 真实伤害
+Tiles.HuangQuanAltarTile.MapEntry: Huang Quan Altar Tile

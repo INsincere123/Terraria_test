@@ -7,6 +7,7 @@ using Terraria.GameContent.ItemDropRules;
 using TestMod.Items.Accessories;
 using TestMod.Items.Weapons.Melee;
 using TestMod.Common.Mechanics.ArmorShred;
+using TestMod.Common.Systems;
 
 namespace TestMod.Common.GlobalNPCs
 {
@@ -48,9 +49,27 @@ namespace TestMod.Common.GlobalNPCs
         }
 
         // ══════════════════════════════════════════════════════════════
-        //   OnKill — NPC 死亡时清理破甲层数记录
+        //   OnKill — NPC 死亡：清理破甲层数 + 黄泉馈灵塔 buff 派发
         // ══════════════════════════════════════════════════════════════
-        public override void OnKill(NPC npc) => ArmorShredSystem.Remove(npc.whoAmI);
+        public override void OnKill(NPC npc)
+        {
+            // 破甲层数清理
+            ArmorShredSystem.Remove(npc.whoAmI);
+
+            // 黄泉馈灵塔：仅在激活范围内（范围内有 Boss）才处理
+            if (!ArenaAltarSystem.IsInActiveRange(npc.Center)) return;
+
+            if (npc.friendly && !npc.boss)
+            {
+                // 友方 NPC 死亡（村民等）→ 给范围内存活玩家施加汲命 buff
+                ArenaAltarSystem.GrantLifestealToNearby();
+            }
+            else if (!npc.friendly && !npc.townNPC)
+            {
+                // 敌方 NPC 死亡 → 给范围内存活玩家施加杀意 buff
+                ArenaAltarSystem.GrantDamageBoostToNearby();
+            }
+        }
 
         // ══════════════════════════════════════════════════════════════
         //   UpdateLifeRegen — debuff 跳伤强化 + 破甲 buff 失效时清理层数

@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
+using Terraria.ModLoader.IO;
 using Microsoft.Xna.Framework; // MathHelper
 using TestMod.Common.Systems;
 
@@ -11,6 +12,9 @@ namespace TestMod.Common.Players
     {
         public bool godModeBuff  = false; // 开关1
         public bool godModeBuff2 = false; // 开关2
+
+        // 击败月亮领主后自动解锁 godModeBuff 的一次性标志（已保存）
+        private bool godModeUnlocked = false;
 
         // 暴击伤害加成系数（由 godModeBuff2 驱动，0.5 = +50%）
         public float critDamageBonus = 0f;
@@ -225,6 +229,35 @@ namespace TestMod.Common.Players
         {
             if (npcDamageMultiplier != 1f)
                 modifiers.FinalDamage *= npcDamageMultiplier;
+        }
+
+        // ██████████████████████████████████████████████████████████████
+        //   PostUpdate — 月亮领主击败后自动解锁 godModeBuff（仅一次）
+        //   条件：NPC.downedMoonlord == true 且尚未解锁过
+        //   解锁后由物品开关自由控制，不会被再次强制开启
+        // ██████████████████████████████████████████████████████████████
+        public override void PostUpdate()
+        {
+            if (NPC.downedMoonlord && !godModeUnlocked)
+            {
+                godModeUnlocked = true;
+                godModeBuff     = true;
+            }
+        }
+
+        // ██████████████████████████████████████████████████████████████
+        //   存档持久化：godModeBuff（当前开关状态）+ godModeUnlocked（解锁标志）
+        // ██████████████████████████████████████████████████████████████
+        public override void SaveData(TagCompound tag)
+        {
+            tag["godModeBuff"]    = godModeBuff;
+            tag["godModeUnlocked"] = godModeUnlocked;
+        }
+
+        public override void LoadData(TagCompound tag)
+        {
+            godModeBuff    = tag.GetBool("godModeBuff");
+            godModeUnlocked = tag.GetBool("godModeUnlocked");
         }
     }
 }

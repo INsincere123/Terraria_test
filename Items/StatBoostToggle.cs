@@ -31,36 +31,42 @@ namespace TestMod.Items
 
         public override void AddRecipes()
         {
+            // 世界吞噬怪 / 克苏鲁之脑 二选一（腐化 or 猩红世界）
+            AddMasterTrophyRecipe(ItemID.EaterofWorldsMasterTrophy);
+            AddMasterTrophyRecipe(ItemID.BrainofCthulhuMasterTrophy);
+        }
+
+        private void AddMasterTrophyRecipe(int eowOrBoc)
+        {
             Recipe recipe = Recipe.Create(Type);
 
-            recipe.AddIngredient(4924); // 克苏鲁之眼
-            recipe.AddIngredient(4925); // 世界吞噬怪
-            recipe.AddIngredient(4926); // 克苏鲁之脑
-            recipe.AddIngredient(4927); // 骷髅王
-            recipe.AddIngredient(4928); // 蜂王
-            recipe.AddIngredient(4929); // 史莱姆王
-            recipe.AddIngredient(4930); // 血肉墙
-            recipe.AddIngredient(4931); // 双子魔眼
-            recipe.AddIngredient(4932); // 毁灭者
-            recipe.AddIngredient(4933); // 机械骷髅王
-            recipe.AddIngredient(4934); // 世纪之花
-            recipe.AddIngredient(4935); // 石巨人
-            recipe.AddIngredient(4936); // 猪龙鱼公爵
-            recipe.AddIngredient(4937); // 拜月教邪教徒
-            recipe.AddIngredient(4938); // 月亮领主
-            recipe.AddIngredient(4939); // 火星飞碟
-            recipe.AddIngredient(4940); // 荷兰飞盗船
-            recipe.AddIngredient(4941); // 哀木
-            recipe.AddIngredient(4942); // 南瓜王
-            recipe.AddIngredient(4943); // 冰雪女王
-            recipe.AddIngredient(4944); // 常绿尖叫怪
-            recipe.AddIngredient(4945); // 圣诞坦克
-            recipe.AddIngredient(4946); // 暗黑魔法师
-            recipe.AddIngredient(4947); // 食人魔
-            recipe.AddIngredient(4948); // 双足翼龙
-            recipe.AddIngredient(4949); // 光之女皇
-            recipe.AddIngredient(4950); // 史莱姆皇后
-            recipe.AddIngredient(5110); // 独眼巨鹿
+            recipe.AddIngredient(ItemID.EyeofCthulhuMasterTrophy);   // 克苏鲁之眼
+            recipe.AddIngredient(eowOrBoc);                           // 世界吞噬怪 或 克苏鲁之脑
+            recipe.AddIngredient(ItemID.SkeletronMasterTrophy);       // 骷髅王
+            recipe.AddIngredient(ItemID.QueenBeeMasterTrophy);        // 蜂王
+            recipe.AddIngredient(ItemID.KingSlimeMasterTrophy);       // 史莱姆王
+            recipe.AddIngredient(ItemID.WallofFleshMasterTrophy);     // 血肉墙
+            recipe.AddIngredient(ItemID.TwinsMasterTrophy);           // 双子魔眼
+            recipe.AddIngredient(ItemID.DestroyerMasterTrophy);       // 毁灭者
+            recipe.AddIngredient(ItemID.SkeletronPrimeMasterTrophy);  // 机械骷髅王
+            recipe.AddIngredient(ItemID.PlanteraMasterTrophy);        // 世纪之花
+            recipe.AddIngredient(ItemID.GolemMasterTrophy);           // 石巨人
+            recipe.AddIngredient(ItemID.DukeFishronMasterTrophy);     // 猪龙鱼公爵
+            recipe.AddIngredient(ItemID.LunaticCultistMasterTrophy);  // 拜月教邪教徒
+            recipe.AddIngredient(ItemID.MoonLordMasterTrophy);        // 月亮领主
+            recipe.AddIngredient(ItemID.UFOMasterTrophy);             // 火星飞碟
+            recipe.AddIngredient(ItemID.FlyingDutchmanMasterTrophy);  // 荷兰飞盗船
+            recipe.AddIngredient(ItemID.MourningWoodMasterTrophy);    // 哀木
+            recipe.AddIngredient(ItemID.PumpkingMasterTrophy);        // 南瓜王
+            recipe.AddIngredient(ItemID.IceQueenMasterTrophy);        // 冰雪女王
+            recipe.AddIngredient(ItemID.EverscreamMasterTrophy);      // 常绿尖叫怪
+            recipe.AddIngredient(ItemID.SantankMasterTrophy);         // 圣诞坦克
+            recipe.AddIngredient(ItemID.DarkMageMasterTrophy);        // 暗黑魔法师
+            recipe.AddIngredient(ItemID.OgreMasterTrophy);            // 食人魔
+            recipe.AddIngredient(ItemID.BetsyMasterTrophy);           // 双足翼龙
+            recipe.AddIngredient(ItemID.FairyQueenMasterTrophy);      // 光之女皇
+            recipe.AddIngredient(ItemID.QueenSlimeMasterTrophy);      // 史莱姆皇后
+            recipe.AddIngredient(ItemID.DeerclopsMasterTrophy);       // 独眼巨鹿
 
             recipe.AddTile(TileID.LunarCraftingStation);
             recipe.Register();

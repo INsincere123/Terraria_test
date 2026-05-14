@@ -20,8 +20,10 @@ namespace TestMod.Common.GlobalProjectiles
             if (!mp.IsBerserk) return;
 
             if (projectile.penetrate != -1)
+            {
                 projectile.penetrate = -1;
                 projectile.maxPenetrate = -1; // 同步最大穿透，防止被其他逻辑重置
+            }
         }
     }
 }
