@@ -15,10 +15,10 @@ namespace TestMod.Prefixes
         // ====================【可调参数 - 慢慢测试】===================
         // ============================================================
 
-        public const float DamageMult         = 1.66f;  // 伤害倍率
+        public const float DamageMult         = 1.35f;  // 伤害倍率
         public const float KnockbackMult      = 1.15f;  // 击退倍率
         public const float UseTimeMult        = 0.30f;  // 使用时间倍率（召唤只用一次，影响召唤动画速度）
-        public const int   ArmorPenetration   = 20;     // 护甲穿透（1.4.5 召唤专属属性）
+        public const int   ArmorPenetration   = 10;     // 护甲穿透（1.4.5 召唤专属属性）
 
         public const float ReforgeValueMult   = 20.0f;
 

@@ -17,22 +17,22 @@ namespace TestMod.Prefixes
 
         // ---------- 生存类 ----------
         public const int DefenseBonus = 4;              // 防御值（整数）
-        public const float DamageReduction = 0.02f;     // 伤害减免，0.01f = 1%
-        public const int MaxLifeBonus = 20;             // 最大生命值（整数）
+        public const float DamageReduction = 0.01f;     // 伤害减免，0.01f = 1%
+        public const int MaxLifeBonus = 15;             // 最大生命值（整数）
         public const int LifeRegenBonus = 2;            // 生命回复（2 = 每秒 +1 HP）
 
         // ---------- 伤害类 ----------
-        public const float DamageBonus = 0.05f;         // 全伤害加成，0.05f = 5%
+        public const float DamageBonus = 0.04f;         // 全伤害加成，0.04f = 4%
         public const int CritChanceBonus = 4;           // 全暴击率加成（整数，单位：%）
-        public const int ArmorPenetrationBonus = 3;     // 护甲穿透（整数）
+        public const int ArmorPenetrationBonus = 2;     // 护甲穿透（整数）
 
         // ---------- 速度类 ----------
-        public const float MoveSpeedBonus = 0.05f;      // 移动速度加成，0.05f = 5%
-        public const float MeleeSpeedBonus = 0.05f;     // 近战攻速加成，0.05f = 5%
+        public const float MoveSpeedBonus = 0.04f;      // 移动速度加成，0.04f = 4%
+        public const float MeleeSpeedBonus = 0.04f;     // 近战攻速加成，0.04f = 4%
 
         // ---------- 魔法类 ----------
-        public const int MaxManaBonus = 20;             // 最大魔力加成（整数）
-        public const float ManaCostReduction = 0.05f;   // 魔力消耗减少，0.05f = 5%
+        public const int MaxManaBonus = 10;             // 最大魔力加成（整数）
+        public const float ManaCostReduction = 0.03f;   // 魔力消耗减少，0.03f = 3%
 
         // ---------- 幸运 ----------
         public const float LuckBonus = 0.1f;            // 幸运值加成

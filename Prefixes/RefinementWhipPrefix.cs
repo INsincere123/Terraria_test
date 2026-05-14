@@ -15,7 +15,7 @@ namespace TestMod.Prefixes
         // ====================【可调参数 - 慢慢测试】===================
         // ============================================================
 
-        public const float DamageMult         = 1.66f;  // 伤害倍率
+        public const float DamageMult         = 1.35f;  // 伤害倍率
         public const float KnockbackMult      = 1.20f;  // 击退倍率
         public const float UseTimeMult        = 0.80f;  // 使用时间倍率（越小挥鞭越快）
         public const float ScaleMult          = 1.60f;  // 大小倍率（影响鞭子攻击范围）

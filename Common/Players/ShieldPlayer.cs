@@ -179,12 +179,14 @@ namespace TestMod.Common.Players
         // ════════════════════════════════════════════════════════════════
         public override void ModifyHitByProjectile(Projectile proj, ref Player.HurtModifiers modifiers)
         {
-            if (CurrentShield > 0f) { _hitTimer = 0; _absorbingHit = true; }
+            _hitTimer = 0; // 受击始终重置计时器，护盾破碎后再被打也要重新等待
+            if (CurrentShield > 0f) _absorbingHit = true;
         }
 
         public override void ModifyHitByNPC(NPC npc, ref Player.HurtModifiers modifiers)
         {
-            if (CurrentShield > 0f) { _hitTimer = 0; _absorbingHit = true; }
+            _hitTimer = 0;
+            if (CurrentShield > 0f) _absorbingHit = true;
         }
 
         // ════════════════════════════════════════════════════════════════

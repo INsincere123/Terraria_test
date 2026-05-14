@@ -15,7 +15,7 @@ namespace TestMod.Prefixes
         // ====================【可调参数 - 慢慢测试】===================
         // ============================================================
 
-        public const float DamageMult         = 1.66f;  // 伤害倍率
+        public const float DamageMult         = 1.35f;  // 伤害倍率
         public const float KnockbackMult      = 1.15f;  // 击退倍率
         public const float UseTimeMult        = 0.70f;  // 使用时间倍率（悠悠球等无效会被自动忽略）
         public const int   CritBonus          = 20;     // 暴击率加成（%）

@@ -19,7 +19,7 @@ namespace TestMod.Prefixes
     public class RefinementPrefix : ModPrefix
     {
         // ── 数值调节区 ────────────────────────────────────────────────
-        public const float DamageMult         = 1.66f;  // 伤害倍率
+        public const float DamageMult         = 1.35f;  // 伤害倍率
         public const float KnockbackMult      = 1.15f;  // 击退倍率
         public const float UseTimeMult        = 0.70f;  // 使用时间倍率（< 1 = 加速）
         public const int   CritBonus          = 20;     // 暴击率加成（%）
