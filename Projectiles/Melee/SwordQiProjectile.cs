@@ -52,8 +52,8 @@ namespace TestMod.Projectiles.Melee
             Projectile.timeLeft             = SwordQiSword.QiDuration;
             Projectile.DamageType           = DamageClass.Melee;
             Projectile.usesLocalNPCImmunity = true;
-            Projectile.localNPCHitCooldown  = 2;
-            Projectile.ArmorPenetration     = 10; // 固定穿甲
+            Projectile.localNPCHitCooldown  = 2;    //占位，实际在 AI 中根据叠层数调整
+            Projectile.ArmorPenetration     = 10;   // 固定穿甲
         }
 
         public override void AI()
@@ -80,7 +80,7 @@ namespace TestMod.Projectiles.Melee
             }
 
             // ── 叠层驱动打击冷却 ─────────────────────────────────────
-            Projectile.localNPCHitCooldown = Stacks < 10 ? 20 : Stacks < 20 ? 14 : 9;
+            Projectile.localNPCHitCooldown = Stacks < 10 ? 16 : Stacks < 20 ? 9 : 4;
 
             // ── 摆动轴：垂直于玩家→目标方向 ──────────────────────────
             Projectile.ai[1] += 1f;

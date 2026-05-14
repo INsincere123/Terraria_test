@@ -2,55 +2,39 @@ using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
 using System;
-using System.Collections.Generic;
 using TestMod.Common.Players;
 using Terraria.GameContent.ItemDropRules;
 using TestMod.Items.Accessories;
 using TestMod.Items.Weapons;
+using TestMod.Common.Mechanics.ArmorShred;
 
 namespace TestMod.Common.GlobalNPCs
 {
     /// <summary>
-    /// 全局 NPC 钩子：破甲debuff层数管理 + debuff跳伤强化
+    /// 全局 NPC 钩子：破甲 debuff 应用 + 掉落修改 + debuff 跳伤强化。
+    /// 破甲层数数据由 ArmorShredSystem 管理，本类只负责 hook 响应。
     /// </summary>
     public class TestGlobalNPC : GlobalNPC
     {
-        private const int BuffID_Celled = BuffID.StardustMinionBleed; // 星尘细胞 debuff
-        private const int BuffID_Daybroken = BuffID.Daybreak; // 破晓之光 debuff
+        private const int BuffID_Celled    = BuffID.StardustMinionBleed; // 星尘细胞 debuff
+        private const int BuffID_Daybroken = BuffID.Daybreak;           // 破晓之光 debuff
 
         // ══════════════════════════════════════════════════════════════
-        //   破甲层数字典（key = npc.whoAmI，最多10层，每层-10护甲）
+        //   ModifyNPCLoot — NPC 掉落修改
         // ══════════════════════════════════════════════════════════════
-        private static readonly Dictionary<int, int> _armorShredStacks = new Dictionary<int, int>();
-
-        public static int GetArmorShredStacks(int npcWhoAmI) =>
-            _armorShredStacks.TryGetValue(npcWhoAmI, out int stacks) ? stacks : 0;
-
-        public static void AddArmorShredStack(int npcWhoAmI)
-        {
-            int current = GetArmorShredStacks(npcWhoAmI);
-            _armorShredStacks[npcWhoAmI] = Math.Min(current + 1, 10);
-        }
-
-        // ══════════════════════════════════════════════════════════════
-        //   ModifyNPCLoot — NPC掉落修改
-        // ══════════════════════════════════════════════════════════════   
         public override void ModifyNPCLoot(NPC npc, NPCLoot npcLoot)
         {
-            if (npc.type == NPCID.HallowBoss) // 光之女皇
-            {
-                npcLoot.Add(ItemDropRule.Common(ModContent.ItemType<SwordQiSword>(), 4));  // 光之女皇有1/4的概率掉落 SwordQiSword
-            }
+            // 光之女皇 1/4 概率掉落 SwordQiSword
+            if (npc.type == NPCID.HallowBoss)
+                npcLoot.Add(ItemDropRule.Common(ModContent.ItemType<SwordQiSword>(), 4));
 
+            // 独眼巨鹿 1/4 概率掉落 AshenSeal
             if (npc.type == NPCID.Deerclops)
-            {
-                npcLoot.Add(ItemDropRule.Common(ModContent.ItemType<AshenSeal>(), 4));  // 独眼巨鹿有1/4的概率掉落AshenSeal
-            }
+                npcLoot.Add(ItemDropRule.Common(ModContent.ItemType<AshenSeal>(), 4));
 
+            // 所有僵尸、恶魔眼 1/15 概率掉落阿比盖尔之花
             if (NPCID.Sets.DemonEyes[npc.type] || NPCID.Sets.Zombies[npc.type])
-            {
-                npcLoot.Add(ItemDropRule.Common(ItemID.AbigailsFlower, 15));  // 所有僵尸、恶魔眼都有1/10的概率掉落阿比盖尔之花
-            }
+                npcLoot.Add(ItemDropRule.Common(ItemID.AbigailsFlower, 15));
         }
 
         // ══════════════════════════════════════════════════════════════
@@ -58,24 +42,24 @@ namespace TestMod.Common.GlobalNPCs
         // ══════════════════════════════════════════════════════════════
         public override void ModifyIncomingHit(NPC npc, ref NPC.HitModifiers modifiers)
         {
-            int stacks = GetArmorShredStacks(npc.whoAmI);
+            int stacks = ArmorShredSystem.GetStacks(npc.whoAmI);
             if (stacks > 0)
-                modifiers.Defense.Flat -= stacks * 10;
+                modifiers.Defense.Flat -= stacks * ArmorShredSystem.DefensePerStack;
         }
 
         // ══════════════════════════════════════════════════════════════
-        //   OnKill — NPC 死亡时清理字典
+        //   OnKill — NPC 死亡时清理破甲层数记录
         // ══════════════════════════════════════════════════════════════
-        public override void OnKill(NPC npc) => _armorShredStacks.Remove(npc.whoAmI);
+        public override void OnKill(NPC npc) => ArmorShredSystem.Remove(npc.whoAmI);
 
         // ══════════════════════════════════════════════════════════════
-        //   UpdateLifeRegen — debuff跳伤强化 + 破甲debuff失效时清理层数
+        //   UpdateLifeRegen — debuff 跳伤强化 + 破甲 buff 失效时清理层数
         // ══════════════════════════════════════════════════════════════
         public override void UpdateLifeRegen(NPC npc, ref int damage)
         {
-            // 破甲debuff消失时同步清除层数
+            // 破甲 debuff 消失时同步清除层数
             if (!npc.HasBuff(ModContent.BuffType<Buffs.ArmorShredDebuff>()))
-                _armorShredStacks.Remove(npc.whoAmI);
+                ArmorShredSystem.Remove(npc.whoAmI);
 
             // 检查是否有玩家开启 godMode
             bool anyGodMode = false;

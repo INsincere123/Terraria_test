@@ -2,9 +2,9 @@ using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
 using Microsoft.Xna.Framework;
-using TestMod.Common.GlobalNPCs;
 using TestMod.Common.GlobalProjectiles;
 using TestMod.Common.Utilities;
+using TestMod.Common.Mechanics.ArmorShred;
 
 namespace TestMod.Projectiles
 {
@@ -112,8 +112,8 @@ namespace TestMod.Projectiles
             Projectile.ai[0] = 10f;
 
             // 破甲debuff叠加（最多10层）
-            if (TestGlobalNPC.GetArmorShredStacks(target.whoAmI) < 10)
-                TestGlobalNPC.AddArmorShredStack(target.whoAmI);
+            if (ArmorShredSystem.GetStacks(target.whoAmI) < ArmorShredSystem.MaxStacks)
+                ArmorShredSystem.AddStack(target.whoAmI);
 
             target.AddBuff(ModContent.BuffType<Buffs.ArmorShredDebuff>(), 180);
         }
