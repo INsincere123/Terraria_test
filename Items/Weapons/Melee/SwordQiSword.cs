@@ -5,7 +5,7 @@ using Terraria.ID;
 using Terraria.ModLoader;
 using TestMod.Projectiles.Melee;
 
-namespace TestMod.Items.Weapons
+namespace TestMod.Items.Weapons.Melee
 {
     // 剑气·裂斩 —— 命中敌人后留下剑气来回切割，重复命中叠层强化
     // 贴图复用 5005 泰拉棱镜（TerraPrism）
@@ -14,8 +14,8 @@ namespace TestMod.Items.Weapons
         public override string Texture => "Terraria/Images/Item_5005";
 
         // ── 数值调节区 ────────────────────────────────────────────────
-        public static float QiDamageRatio = 0.45f; // 剑气基础伤害 = 剑基础伤害 × 此值
-        public static int   QiDuration    = 60 * 8;   // 剑气持续帧数（60帧 = 1秒）
+        public static float QiDamageRatio = 0.55f; // 剑气基础伤害 = 剑基础伤害 × 此值
+        public static int   QiDuration    = 60 * 10;   // 剑气持续帧数（60帧 = 1秒）
         public static int   MaxStacks     = 100;   // 叠层上限
         // ─────────────────────────────────────────────────────────────
 
@@ -25,8 +25,8 @@ namespace TestMod.Items.Weapons
             Item.DamageType   = DamageClass.Melee;
             Item.width        = 40;
             Item.height       = 40;
-            Item.useTime      = 17;
-            Item.useAnimation = 17;
+            Item.useTime      = 18;
+            Item.useAnimation = 18;
             Item.useStyle     = ItemUseStyleID.Swing;
             Item.knockBack    = 7f;
             Item.crit         = 8;

@@ -12,7 +12,7 @@ namespace TestMod.Common.Players
     //  三阶段状态机（以 HasBuff 判断，tML 自动管理倒计时和显示）：
     //
     //  ① 正常阶段  HP > 20%：伤害/暴击随 HP 下降非线性增强（供武器读取）
-    //  ② 猩红暴走  HP ≤ 20%：通用加成爆发（5秒），每秒固定扣血
+    //  ② 猩红暴走  武器扣血后 HP ≤ 20%：通用加成爆发（5秒），每秒固定扣血
     //  ③ 战后虚弱  暴走结束后（10秒）：最大HP-20%，伤害在前4秒衰减至0
     //
     //  武器接入：
@@ -120,9 +120,6 @@ namespace TestMod.Common.Players
             else
             {
                 _drainAccum = 0;
-                // 正常状态：检测是否应进入暴走
-                if (HpRatio <= BerserkThreshold)
-                    StartBerserk();
             }
         }
 
@@ -152,7 +149,7 @@ namespace TestMod.Common.Players
 
         // ── 内部方法 ──────────────────────────────────────────────────
 
-        // 供武器在扣血后主动触发检测（也可不调用，PostUpdateEquips 每帧自动检测）
+        // 唯一的暴走触发入口，武器扣血后调用
         public void TriggerBerserkCheck()
         {
             if (!IsBerserk && !IsExhausted && HpRatio <= BerserkThreshold)

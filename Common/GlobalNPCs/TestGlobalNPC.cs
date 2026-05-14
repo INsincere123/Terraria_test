@@ -5,7 +5,7 @@ using System;
 using TestMod.Common.Players;
 using Terraria.GameContent.ItemDropRules;
 using TestMod.Items.Accessories;
-using TestMod.Items.Weapons;
+using TestMod.Items.Weapons.Melee;
 using TestMod.Common.Mechanics.ArmorShred;
 
 namespace TestMod.Common.GlobalNPCs

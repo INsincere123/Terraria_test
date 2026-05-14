@@ -4,7 +4,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Terraria;
 using Terraria.GameContent;
 using Terraria.ModLoader;
-using TestMod.Items.Weapons;
+using TestMod.Items.Weapons.Melee;
 
 namespace TestMod.Projectiles.Melee
 {
@@ -35,7 +35,7 @@ namespace TestMod.Projectiles.Melee
         public static float OscillationPadding = 60f;   // 在敌人半身宽基础上额外延伸的距离（px）
         public static float OscillationSpeed   = 0.24f; // 摆动速度（rad/帧），越大越快
         public static float MaxEarlyBonus      = 1.5f;  // 20层时最大伤害加成（×2.5 总计）
-        public static float MaxLateBonus       = 0.3f;  // 100层时额外加成上限
+        public static float MaxLateBonus       = 0.5f;  // 100层时额外加成上限
         // ─────────────────────────────────────────────────────────────
 
         private int Stacks => (int)Projectile.localAI[0];

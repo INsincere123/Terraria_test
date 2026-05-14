@@ -8,7 +8,7 @@ using TestMod.Common.Players;
 using TestMod.Items.DamageTypes;
 using TestMod.Projectiles.Melee;
 
-namespace TestMod.Items.Weapons
+namespace TestMod.Items.Weapons.Melee
 {
     // 血饲匕首 —— 消耗生命值投掷追踪匕首，伤害随失血比例非线性增强
     // 贴图复用 3054 暗影焰刀（ShadowFlameKnife）

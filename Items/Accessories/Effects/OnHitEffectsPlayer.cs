@@ -114,7 +114,9 @@ namespace TestMod.Items.Accessories.Effects
         //  命中分发
         // ======================================================
 
-        public override void OnHitNPCWithProj(Projectile proj, NPC target, NPC.HitInfo hit, int damageDone)
+        // 由 TestGlobalProjectile.OnHitNPC 调用，覆盖所有伤害类型（包括 TrueDamageClass）
+        // ModPlayer.OnHitNPCWithProj 对自定义 DamageClass 存在兼容性问题，改用 GlobalProjectile 路径
+        public void DispatchProjectileHit(Projectile proj, NPC target, NPC.HitInfo hit, int damageDone)
         {
             if (target.friendly || target.type == NPCID.TargetDummy)
                 return;

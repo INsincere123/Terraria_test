@@ -29,7 +29,7 @@ namespace TestMod.Projectiles.Melee
         // 追踪参数在 TestGlobalProjectile.cs 的 PostAI 分发里调整：
         //   ApplyHighTierTracking(projectile, minSpeed:10f, maxSpeed:20f, lerpAmount:0.14f, extraCorrection:0.22f)
         public const int   Lifetime        = 240;   // 最大存活帧数（4秒）
-        public const float RotationSpeed   = 0.55f; // 自转速度（rad/帧）
+        public const float RotationOffset  = MathHelper.PiOver2; // 贴图朝向修正（顺时针90°）
         public const int TrackingDelay      = 17;     // 生成后多少帧开始追踪
         // ─────────────────────────────────────────────────────────────
 
@@ -55,8 +55,7 @@ namespace TestMod.Projectiles.Melee
 
         public override void AI()
         {
-            // 自转（视觉）——追踪逻辑由 TestGlobalProjectile.PostAI 的分发统一处理
-            Projectile.rotation += RotationSpeed;
+            Projectile.rotation = Projectile.velocity.ToRotation() + RotationOffset;
             
             if (Projectile.ai[0] > 0)
             {

@@ -235,6 +235,11 @@ namespace TestMod.Common.GlobalProjectiles
             Player player = Main.player[projectile.owner];
             if (!player.active) return;
 
+            // 通过 GlobalProjectile 路径分发副手等追加攻击效果
+            // 不走 ModPlayer.OnHitNPCWithProj 是因为自定义 DamageClass 对该钩子存在兼容性问题
+            if (projectile.friendly && !projectile.hostile)
+                player.GetModPlayer<OnHitEffectsPlayer>().DispatchProjectileHit(projectile, target, hit, damageDone);
+
             // 💥 ① 冲撞型召唤物 (含蜘蛛) 命中后弹开 ── 不需 godMode
             //    防止贴在 boss 身上空转无敌帧
             if (IsContactMinion(projectile) || IsSpiderMinion(projectile.type))

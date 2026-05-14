@@ -27,6 +27,11 @@ namespace TestMod.Items.DamageTypes
         public override bool GetPrefixInheritance(DamageClass damageClass)
             => damageClass == DamageClass.Melee;
 
+        // 效果继承：继承 Throwing，使 CountsAsClass 检查可见（套装效果、饰品特效等）
+        // Throwing 在 1.4 原版无防具套装，副作用最小
+        public override bool GetEffectInheritance(DamageClass damageClass)
+            => damageClass == DamageClass.Throwing;
+
         public override bool UseStandardCritCalcs => true;
     }
 }
