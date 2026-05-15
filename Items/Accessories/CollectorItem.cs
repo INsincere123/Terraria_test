@@ -20,12 +20,12 @@ namespace TestMod.Items.Accessories
     public class CollectorItem : ModItem
     {
         // 开发期占位贴图；替换为自定义 PNG 后删除此行
-        public override string Texture => "Terraria/Images/Item_" + ItemID.Diamond;
+        //public override string Texture => "Terraria/Images/Item_" + ItemID.Diamond;
 
         // ── 数值调节区 ────────────────────────────────────────────────
         public const int PreHardmodeAP  = 5;  // 困难模式前护甲穿透
         public const int HardmodeAP     = 10; // 困难模式护甲穿透
-        public const int HardmodeCrit   = 8;  // 困难模式暴击率加成（%）
+        public const int HardmodeCrit   = 7;  // 困难模式暴击率加成（%）
         // ─────────────────────────────────────────────────────────────
 
         public override void SetDefaults()

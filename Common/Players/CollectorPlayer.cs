@@ -10,7 +10,7 @@ namespace TestMod.Common.Players
     /// 收集者饰品玩家钩子。
     ///
     /// 处决逻辑（在 OnHitNPC 里检查击中后血量，不依赖 SetInstantKill 传播链）：
-    ///   每次命中 Boss 后，若 Boss 剩余血量低于 5%，立即触发处决效果：
+    ///   每次命中 Boss 后，若 Boss 剩余血量低于 7%，立即触发处决效果：
     ///   播放音效、显示视觉冲击数字，若 Boss 仍存活则调 StrikeInstantKill()。
     ///   用 _lastExecutedWhoAmI 防止同帧多发弹幕重复触发。
     ///
@@ -19,7 +19,7 @@ namespace TestMod.Common.Players
     public class CollectorPlayer : ModPlayer
     {
         // ── 数值调节区 ────────────────────────────────────────────────
-        public const float ExecuteThreshold = 0.25f; // Boss 血量低于此比例时处决（5%）
+        public const float ExecuteThreshold = 0.07f; // Boss 血量低于此比例时处决（7%）
         // ─────────────────────────────────────────────────────────────
 
         private static readonly Microsoft.Xna.Framework.Color ExecuteColor
@@ -62,7 +62,7 @@ namespace TestMod.Common.Players
 
             // 击中后血量比例（负值表示本次命中已将 Boss 打死）
             float lifeRatio = (float)target.life / target.lifeMax;
-            if (lifeRatio >= ExecuteThreshold) return; // 仍高于 5%，不触发
+            if (lifeRatio >= ExecuteThreshold) return; // 仍高于 7%，不触发
 
             _lastExecutedWhoAmI = target.whoAmI;
 
@@ -74,7 +74,7 @@ namespace TestMod.Common.Players
             // 处决音效（MoonLord = NPC_Killed_10，SoundType.Sound，MaxInstances=0，全局播放）
             SoundEngine.PlaySound(SoundID.MoonLord, null);
 
-            // 若 Boss 被本次命中打至低于 5% 但尚未死亡（伤害不足以杀死），补一刀确保死亡
+            // 若 Boss 被本次命中打至低于 7% 但尚未死亡（伤害不足以杀死），补一刀确保死亡
             if (target.active && target.life > 0)
                 target.StrikeInstantKill();
         }
