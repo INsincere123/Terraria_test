@@ -33,6 +33,25 @@ Items: {
 		Tooltip: ""
 	}
 
+	JuLingHat: {
+		DisplayName: 聚灵法冠
+		Tooltip:
+			'''
+			[c/6495ED:+10%] 魔法伤害  [c/6495ED:+10%] 魔法暴击
+			[c/6495ED:+80] 最大法力值  [c/6495ED:-10%] 法力消耗
+			'''
+	}
+
+	JuLingRobe: {
+		DisplayName: 聚灵法衣
+		Tooltip: "[c/6495ED:+7%] 魔法伤害  [c/6495ED:+7%] 魔法暴击"
+	}
+
+	JuLingLeggings: {
+		DisplayName: 聚灵法绔
+		Tooltip: "[c/6495ED:+5%] 魔法伤害  [c/6495ED:+5%] 移动速度"
+	}
+
 	AntaresBreastplate: {
 		DisplayName: Antares Breastplate
 		Tooltip: ""
@@ -300,6 +319,16 @@ Buffs: {
 		Description: "[c/FF8C00:全属性伤害提升 10%]"
 	}
 
+	JuLingActiveBuff: {
+		DisplayName: 灵力凝聚
+		Description: 魔法伤害与暴击大幅提升，法力消耗翻倍；暴击命中时汲取生命
+	}
+
+	JuLingCooldownBuff: {
+		DisplayName: 灵力冷却
+		Description: 聚灵主动技能冷却中
+	}
+
 	BerserkBladeBuff: {
 		DisplayName: 狂暴
 		Description: 真近战命中持续积累，提升攻速；满层时附带真实伤害
@@ -334,6 +363,7 @@ Keybinds: {
 	PreciseFlightSlowdown.DisplayName: 减速以精确走位
 	PreciseFlightToggle.DisplayName: 精确飞行
 	"Activate Time Stop.DisplayName": 时停
+	"JuLing Ability.DisplayName": 聚灵·灵力凝聚
 	"Omniguardian Blink.DisplayName": 短冲刺
 }
 

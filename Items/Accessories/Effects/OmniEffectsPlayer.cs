@@ -31,6 +31,7 @@ namespace TestMod.Items.Accessories.Effects
         public bool EnableDRShield;            // 启用伤害减免护盾
         public bool EnableReflectShield;       // 启用反射护盾
         public bool EnablePlayerSize;          // 启用体型缩放
+        public bool EnableLifesteal;           // 启用吸血
 
         // ===== 内部计时器 / 持久状态 =====
         public int ExtraDodgeCooldown;        // 自定义额外闪避的冷却 tick
@@ -50,6 +51,11 @@ namespace TestMod.Items.Accessories.Effects
         // ===== 体型缩放配置（每帧由 Apply 写入）=====
         public PlayerSizeConfig PlayerSizeConfig;
         public float            PlayerSizeCurrentScale; // PostUpdate 计算后供 TransformDrawData 读取
+
+        // ===== 吸血配置（每帧由 Apply 写入）=====
+        public LifestealConfig LifestealConfig;
+        public int             LifestealCooldown;      // 两次触发间冷却（即使卸下装备也继续倒数）
+        public int             LifestealPendingRegen;  // LifeRegen 模式的挂起治疗量（平滑释放）
 
         // ===== 配置参数 (由饰品在 UpdateAccessory 时写入, 让模块知道用什么数值) =====
         public float FastFall_MaxFallSpeed;
@@ -84,6 +90,7 @@ namespace TestMod.Items.Accessories.Effects
             EnableReflectShield  = false;
             EnablePlayerSize     = false;
             PlayerSizeCurrentScale = 1f;
+            EnableLifesteal      = false;
 
             // 药水加成每帧重置 (脱装备后立即失效)
             Potion_HealFlatBonus = 0;
@@ -102,6 +109,9 @@ namespace TestMod.Items.Accessories.Effects
 
             // 卸下装备时还原 width/height（width 不会被原版每帧重置，需手动归位）
             PlayerSizeEffect.RestoreHitbox(Player, this);
+
+            // 吸血冷却持续倒数（脱装备后仍继续，保证重新穿上时不立即触发）
+            if (LifestealCooldown > 0) LifestealCooldown--;
         }
 
         // 所有绘制层填充完毕后缩放视觉，与碰撞箱 scale 保持一致
@@ -126,6 +136,7 @@ namespace TestMod.Items.Accessories.Effects
         public override void UpdateLifeRegen()
         {
             SurvivalEffect.UpdateLifeRegen(Player, this);
+            LifestealEffect.DrainPendingRegen(Player, this);
         }
 
         public override void PostUpdateMiscEffects()
@@ -136,6 +147,16 @@ namespace TestMod.Items.Accessories.Effects
             ReflectShieldEffect.UpdateMiscEffects(Player, this);
             // 体型缩放：在 TileCollision 之后、物理结算完毕后修改碰撞箱（灾厄模式）
             PlayerSizeEffect.UpdateHitbox(Player, this);
+        }
+
+        public override void OnHitNPCWithItem(Item item, NPC target, NPC.HitInfo hit, int damageDone)
+        {
+            LifestealEffect.TryHeal(Player, this, hit, damageDone, fromProjectile: false);
+        }
+
+        public override void OnHitNPCWithProj(Projectile proj, NPC target, NPC.HitInfo hit, int damageDone)
+        {
+            LifestealEffect.TryHeal(Player, this, hit, damageDone, fromProjectile: true);
         }
 
         public override bool FreeDodge(Player.HurtInfo info)

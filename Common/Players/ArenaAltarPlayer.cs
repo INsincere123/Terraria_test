@@ -1,15 +1,16 @@
-using System;
 using Terraria;
 using Terraria.ModLoader;
 using TestMod.Buffs;
+using TestMod.Items.Accessories.Effects;
 
 namespace TestMod.Common.Players
 {
     /// <summary>
     /// 黄泉馈灵塔玩家钩子。
     /// 职责：
-    ///   · ResetEffects    — 「杀意」buff 激活时叠加伤害加成
-    ///   · OnHitNPC / WithProj — 「汲命」buff 激活时对命中造成吸血治疗
+    ///   · ResetEffects        — 「杀意」buff 激活时叠加伤害加成
+    ///   · PostUpdateMiscEffects — 「汲命」buff 激活时注册吸血模块
+    ///     （在此而非 ResetEffects 中注册，避免 ModPlayer 执行顺序导致 EnableLifesteal 被重置）
     /// </summary>
     public class ArenaAltarPlayer : ModPlayer
     {
@@ -19,9 +20,14 @@ namespace TestMod.Common.Players
         public const int   LifestealHealCap      = 35;    // 汲命：单次命中回血上限（防秒杀小怪爆血）
         // ─────────────────────────────────────────────────────────────
 
+        private static readonly LifestealConfig HuangQuanLifestealConfig = LifestealConfig.Default with
+        {
+            HitDamageRatio = LifestealRate,
+            HealCap        = LifestealHealCap,
+        };
+
         // ██████████████████████████████████████████████████████████████
         //   ResetEffects — 每帧调用，杀意 buff 存在时施加伤害加成
-        //   Player.GetDamage 加算会影响所有伤害类型（Generic 全覆盖）
         // ██████████████████████████████████████████████████████████████
         public override void ResetEffects()
         {
@@ -30,31 +36,13 @@ namespace TestMod.Common.Players
         }
 
         // ██████████████████████████████████████████████████████████████
-        //   OnHitNPC — 近战 / 直接命中时的汲命结算
+        //   PostUpdateMiscEffects — 汲命 buff 存在时注册吸血效果
+        //   OnHitNPCWithItem / OnHitNPCWithProj 分发由 OmniEffectsPlayer 统一处理
         // ██████████████████████████████████████████████████████████████
-        public override void OnHitNPC(NPC target, NPC.HitInfo hit, int damageDone)
+        public override void PostUpdateMiscEffects()
         {
-            TryLifesteal(damageDone);
-        }
-
-        // ██████████████████████████████████████████████████████████████
-        //   OnHitNPCWithProj — 弹射物命中时的汲命结算（覆盖召唤物、子弹等）
-        // ██████████████████████████████████████████████████████████████
-        public override void OnHitNPCWithProj(Projectile proj, NPC target,
-            NPC.HitInfo hit, int damageDone)
-        {
-            TryLifesteal(damageDone);
-        }
-
-        // ── 汲命核心逻辑 ─────────────────────────────────────────────
-        private void TryLifesteal(int damageDone)
-        {
-            if (!Player.HasBuff(ModContent.BuffType<HuangQuanLifestealBuff>())) return;
-
-            int healAmount = (int)(damageDone * LifestealRate);
-            healAmount     = Math.Min(healAmount, LifestealHealCap); // 单次上限
-            if (healAmount > 0)
-                Player.Heal(healAmount); // 直接治疗，绕开原版血池限制
+            if (Player.HasBuff(ModContent.BuffType<HuangQuanLifestealBuff>()))
+                LifestealEffect.Apply(Player, HuangQuanLifestealConfig);
         }
     }
 }
