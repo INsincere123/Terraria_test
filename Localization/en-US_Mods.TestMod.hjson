@@ -100,6 +100,11 @@ Items: {
 			'''
 	}
 
+	FocusOrb: {
+		DisplayName: 专注宝珠
+		Tooltip: "[c/6495ED:+8%] 全属性伤害  [c/6495ED:+6%] 暴击率  [c/6495ED:+5] 护甲穿透"
+	}
+
 	BerserkBlade: {
 		DisplayName: 狂暴之刃
 		Tooltip:
@@ -329,6 +334,11 @@ Buffs: {
 		Description: 聚灵主动技能冷却中
 	}
 
+	FocusOrbCooldownBuff: {
+		DisplayName: 专注冷却
+		Description: 专注宝珠主动技能冷却中
+	}
+
 	BerserkBladeBuff: {
 		DisplayName: 狂暴
 		Description: 真近战命中持续积累，提升攻速；满层时附带真实伤害
@@ -364,6 +374,7 @@ Keybinds: {
 	PreciseFlightToggle.DisplayName: 精确飞行
 	"Activate Time Stop.DisplayName": 时停
 	"JuLing Ability.DisplayName": 聚灵·灵力凝聚
+	"FocusOrb Ability.DisplayName": 专注·凝神聚气
 	"Omniguardian Blink.DisplayName": 短冲刺
 }
 

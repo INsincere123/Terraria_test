@@ -1,3 +1,4 @@
+using System;
 using Terraria;
 using Terraria.DataStructures;
 using Terraria.ModLoader;
@@ -56,6 +57,13 @@ namespace TestMod.Items.Accessories.Effects
         public LifestealConfig LifestealConfig;
         public int             LifestealCooldown;      // 两次触发间冷却（即使卸下装备也继续倒数）
         public int             LifestealPendingRegen;  // LifeRegen 模式的挂起治疗量（平滑释放）
+
+        // ===== 强制暴击/追踪状态（由 ForcedCritEffect.Apply 写入，按命中次数消耗）=====
+        // 不在 ResetEffects 中重置——这些是跨帧持久计数，仅在激活时覆盖
+        public int            ForcedCritRemaining;    // 剩余强制暴击次数
+        public int            ForcedHomingRemaining;  // 剩余强制追踪弹幕次数（由弹幕 OnSpawn 消耗）
+        public float          ForcedCritBoost;        // 施加的暴击率加成（用于还原自然暴击率）
+        public ExtraHitConfig ForcedCritExtraHit;     // 本该暴击时触发的额外伤害配置
 
         // ===== 配置参数 (由饰品在 UpdateAccessory 时写入, 让模块知道用什么数值) =====
         public float FastFall_MaxFallSpeed;
@@ -123,6 +131,13 @@ namespace TestMod.Items.Accessories.Effects
 
         // ===== 钩子分发 ===================================================
 
+        public override void PostUpdateEquips()
+        {
+            // 强制暴击：有剩余计数时施加暴击率加成，使下一次命中必然暴击
+            if (ForcedCritRemaining > 0)
+                Player.GetCritChance(DamageClass.Generic) += ForcedCritBoost;
+        }
+
         public override void PostUpdateRunSpeeds()
         {
             FastFallEffect.UpdateRunSpeeds(Player, this);
@@ -152,11 +167,38 @@ namespace TestMod.Items.Accessories.Effects
         public override void OnHitNPCWithItem(Item item, NPC target, NPC.HitInfo hit, int damageDone)
         {
             LifestealEffect.TryHeal(Player, this, hit, damageDone, fromProjectile: false);
+
+            if (ForcedCritRemaining > 0)
+            {
+                ForcedCritRemaining--;
+                TryForcedCritExtraHit(item.DamageType, target, damageDone);
+            }
         }
 
         public override void OnHitNPCWithProj(Projectile proj, NPC target, NPC.HitInfo hit, int damageDone)
         {
             LifestealEffect.TryHeal(Player, this, hit, damageDone, fromProjectile: true);
+
+            if (ForcedCritRemaining > 0)
+            {
+                ForcedCritRemaining--;
+                TryForcedCritExtraHit(proj.DamageType, target, damageDone);
+            }
+        }
+
+        // 独立判定"本该暴击"概率，满足时触发额外伤害
+        private void TryForcedCritExtraHit(DamageClass dmgType, NPC target, int damageDone)
+        {
+            // GetCritChance 只返回该职业自身的 stat，不含父类。
+            // 有效暴击率 = GetCritChance(dmgType) + GetCritChance(Generic)（父类继承叠加）
+            // 自然暴击率 = 有效暴击率 - ForcedCritBoost（减去我们加在 Generic 上的强制量）
+            float naturalCrit = MathF.Max(0f,
+                Player.GetCritChance(dmgType) + Player.GetCritChance(DamageClass.Generic) - ForcedCritBoost);
+
+            // 自然暴击率超 100% 时 rand*100 始终 <= naturalCrit，触发概率 100%（正确行为）
+            if (naturalCrit <= Main.rand.NextFloat() * 100f) return;
+
+            ExtraHitEffect.Strike(Player, target, ForcedCritExtraHit, damageDone);
         }
 
         public override bool FreeDodge(Player.HurtInfo info)

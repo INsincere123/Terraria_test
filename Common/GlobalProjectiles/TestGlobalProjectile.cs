@@ -173,6 +173,9 @@ namespace TestMod.Common.GlobalProjectiles
 
             // 时缓：PostAI 末尾缩放速度（AI 跑完后再缩，防止被覆盖）
             ApplyTimeSlowToProjectile(projectile);
+
+            // 强制追踪：最后应用，覆盖其他速度修改
+            ForcedHoming_Update(projectile);
         }
 
         // ══════════════════════════════════════════════════════════════
