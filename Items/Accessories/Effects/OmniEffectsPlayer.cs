@@ -1,4 +1,5 @@
 using Terraria;
+using Terraria.DataStructures;
 using Terraria.ModLoader;
 
 namespace TestMod.Items.Accessories.Effects
@@ -29,6 +30,7 @@ namespace TestMod.Items.Accessories.Effects
         public bool EnableGrapple;             // 启用红木魔石钩爪效果
         public bool EnableDRShield;            // 启用伤害减免护盾
         public bool EnableReflectShield;       // 启用反射护盾
+        public bool EnablePlayerSize;          // 启用体型缩放
 
         // ===== 内部计时器 / 持久状态 =====
         public int ExtraDodgeCooldown;        // 自定义额外闪避的冷却 tick
@@ -42,8 +44,12 @@ namespace TestMod.Items.Accessories.Effects
         public int   ReflectShieldRespawnCooldown;
 
         // ===== 护盾配置参数（每帧由 Apply 写入）=====
-        public DRShieldConfig     DRShieldConfig;
+        public DRShieldConfig      DRShieldConfig;
         public ReflectShieldConfig ReflectShieldConfig;
+
+        // ===== 体型缩放配置（每帧由 Apply 写入）=====
+        public PlayerSizeConfig PlayerSizeConfig;
+        public float            PlayerSizeCurrentScale; // PostUpdate 计算后供 TransformDrawData 读取
 
         // ===== 配置参数 (由饰品在 UpdateAccessory 时写入, 让模块知道用什么数值) =====
         public float FastFall_MaxFallSpeed;
@@ -76,6 +82,8 @@ namespace TestMod.Items.Accessories.Effects
             EnableGrapple        = false;
             EnableDRShield       = false;
             EnableReflectShield  = false;
+            EnablePlayerSize     = false;
+            PlayerSizeCurrentScale = 1f;
 
             // 药水加成每帧重置 (脱装备后立即失效)
             Potion_HealFlatBonus = 0;
@@ -91,6 +99,16 @@ namespace TestMod.Items.Accessories.Effects
                 DRShieldRespawnCooldown--;
             if (ReflectShieldRespawnCooldown > 0)
                 ReflectShieldRespawnCooldown--;
+
+            // 卸下装备时还原 width/height（width 不会被原版每帧重置，需手动归位）
+            PlayerSizeEffect.RestoreHitbox(Player, this);
+        }
+
+        // 所有绘制层填充完毕后缩放视觉，与碰撞箱 scale 保持一致
+        public override void TransformDrawData(ref PlayerDrawSet drawInfo)
+        {
+            if (EnablePlayerSize)
+                PlayerSizeEffect.ApplyDrawScale(ref drawInfo, PlayerSizeCurrentScale);
         }
 
         // ===== 钩子分发 ===================================================
@@ -116,6 +134,8 @@ namespace TestMod.Items.Accessories.Effects
             GrappleEffect.UpdateMiscEffects(Player, this);
             DRShieldEffect.UpdateMiscEffects(Player, this);
             ReflectShieldEffect.UpdateMiscEffects(Player, this);
+            // 体型缩放：在 TileCollision 之后、物理结算完毕后修改碰撞箱（灾厄模式）
+            PlayerSizeEffect.UpdateHitbox(Player, this);
         }
 
         public override bool FreeDodge(Player.HurtInfo info)
