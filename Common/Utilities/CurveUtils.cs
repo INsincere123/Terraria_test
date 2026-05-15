@@ -43,6 +43,36 @@ namespace TestMod.Common.Utilities
         }
 
         // ══════════════════════════════════════════════════════════════
+        //   Boss 奖励曲线
+        // ══════════════════════════════════════════════════════════════
+
+        /// <summary>
+        /// 根据 Boss 最大生命值计算铂金奖励（对数曲线）。
+        ///
+        /// 映射关系：
+        ///   HP ≤ 2,000      → 3 铂金（下限）
+        ///   HP ≥ 1,000,000  → 60 铂金（上限）
+        ///   中间段按对数插值：先快后慢，自动兼容各模组 Boss
+        ///
+        /// 返回值保留两位小数：
+        ///   整数部分 = 铂金币数量
+        ///   小数×100  = 金币数量（如 15.73 → 15 铂 + 73 金）
+        /// </summary>
+        public static float ComputeBossRewardPlatinum(int lifeMax)
+        {
+            const int   MinHp     = 2_000;
+            const int   MaxHp     = 1_000_000;
+            const float MinReward = 3f;
+            const float MaxReward = 60f;
+
+            int   hp = Math.Clamp(lifeMax, MinHp, MaxHp);
+            float t  = MathF.Log((float)hp / MinHp) / MathF.Log((float)MaxHp / MinHp); // [0,1]
+            float raw = MinReward + (MaxReward - MinReward) * t;
+
+            return (float)Math.Round(raw, 2); // 保留两位小数
+        }
+
+        // ══════════════════════════════════════════════════════════════
         //   加权随机
         // ══════════════════════════════════════════════════════════════
 

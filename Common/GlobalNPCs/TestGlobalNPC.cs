@@ -8,6 +8,7 @@ using TestMod.Items.Accessories;
 using TestMod.Items.Weapons.Melee;
 using TestMod.Common.Mechanics.ArmorShred;
 using TestMod.Common.Systems;
+using TestMod.Common.Utilities;
 
 namespace TestMod.Common.GlobalNPCs
 {
@@ -53,8 +54,11 @@ namespace TestMod.Common.GlobalNPCs
         // ══════════════════════════════════════════════════════════════
         public override void OnKill(NPC npc)
         {
-            // 破甲层数清理
+            // 破甲层数清理（始终执行）
             ArmorShredSystem.Remove(npc.whoAmI);
+
+            // 收集者系统：与祭坛无关，必须在祭坛范围检查之前调用（避免被提前 return 拦截）
+            CollectorSystem.OnNpcKilled(npc);
 
             // 黄泉馈灵塔：仅在激活范围内（范围内有 Boss）才处理
             if (!ArenaAltarSystem.IsInActiveRange(npc.Center)) return;
