@@ -9,6 +9,7 @@ using TestMod.Items.Weapons.Melee;
 using TestMod.Common.Mechanics.ArmorShred;
 using TestMod.Common.Systems;
 using TestMod.Common.Utilities;
+using TestMod.Items.DamageTypes;
 
 namespace TestMod.Common.GlobalNPCs
 {
@@ -44,9 +45,15 @@ namespace TestMod.Common.GlobalNPCs
         // ══════════════════════════════════════════════════════════════
         public override void ModifyIncomingHit(NPC npc, ref NPC.HitModifiers modifiers)
         {
+            // 破甲层数减少防御
             int stacks = ArmorShredSystem.GetStacks(npc.whoAmI);
             if (stacks > 0)
                 modifiers.Defense.Flat -= stacks * ArmorShredSystem.DefensePerStack;
+
+            // 真实伤害：100% 穿甲，对所有来源生效（含 SimpleStrikeNPC）
+            // GlobalItem.ModifyHitNPC 只覆盖物品直接命中，此处补全其余路径
+            if (modifiers.DamageType == TrueDamageClass.Instance)
+                modifiers.ScalingArmorPenetration += 1f;
         }
 
         // ══════════════════════════════════════════════════════════════

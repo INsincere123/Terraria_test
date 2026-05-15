@@ -81,6 +81,18 @@ Items: {
 			'''
 	}
 
+	BerserkBlade: {
+		DisplayName: 狂暴之刃
+		Tooltip:
+			'''
+			命中提供 [c/FF8C00:狂暴] 叠层，持续 [c/FFD700:2 秒]
+			每层：近战攻速 [c/6495ED:+4%]（上限 [c/6495ED:+40%]）
+			[c/FF4500:满 10 层]时，额外造成 [c/FF4500:100 + 17% 触发伤害] 的真实伤害
+			[c/AAAAAA:物品直接命中：每次叠 1 层，立即触发]
+			[c/AAAAAA:近战弹幕命中：每 5 次叠 1 层；满层后每 3 次触发一次]
+			'''
+	}
+
 	AshenSeal: {
 		Tooltip: 每点防御力增加1%伤害，但将防御力清零
 		DisplayName: 焚骸圣印
@@ -286,6 +298,11 @@ Buffs: {
 	HuangQuanDamageBoostBuff: {
 		DisplayName: 黄泉·杀意
 		Description: "[c/FF8C00:全属性伤害提升 10%]"
+	}
+
+	BerserkBladeBuff: {
+		DisplayName: 狂暴
+		Description: 真近战命中持续积累，提升攻速；满层时附带真实伤害
 	}
 
 	SuperEnergyShieldCooldownBuff: {

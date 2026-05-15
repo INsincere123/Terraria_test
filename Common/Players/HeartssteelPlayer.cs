@@ -4,6 +4,7 @@ using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
 using Terraria.ModLoader.IO;
+using TestMod.Items.Accessories.Effects;
 
 namespace TestMod.Common.Players
 {
@@ -39,6 +40,19 @@ namespace TestMod.Common.Players
 
         // 防止 SimpleStrikeNPC 触发 OnHitNPC 时递归进入 TryTriggerProc
         private bool _procActive;
+
+        // 额外伤害配置：固定 240 + 88% 最大生命，跟随武器类型，独立暴击
+        private static readonly ExtraHitConfig ProcHitConfig = new()
+        {
+            FlatDamage          = BonusDmgFlat,
+            PlayerStatRatio     = BonusDmgHpRatio,
+            StatType            = PlayerStatType.MaxHP,
+            FollowWeapon        = true,
+            UseCrit             = true,
+            Knockback           = 0f,
+            NoPlayerInteraction = false,
+            CombatTextColor     = new Color(180, 50, 255),  // 紫色伤害数字
+        };
 
         public override void ResetEffects()
         {
@@ -106,32 +120,11 @@ namespace TestMod.Common.Players
             if (_procActive || !HasHeartsteel || !IsCharged) return;
             if (!target.active || !target.boss || target.life <= 0) return;
 
-            _procActive   = true;
-            IsCharged     = false;
-            ChargeTimer   = 0;
+            _procActive = true;
+            IsCharged   = false;
+            ChargeTimer = 0;
 
-            // 根据当前持握武器决定伤害类型（非武器/空手默认近战）
-            Item heldItem = Player.HeldItem;
-            DamageClass dmgClass = (heldItem.IsAir || heldItem.damage <= 0)
-                ? DamageClass.Melee
-                : (heldItem.DamageType ?? DamageClass.Melee);
-
-            // 基础伤害 × 玩家当前伤害加成
-            int baseDamage    = (int)(BonusDmgFlat + Player.statLifeMax2 * BonusDmgHpRatio);
-            int scaledDamage  = (int)Player.GetDamage(dmgClass).ApplyTo(baseDamage);
-
-            // 使用玩家暴击率做独立判定
-            bool crit      = Player.GetCritChance(dmgClass) > Main.rand.NextFloat() * 100f;
-            int  direction = target.Center.X > Player.Center.X ? 1 : -1;
-
-            // 独立一击：走 NPC 防御计算，触发 OnHit 系列钩子（含其它 mod 效果）
-            // noPlayerInteraction:false → 多人模式下自动同步伤害包
-            int damageDone = target.SimpleStrikeNPC(
-                scaledDamage, direction,
-                crit:               crit,
-                knockBack:          0f,
-                damageType:         dmgClass,
-                noPlayerInteraction: false);
+            int damageDone = ExtraHitEffect.Strike(Player, target, ProcHitConfig);
 
             // 永久叠层：基于实际打出的伤害（已扣除 NPC 防御）
             if (damageDone > 0 && BonusMaxHP < MaxBonusHP)

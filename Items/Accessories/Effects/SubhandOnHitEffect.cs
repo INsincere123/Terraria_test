@@ -10,6 +10,7 @@ namespace TestMod.Items.Accessories.Effects
     /// "副手"饰品的追加攻击效果。
     /// 触发时：在玩家头顶生成（或复用）炮台弹幕 <see cref="SubhandCannon"/>，
     /// 并从炮台位置向目标发射一颗 MagnetSphereBolt。
+    /// 伤害数值通过 ExtraHitEffect.Compute 计算，投送仍由弹幕负责。
     /// </summary>
     public class SubhandOnHitEffect : OnHitEffect
     {
@@ -18,13 +19,20 @@ namespace TestMod.Items.Accessories.Effects
         // ======================================================
 
         /// <summary>
-        /// 穿透弹幕触发时的全局冷却帧数（约 0.5 秒）。
+        /// 穿透弹幕触发时的全局冷却帧数。
         /// 非穿透命中不受此限制。
         /// </summary>
-        private const int GLOBAL_CD = 30;
+        private const int GLOBAL_CD = 20;
 
         /// <summary>追加攻击伤害为触发伤害的百分比（1.0 = 100%）。</summary>
         private const float DAMAGE_RATIO = 0.19f;
+
+        // 伤害配置：触发伤害的 19%，无属性加成（由弹幕自身应用 NPC 防御）
+        private static readonly ExtraHitConfig DamageConfig = new()
+        {
+            HitDamageRatio = DAMAGE_RATIO,
+            StatType       = PlayerStatType.None,
+        };
 
         // ======================================================
         //  构造
@@ -49,7 +57,7 @@ namespace TestMod.Items.Accessories.Effects
                 return;
 
             SubhandCannon cannon = FindOrSpawnCannon(player);
-            cannon?.FireAt(target, (int)(damageDone * DAMAGE_RATIO));
+            cannon?.FireAt(target, ExtraHitEffect.Compute(player, DamageConfig, damageDone));
         }
 
         // ======================================================
