@@ -98,7 +98,9 @@ namespace TestMod.Items.Accessories
 
         public override void SetDefaults()
         {
-            base.SetDefaults();
+            Item.width     = 30;
+            Item.height    = 30;
+            Item.accessory = true;
             Item.value = Item.sellPrice(platinum: 100);
             Item.rare  = ModContent.RarityType<AntaresRarity>();
             if (CalamityCompatSystem.CalamityLoaded)
