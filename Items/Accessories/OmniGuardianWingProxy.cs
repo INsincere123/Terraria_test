@@ -36,7 +36,7 @@ namespace TestMod.Items.Accessories
             ArmorIDs.Wing.Sets.Stats[WingSlot] = new WingStats(
                 flyTime:                     3600,
                 flySpeedOverride:            20f,
-                hasHoldDownHoverFeatures:    true,
+                hasHoldDownHoverFeatures:    true,   // OmniGuardian 开悬浮
                 hoverFlySpeedOverride:       7.5f,
                 hoverAccelerationMultiplier: 1.5f
             );

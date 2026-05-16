@@ -55,21 +55,77 @@ namespace TestMod.Items.Accessories
 
     public struct WingFlightConfig
     {
-        public int   FlyTime;                // 翅膀飞行时间上限 (开 InfiniteFlight 后实际无限)
-        public float HorizontalSpeed;        // 水平飞行速度
-        public float HorizontalAccelMult;    // 水平飞行加速度倍率
+        // ── 基础飞行 ─────────────────────────────────────────────────────────────
+
+        // 翅膀飞行时间上限，单位 tick（60 tick = 1 秒）。
+        // wingTime 每帧 -1，归零后无法继续飞行直到落地回满。
+        // InfiniteFlight = true 时 wingTime 不再递减，此值无实际意义。
+        // 参考：月光仙翼 1800 / 女皇之翼 1800 / 火神之翼 1500
+        public int   FlyTime;
+
+        // 飞行时的水平最大速度（覆写 vanilla 默认值 Player.accRunSpeed）。
+        // 参考：幽灵翅膀 6.5 / 猪龙鱼翅膀 9 / 女皇之翼 9.5 / 天界星盘 8
+        public float HorizontalSpeed;
+
+        // 水平加速度倍率，乘在 vanilla 传入的 acceleration 上。
+        // 1.0 = 不改变（默认加速度）；> 1 = 加速更快起步；0 = 永远无法加速到最高速（不要设 0）。
+        public float HorizontalAccelMult;
+
+        // 正在下坠（velocity.Y > 0）时按跳跃键的向上冲力。
+        // 值越高越能"翻盘"下落，强行转为上升。
+        // 参考：大多数 vanilla 翅膀 0.85 / 火神之翼 1.0
         public float AscentWhenFalling;
+
+        // 已经在上升（velocity.Y < 0）时的额外持续向上加速量。
+        // 仅在当前上升速度 < MaxAscentMult × 最大上升速 × MaxCanAscendMult 时生效。
+        // 参考：大多数 vanilla 翅膀 0.1
         public float AscentWhenRising;
+
+        // 控制 AscentWhenRising 何时停止生效的阈值比例。
+        // 条件：currentUpSpeed / maxUpSpeed < MaxCanAscendMult 时才继续施加 AscentWhenRising。
+        // 值越高 = 越接近极速时仍能加速（"顶满"效果更强）。
+        // 参考：大多数 vanilla 翅膀 0.5
         public float MaxCanAscendMult;
+
+        // 最大上升速度倍率，直接乘在 vanilla 内部计算的上升速度上限上。
+        // 参考：大多数 vanilla 翅膀 1.5 / 喷气背包级别 3+
         public float MaxAscentMult;
+
+        // 每帧恒定向上施加的微小推力，即使不按任何键也会生效。
+        // 0 = 纯滑翔（靠 AscentWhenFalling 反向）；> 0 = 轻微上漂感。
+        // 参考：大多数 vanilla 翅膀 0.1
         public float ConstantAscend;
 
-        public float HoverHorizontalSpeed;   // 悬浮时水平速度 (按下键, vanilla 提供的悬浮)
-        public float HoverAccelMult;
-        public float UpBoostMultiplier;      // 按上键加速倍率 (1.0f = 不加速)
+        // ── 悬浮（需要 EnableHover = true）────────────────────────────────────
 
-        public bool  InfiniteFlight;         // empressBrooch 翱翔之证
-        public bool  EnablePerfectHover;     // 完美悬浮 (按下+跳跃 视觉静止)
+        // 是否启用按下键悬浮功能（vanilla WingStats.hasHoldDownHoverFeatures）。
+        // false（默认）= 按下键不进入悬浮，HoverHorizontalSpeed / HoverAccelMult 无需填写。
+        // true = 按住下键时进入悬浮模式，水平移动参数由下方两个字段控制。
+        public bool  EnableHover;
+
+        // 悬浮模式下的水平最大速度（仅 EnableHover = true 时有效）。
+        // 参考：女皇之翼 6.25
+        public float HoverHorizontalSpeed;
+
+        // 悬浮模式下的水平加速度倍率（仅 EnableHover = true 时有效）。
+        // 参考：女皇之翼 1.5 / 普通翅膀 1.0
+        public float HoverAccelMult;
+
+        // ── 特殊飞行行为 ──────────────────────────────────────────────────────
+
+        // 按上键 + 跳跃键时，对 AscentWhenRising / MaxAscentMult / ConstantAscend 同乘此倍率。
+        // 触发条件：> 1f；默认 0（struct 默认值）等同于不触发，无需显式写 1f。
+        // 参考：女皇之翼 1.5 / 喷气背包级 5+
+        public float UpBoostMultiplier;
+
+        // 设为 true 时赋予 player.empressBrooch，飞行不消耗 wingTime（御翼徽章效果）。
+        // bool 默认 false，不需要消耗飞行时间时可省略此字段。
+        public bool  InfiniteFlight;
+
+        // 设为 true 时启用完美悬浮：按下键 + 跳跃键时 velocity.Y 强制为 -0.0001f，
+        // 视觉完全静止但 vanilla 仍判定为飞行中（防止"虚空跑步" bug）。
+        // bool 默认 false，不需要时可省略。
+        public bool  EnablePerfectHover;
     }
 
     public abstract class OmniWingItem : ModItem
@@ -84,7 +140,7 @@ namespace TestMod.Items.Accessories
 
             ArmorIDs.Wing.Sets.Stats[wingSlot] = new WingStats(
                 flyTime: cfg.FlyTime,
-                flySpeedOverride: cfg.HorizontalSpeed,  // 留空时 vanilla 用 Player.accRunSpeed; 这里直接用水平速度
+                flySpeedOverride: cfg.HorizontalSpeed,
                 hasHoldDownHoverFeatures: true,
                 hoverFlySpeedOverride: cfg.HoverHorizontalSpeed,
                 hoverAccelerationMultiplier: cfg.HoverAccelMult
