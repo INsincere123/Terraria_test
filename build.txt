@@ -1,5 +1,5 @@
 displayName = test
 author = Zelda
-version = 0.4
+version = 0.5
 modReferences = Luminance
-buildIgnore = *.csproj, *.user, *.sln, *.md, obj\*, bin\*, .vs\*, .git\*, .claude\*, Luminance.dll, Luminance.pdb, Luminance.xml, TestMod.code-workspace, Properties\*, tree.txt, tree.bat, tree.py, .gitignore
+buildIgnore = *.csproj, *.user, *.sln, *.md, obj\*, bin\*, .vs\*, .git\*, .claude\*, .vscode\*, Luminance.dll, Luminance.pdb, Luminance.xml, TestMod.code-workspace, Properties\*, tree.txt, tree.bat, tree.py, .gitignore

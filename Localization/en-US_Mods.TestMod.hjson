@@ -233,6 +233,19 @@ Items: {
 			'''
 	}
 
+	SuperRelocator: {
+		DisplayName: 超级定位器
+		Tooltip:
+			'''
+			传送到鼠标位置
+			传送后静止 [c/FFD700:1 秒]，期间：
+			  [c/6495ED:0.15 秒内]按方向键/跳跃 → 继承传送前速度
+			  [c/AAAAAA:0.15~1 秒]按方向键/跳跃 → 解除静止，重新起步
+			受击立即解除静止
+			冻结期间可再次传送
+			'''
+	}
+
 	DevTestAccessory: {
 		Tooltip: ""
 		DisplayName: Dev Test Accessory
@@ -382,6 +395,7 @@ Keybinds: {
 	"JuLing Ability.DisplayName": 聚灵·灵力凝聚
 	"FocusOrb Ability.DisplayName": 专注·凝神聚气
 	"Omniguardian Blink.DisplayName": 短冲刺
+	SuperRelocator.DisplayName: 闪现
 }
 
 Prefixes: {
