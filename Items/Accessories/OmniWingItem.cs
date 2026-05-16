@@ -141,7 +141,7 @@ namespace TestMod.Items.Accessories
             ArmorIDs.Wing.Sets.Stats[wingSlot] = new WingStats(
                 flyTime: cfg.FlyTime,
                 flySpeedOverride: cfg.HorizontalSpeed,
-                hasHoldDownHoverFeatures: true,
+                hasHoldDownHoverFeatures: cfg.EnableHover,
                 hoverFlySpeedOverride: cfg.HoverHorizontalSpeed,
                 hoverAccelerationMultiplier: cfg.HoverAccelMult
             );
