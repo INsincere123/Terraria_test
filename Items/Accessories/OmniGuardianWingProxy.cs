@@ -1,5 +1,4 @@
 using Terraria;
-using Terraria.DataStructures;
 using Terraria.ID;
 using Terraria.ModLoader;
 
@@ -20,7 +19,7 @@ namespace TestMod.Items.Accessories
     // ============================================================================
 
     [AutoloadEquip(EquipType.Wings)]
-    internal class OmniGuardianWingProxy : ModItem
+    internal class OmniGuardianWingProxy : OmniWingItem
     {
         // 供外部读取已注册的 wing slot ID
         public static int WingSlot { get; private set; }
@@ -28,60 +27,40 @@ namespace TestMod.Items.Accessories
         // 复用主饰品的物品栏贴图，此物品本身永远不会被玩家持有
         public override string Texture => "TestMod/Items/Accessories/OmniGuardianAccessory";
 
+        // ── 数值调节区 ────────────────────────────────────────────────
+        protected override WingFlightConfig WingsConfig => new WingFlightConfig {
+            FlyTime              = 3600,
+            HorizontalSpeed      = 20f,
+            HorizontalAccelMult  = 1.2f,
+            AscentWhenFalling    = 1.2f,
+            AscentWhenRising     = 0.1f,
+            MaxCanAscendMult     = 0.8f,
+            MaxAscentMult        = 3f,
+            ConstantAscend       = 0.1f,
+            EnableHover          = true,
+            HoverHorizontalSpeed = 7.5f,
+            HoverAccelMult       = 1.5f,
+            UpBoostMultiplier    = 5f,
+            // InfiniteFlight / EnablePerfectHover 由 OmniGuardianAccessory 负责，
+            // 此 proxy 永远不被装备，UpdateAccessory 不会被调用
+        };
+        // ─────────────────────────────────────────────────────────────
+
         public override void SetStaticDefaults()
         {
+            base.SetStaticDefaults(); // 读 WingsConfig 填入 WingStats
             WingSlot = EquipLoader.GetEquipSlot(Mod, Name, EquipType.Wings);
-
-            // 注册 vanilla 翅膀属性表——启用按下键悬浮的基础设施
-            ArmorIDs.Wing.Sets.Stats[WingSlot] = new WingStats(
-                flyTime:                     3600,
-                flySpeedOverride:            20f,
-                hasHoldDownHoverFeatures:    true,   // OmniGuardian 开悬浮
-                hoverFlySpeedOverride:       7.5f,
-                hoverAccelerationMultiplier: 1.5f
-            );
         }
-
-        // ── 飞行参数（数值对齐 OmniGuardianAccessory.WingsConfig）─────────────
-        public override void HorizontalWingSpeeds(Player player, ref float speed, ref float acceleration)
-        {
-            speed         = 20f;
-            acceleration *= 1.2f;
-        }
-
-        public override void VerticalWingSpeeds(Player player,
-            ref float ascentWhenFalling,
-            ref float ascentWhenRising,
-            ref float maxCanAscendMultiplier,
-            ref float maxAscentMultiplier,
-            ref float constantAscend)
-        {
-            ascentWhenFalling      = 1.2f;
-            ascentWhenRising       = 0.1f;
-            maxCanAscendMultiplier = 0.8f;
-            maxAscentMultiplier    = 3f;
-            constantAscend         = 0.1f;
-
-            // 按上键 + 跳跃：喷气背包级上冲（×5 倍）
-            if (player.controlUp && player.controlJump)
-            {
-                ascentWhenRising    *= 5f;
-                maxAscentMultiplier *= 5f;
-                constantAscend      *= 5f;
-            }
-        }
-        // ─────────────────────────────────────────────────────────────────────
 
         public override void SetDefaults()
         {
-            Item.width    = 2;
-            Item.height   = 2;
-            Item.maxStack = 1;
-            Item.rare     = ItemRarityID.White;
+            // 不调 base：OmniWingItem.SetDefaults 设 width/height=30，
+            // proxy 永不显示在物品栏，用最小尺寸即可
+            Item.width     = 2;
+            Item.height    = 2;
+            Item.maxStack  = 1;
+            Item.rare      = ItemRarityID.White;
             Item.accessory = true;
         }
-
-        // 禁止出现在任何战利品池 / 商店 / 合成
-        public override void AddRecipes() { }
     }
 }
