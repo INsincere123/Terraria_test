@@ -232,6 +232,11 @@ Items: {
 			· 对 Boss 额外附加 [c/FF4500:500] 点平伤
 			'''
 	}
+
+	DevTestAccessory: {
+		Tooltip: ""
+		DisplayName: Dev Test Accessory
+	}
 }
 
 Buffs: {
