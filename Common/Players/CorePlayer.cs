@@ -19,6 +19,16 @@ namespace TestMod.Common.Players
         // 暴击伤害加成系数（由 godModeBuff2 驱动，0.5 = +50%）
         public float critDamageBonus = 0f;
 
+        // ── 输出伤害乘区（防御前结算，每帧重置为 1f）────────────────────────────
+        // 独立增伤：在加法增伤（Additive）之后独立相乘，作用于 SourceDamage.Multiplicative
+        // 敌人加深：从目标侧乘算，作用于 TargetDamageMultiplier
+        // 调用示例（UpdateAccessory 里）：
+        //   player.GetModPlayer<CorePlayer>().independentDamageMult  *= 1.3f;  // 独立增伤 +30%
+        //   player.GetModPlayer<CorePlayer>().targetVulnerabilityMult *= 1.2f;  // 敌人伤害加深 +20%
+        //   两者可单独使用，也可同时使用。
+        public float independentDamageMult   = 1f;  // 独立增伤乘区
+        public float targetVulnerabilityMult  = 1f;  // 敌人伤害加深乘区
+
         // ── 受击伤害乘区（默认 1f = 不生效，赋值后在结算最终伤害时相乘，独立乘区）──
         // 使用方法：在 UpdateAccessory / UpdateEquip 里设置，默认 0.75f 即减少 25%
         // 示例：player.GetModPlayer<CorePlayer>().projDamageMultiplier = 0.75f;
@@ -59,6 +69,10 @@ namespace TestMod.Common.Players
             // ── 受击伤害乘区重置 ─────────────────────────────────
             projDamageMultiplier = 1f;
             npcDamageMultiplier  = 1f;
+
+            // ── 输出伤害乘区重置 ─────────────────────────────────
+            independentDamageMult  = 1f;
+            targetVulnerabilityMult = 1f;
 
             // ══════════════════════════════════════════════════════════
             // Buff1：小幅强化
@@ -171,6 +185,18 @@ namespace TestMod.Common.Players
         //   原因：Item.scale 只影响近战 hitbox，对鞭子范围无效；
         //         鞭子范围由 whipRangeMultiplier 驱动，需手动桥接。
         // ██████████████████████████████████████████████████████████████
+        // ██████████████████████████████████████████████████████████████
+        //   PostUpdateMiscEffects — 两个输出伤害乘区统一在 Stat 阶段写入
+        //   写入 GetDamage(Generic).Multiplicative，与命中阶段各 hook 完全隔离
+        // ██████████████████████████████████████████████████████████████
+        public override void PostUpdateMiscEffects()
+        {
+            if (independentDamageMult != 1f)
+                Player.GetDamage(DamageClass.Generic) *= independentDamageMult;
+            if (targetVulnerabilityMult != 1f)
+                Player.GetDamage(DamageClass.Generic) *= targetVulnerabilityMult;
+        }
+
         public override void PostUpdateEquips()
         {
             Item held = Player.HeldItem;

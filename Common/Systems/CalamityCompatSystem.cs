@@ -1,6 +1,7 @@
 using System;
 using System.Reflection;
 using Terraria;
+using Terraria.ID;
 using Terraria.ModLoader;
 using TestMod.Prefixes;
 
@@ -21,6 +22,10 @@ namespace TestMod.Common.Systems
         // ── 灾厄加载状态 ─────────────────────────────────────
         public static bool CalamityLoaded { get; private set; }
 
+        // ── 灾厄真近战伤害类型（反射缓存）───────────────────
+        // 灾厄在 SetDefaults 里把 shoot == 0 的近战武器改为此类型
+        public static DamageClass CalamityTrueMelee { get; private set; }
+
         // ── 反射缓存 ─────────────────────────────────────────
         private static FieldInfo _fearmongerSetField;
         private static FieldInfo _gSabatonField;          // CalamityPlayer.gSabaton
@@ -34,6 +39,13 @@ namespace TestMod.Common.Systems
             // 缓存稀有度 ID
             if (ModContent.TryFind<ModRarity>("CalamityMod", ApplyRarity, out var rarity))
                 CalamityRarity = rarity.Type;
+
+            // 缓存灾厄真近战伤害类型（TrueMeleeDamageClass.Instance）
+            // namespace CalamityMod，Instance 是 internal static field
+            var trueMeleeType  = cal.Code.GetType("CalamityMod.TrueMeleeDamageClass");
+            var instanceField  = trueMeleeType?.GetField("Instance",
+                BindingFlags.NonPublic | BindingFlags.Static);
+            CalamityTrueMelee = instanceField?.GetValue(null) as DamageClass;
 
             // 缓存 CalamityPlayer 类型及所需字段
             _calPlayerType      = cal.Code.GetType("CalamityMod.CalPlayer.CalamityPlayer");
@@ -145,6 +157,52 @@ namespace TestMod.Common.Systems
                 ModContent.PrefixType<RefinementSummonNoKBPrefix>()
             });
         }
+
+        /// <summary>
+        /// 判断某把武器是否为"真近战"：
+        /// 灾厄已加载时沿用灾厄的 TrueMeleeDamageClass 标记；
+        /// 未加载时回退到 item.shoot == 0 的经典判断。
+        /// </summary>
+        public static bool IsTrueMeleeWeapon(Item item)
+        {
+            if (CalamityLoaded && CalamityTrueMelee != null)
+                return item.DamageType.CountsAsClass(CalamityTrueMelee);
+
+            return item.DamageType.CountsAsClass(DamageClass.Melee) && item.shoot == ProjectileID.None;
+        }
+
+        /// <summary>
+        /// 判断某颗弹幕是否为"真近战弹幕"：
+        /// 灾厄已加载时直接检查弹幕自身的 DamageType；
+        /// 未加载时：
+        ///   1. 来源武器 shoot == 0 → 视为真近战
+        ///   2. proj.type == weapon.shoot 且 aiStyle 属于真近战延伸名单 → 视为真近战（如挥砍弧光）
+        /// </summary>
+        public static bool IsTrueMeleeProj(Projectile proj, Item sourceWeapon)
+        {
+            if (CalamityLoaded && CalamityTrueMelee != null)
+                return proj.DamageType.CountsAsClass(CalamityTrueMelee);
+
+            if (!sourceWeapon.DamageType.CountsAsClass(DamageClass.Melee)) return false;
+
+            // 纯挥动武器（无弹幕），来自 Shoot() 覆写的弹幕也视为真近战
+            if (sourceWeapon.shoot == ProjectileID.None) return true;
+
+            // 弹幕就是 item.shoot 直接创建，且 aiStyle 属于武器延伸类型
+            return proj.type == sourceWeapon.shoot && IsTrueMeleeAIStyle(proj.aiStyle);
+        }
+
+        // 真近战武器延伸 aiStyle 名单：
+        // 15=链球  19=矛  142=向前刺  152=挥砍弧光(BladeOfGrass/Muramasa)
+        // 161=短剑刺  188=暗影之刃弧  190=NightsEdge 挥砍弧光
+        private static bool IsTrueMeleeAIStyle(int aiStyle) =>
+               aiStyle == ProjAIStyleID.Flail         // 15
+            || aiStyle == ProjAIStyleID.Spear         // 19
+            || aiStyle == ProjAIStyleID.ForwardStab   // 142
+            || aiStyle == ProjAIStyleID.SuperStarBeam // 152
+            || aiStyle == ProjAIStyleID.ShortSword    // 161
+            || aiStyle == ProjAIStyleID.LightsBane    // 188
+            || aiStyle == ProjAIStyleID.NightsEdge;   // 190
 
         /// <summary>
         /// 向灾厄的某张 int[][] 等级表末尾追加一个新 tier。
