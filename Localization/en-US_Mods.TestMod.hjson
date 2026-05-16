@@ -255,6 +255,11 @@ Items: {
 		Tooltip: ""
 		DisplayName: Omni Guardian Wing Proxy
 	}
+
+	TestWing: {
+		Tooltip: ""
+		DisplayName: Test Wing
+	}
 }
 
 Buffs: {
