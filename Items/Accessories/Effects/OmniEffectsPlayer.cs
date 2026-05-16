@@ -2,6 +2,7 @@ using System;
 using Terraria;
 using Terraria.DataStructures;
 using Terraria.ModLoader;
+using TestMod.Items.Accessories;
 
 namespace TestMod.Items.Accessories.Effects
 {
@@ -20,6 +21,7 @@ namespace TestMod.Items.Accessories.Effects
     public class OmniEffectsPlayer : ModPlayer
     {
         // ===== 启用标志 (饰品每帧重新设置) =====
+        public bool GrantOmniWings;            // OmniGuardianAccessory 已装备 → PostUpdateEquips 覆写 wingsLogic
         public bool EnableFastFall;            // 启用快速下落
         public bool EnableTripleDodgeExtra;    // 启用自定义额外闪避 (神圣套/黑带闪避不需要标志, vanilla 自动管理)
         public bool EnablePerfectHover;        // 启用完美悬浮
@@ -85,6 +87,7 @@ namespace TestMod.Items.Accessories.Effects
 
         public override void ResetEffects()
         {
+            GrantOmniWings = false;
             EnableFastFall = false;
             EnableTripleDodgeExtra = false;
             EnablePerfectHover = false;
@@ -136,6 +139,16 @@ namespace TestMod.Items.Accessories.Effects
             // 强制暴击：有剩余计数时施加暴击率加成，使下一次命中必然暴击
             if (ForcedCritRemaining > 0)
                 Player.GetCritChance(DamageClass.Generic) += ForcedCritBoost;
+
+            // 翅膀覆写：在所有 UpdateAccessory 结束后最后写入，确保胜过同帧已装备的真实翅膀
+            if (GrantOmniWings)
+            {
+                int slot = OmniGuardianWingProxy.WingSlot;
+                Player.wings      = slot;   // 视觉：显示 Proxy 的翅膀贴图和动画
+                Player.wingsLogic = slot;   // 物理：调用 Proxy 的 HorizontalWingSpeeds / VerticalWingSpeeds
+                Player.empressBrooch  = true;  // 飞行不消耗时间
+                Player.wingTimeMax    = 3600;  // 备用（empressBrooch 已开，实际不消耗）
+            }
         }
 
         public override void PostUpdateRunSpeeds()

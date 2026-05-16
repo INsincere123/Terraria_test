@@ -14,7 +14,9 @@ namespace TestMod.Items.Accessories
     //  OmniGuardianAccessory  ——  综合守护饰品 (天界星盘风格翅膀)
     // ----------------------------------------------------------------------------
     //  这个饰品现在是 "Effects 模块组合" 的演示:
-    //   - 翅膀飞行系统          —— 继承 OmniWingItem 自动获得
+    //   - 翅膀飞行系统          —— OmniGuardianWingProxy 持有 slot，本类在
+    //                              OmniEffectsPlayer.PostUpdateEquips 里写入
+    //                              player.wingsLogic，与真实翅膀可以共存
     //   - 攻击属性              —— CombatStatsEffect
     //   - 防御 / HP / MP        —— DefensiveStatsEffect
     //   - 召唤栏 / 哨兵栏       —— SummonStatsEffect
@@ -32,33 +34,17 @@ namespace TestMod.Items.Accessories
     //
     //  贴图:
     //    - OmniGuardianAccessory.png
-    //    - OmniGuardianAccessory_Wings.png
+    //    - OmniGuardianWingProxy_Wings.png (背部翅膀动画，由 Proxy 持有)
     // ============================================================================
 
-    [AutoloadEquip(EquipType.Wings)]
-    public class OmniGuardianAccessory : OmniWingItem
+    public class OmniGuardianAccessory : ModItem
     {
         // ========================================================================
         // =====                  数值调节区 (可自由修改)                     =====
         // ========================================================================
 
         // ---------- 翅膀飞行 ----------
-        // 参考: vanilla 月光仙翼 1800 / 火神之翼 1500 / 女皇之翼 1800; 飞行时间单位是 tick (60 tick = 1秒)
-        protected override WingFlightConfig WingsConfig => new WingFlightConfig {
-            FlyTime              = 3600,   // 翅膀总飞行时间 tick (3600 = 60秒, 因开了 InfiniteFlight 实际无限)
-            HorizontalSpeed      = 20f,    // 水平最大飞行速度 (vanilla 月光仙翼 9, 女皇之翼 9.5; 20 已经很离谱)
-            HorizontalAccelMult  = 1.2f,   // 水平加速度倍率 (1.0 = 不加速, 越高起步越快)
-            AscentWhenFalling    = 1.2f,   // 下落时按住跳跃的上升力 (vanilla 大多 0.85f, 越高越能"翻盘")
-            AscentWhenRising     = 0.1f,   // 已经在上升时按住跳跃的额外加速度
-            MaxCanAscendMult     = 0.8f,   // 当前 Y 速 / 最大上升速度 < 此倍率时才能继续加速 (越接近 1 越能持续顶上去)
-            MaxAscentMult        = 3f,     // 最大上升速度倍率 (vanilla 大多 1.5; 3 = 翻倍上升)
-            ConstantAscend       = 0.1f,   // 持续向上的恒定力 (越高越"飘", 越低越像滑翔)
-            HoverHorizontalSpeed = 7.5f,   // 按下键悬浮时的水平速度 (vanilla 女皇之翼 6.25)
-            HoverAccelMult       = 1.5f,   // 按下键悬浮时的水平加速度倍率
-            UpBoostMultiplier    = 5f,     // 按上+跳跃 时的上升加速倍率 (1.0=禁用, vanilla 女皇之翼 1.5, 5 = 喷气背包级)
-            InfiniteFlight       = true,   // empressBrooch 御翼徽章: 飞行不消耗 FlyTime
-            EnablePerfectHover   = true,   // 按下+跳跃 视觉完全静止悬停 (内部 velocity.Y = -0.0001f, 不会卡虚空跑步 bug)
-        };
+        // 飞行参数已移至 OmniGuardianWingProxy（HorizontalWingSpeeds / VerticalWingSpeeds）
 
         // ---------- 攻击属性 ----------
         // 作用职业默认 Generic (所有职业); 想做职业专属饰品请改 CombatStatsConfig.ClassType
@@ -121,8 +107,11 @@ namespace TestMod.Items.Accessories
 
         public override void UpdateAccessory(Player player, bool hideVisual)
         {
-            // [0] 应用翅膀飞行 + 完美悬浮 (基类提供)
-            base.UpdateAccessory(player, hideVisual);
+            // [0] 标记本饰品已装备 → OmniEffectsPlayer.PostUpdateEquips 最后写入 wingsLogic
+            //     这样与真实翅膀装备在同一帧时，本饰品的翅膀参数在所有 UpdateAccessory 结束后再覆写，确保胜出
+            player.GetModPlayer<OmniEffectsPlayer>().GrantOmniWings = true;
+            // 完美悬浮（按下键 + 跳跃键时 velocity.Y = -0.0001f，防止虚空跑步 bug）
+            PerfectHoverEffect.Apply(player);
 
             // [1] 攻击属性
             CombatStatsEffect.Apply(player, new CombatStatsConfig {

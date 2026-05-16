@@ -250,6 +250,11 @@ Items: {
 		Tooltip: ""
 		DisplayName: Dev Test Accessory
 	}
+
+	OmniGuardianWingProxy: {
+		Tooltip: ""
+		DisplayName: Omni Guardian Wing Proxy
+	}
 }
 
 Buffs: {
