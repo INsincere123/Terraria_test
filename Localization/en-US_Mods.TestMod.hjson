@@ -377,6 +377,11 @@ Buffs: {
 		DisplayName: 超能护盾冷却
 		Description: 紧急护盾正在冷却，无法再次触发
 	}
+
+	BlindnessDebuff: {
+		Description: Mods.TestMod.Buffs.BlindnessDebuff.Description
+		DisplayName: Blindness Debuff
+	}
 }
 
 Projectiles: {
