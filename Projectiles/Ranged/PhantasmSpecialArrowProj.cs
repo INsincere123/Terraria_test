@@ -6,7 +6,7 @@ using TestMod.Common.GlobalProjectiles;
 using TestMod.Common.Utilities;
 using TestMod.Common.Mechanics.ArmorShred;
 
-namespace TestMod.Projectiles
+namespace TestMod.Projectiles.Ranged
 {
     /// <summary>
     /// 幻影弓强化专用弹射物

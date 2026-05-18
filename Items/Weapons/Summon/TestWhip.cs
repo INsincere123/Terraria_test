@@ -1,7 +1,7 @@
 using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
-using TestMod.Projectiles;
+using TestMod.Projectiles.Summon;
 using TestMod.Rarities;
 
 namespace TestMod.Items.Weapons.Summon

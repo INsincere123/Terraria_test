@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using Luminance.Core.Graphics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Terraria;
@@ -23,6 +24,7 @@ namespace TestMod.Projectiles.Minions
 
         private const int AscensionThreshold3 = 34;     // 第三质变档位门槛
         private const float AscensionDamageMultiplier3 = 66f;   // 第三质变伤害倍率
+        private const float AntaresStarVisualScale = 0.68f;
 
         public Player Owner => Main.player[Projectile.owner];
         public AntaresMinionPlayer ModdedOwner => Owner.GetModPlayer<AntaresMinionPlayer>();
@@ -39,6 +41,71 @@ namespace TestMod.Projectiles.Minions
         public ref float AscensionPulseTimer => ref Projectile.localAI[0];
 
         private bool spawnEffectPlayed;
+
+        private readonly struct ConstellationStar
+        {
+            public readonly int UnlockSlot;
+            public readonly Vector2 Offset;
+            public readonly float Size;
+            public readonly float Brightness;
+            public readonly Color CoreColor;
+            public readonly Color GlowColor;
+
+            public ConstellationStar(int unlockSlot, Vector2 offset, float size, float brightness, Color coreColor, Color glowColor)
+            {
+                UnlockSlot = unlockSlot;
+                Offset = offset;
+                Size = size;
+                Brightness = brightness;
+                CoreColor = coreColor;
+                GlowColor = glowColor;
+            }
+        }
+
+        private readonly struct ConstellationLine
+        {
+            public readonly int UnlockSlot;
+            public readonly int From;
+            public readonly int To;
+            public readonly float Weight;
+
+            public ConstellationLine(int unlockSlot, int from, int to, float weight)
+            {
+                UnlockSlot = unlockSlot;
+                From = from;
+                To = to;
+                Weight = weight;
+            }
+        }
+
+        private static readonly ConstellationStar[] Stars =
+        [
+            new(0,  new Vector2(0f, 0f),       1.85f, 1.25f, new Color(255, 105, 45), new Color(190, 25, 8)),    // Antares
+            new(2,  new Vector2(70f, -80f),    1.05f, 0.82f, new Color(190, 230, 255), new Color(70, 170, 255)),  // delta Sco
+            new(3,  new Vector2(-30f, 80f),    1.00f, 0.78f, new Color(190, 235, 255), new Color(60, 165, 255)),  // tau Sco
+            new(4,  new Vector2(-80f, 150f),   0.95f, 0.72f, new Color(175, 225, 255), new Color(55, 150, 240)),  // epsilon Sco
+            new(5,  new Vector2(140f, -140f),  1.16f, 0.88f, new Color(210, 240, 255), new Color(85, 180, 255)),  // beta Sco
+            new(6,  new Vector2(-120f, 210f),  0.78f, 0.58f, new Color(165, 220, 255), new Color(45, 135, 225)),  // mu Sco
+            new(7,  new Vector2(-170f, 240f),  0.72f, 0.54f, new Color(160, 215, 255), new Color(40, 125, 215)),  // zeta Sco
+            new(8,  new Vector2(-210f, 200f),  0.72f, 0.56f, new Color(160, 215, 255), new Color(40, 130, 220)),  // theta Sco
+            new(9,  new Vector2(-140f, 170f),  1.25f, 0.96f, new Color(230, 245, 255), new Color(110, 190, 255)), // lambda Sco
+            new(10, new Vector2(190f, -100f),  0.82f, 0.60f, new Color(170, 220, 255), new Color(50, 140, 225)),  // rho Sco
+            new(11, new Vector2(80f, -160f),   0.86f, 0.64f, new Color(175, 225, 255), new Color(55, 145, 235)),  // pi Sco
+        ];
+
+        private static readonly ConstellationLine[] Lines =
+        [
+            new(2, 0, 1, 1.00f),
+            new(3, 0, 2, 1.00f),
+            new(4, 2, 3, 0.95f),
+            new(5, 1, 4, 0.92f),
+            new(6, 3, 5, 0.85f),
+            new(7, 5, 6, 0.78f),
+            new(8, 6, 7, 0.76f),
+            new(9, 7, 8, 1.00f),
+            new(10, 4, 9, 0.72f),
+            new(11, 4, 10, 0.72f),
+        ];
 
         public override void SetStaticDefaults()
         {
@@ -137,44 +204,27 @@ namespace TestMod.Projectiles.Minions
         private void SpawnStarDust()
         {
             Vector2 center = Projectile.Center;
+            int tier = GetAscensionTier();
 
-            void Star(float slotReq, Vector2 offset, float intensity, int dustType = DustID.BlueTorch) // ← 加参数，默认蓝色
+            for (int i = 0; i < Stars.Length; i++)
             {
-                if (slotReq > 0 && Projectile.minionSlots < slotReq)
-                    return;
-                offset.X *= Projectile.spriteDirection;
-                Vector2 pos = center + offset * Projectile.scale;
-                if (Main.rand.NextBool(2))
-                {
-                    int d = Dust.NewDust(pos - Vector2.One * 2f, 4, 4, dustType, 0f, 0f, 100, default, intensity); // ← 用参数
-                    Main.dust[d].noGravity = true;
-                    Main.dust[d].velocity *= 0.2f;
-                    Main.dust[d].scale = intensity * Main.rand.NextFloat(1f, 1.4f);
-                }
-            }
+                ConstellationStar star = Stars[i];
+                if (!IsStarUnlocked(star))
+                    continue;
 
-            // ─── Scorpius 天蝎座 (以 α Antares 心宿二为中心) ───
-            // α Antares (心宿二,主星) 红色；质变后必生成粒子且更大更亮
-            bool isAscended = Projectile.minionSlots > AscensionThreshold;
-            if (Main.rand.NextBool(2) || isAscended)
-            {
-                Vector2 pos = center + new Vector2(0f, 0f) * Projectile.scale;
-                int d = Dust.NewDust(pos - Vector2.One * 2f, 4, 4, DustID.RedTorch, 0f, 0f, 100, default,
-                    isAscended ? 2.2f : 1.5f);
+                bool isAntares = i == 0;
+                bool shouldSpawn = Main.rand.NextBool(isAntares || tier > 0 ? 2 : 4);
+                if (!shouldSpawn)
+                    continue;
+
+                Vector2 pos = center + GetStarOffset(star) * Projectile.scale;
+                int dustType = isAntares ? DustID.RedTorch : (tier >= 2 && Main.rand.NextBool(4) ? DustID.GoldFlame : DustID.BlueTorch);
+                float intensity = star.Brightness * (isAntares ? 1.35f : 0.85f) * (1f + tier * 0.18f);
+                int d = Dust.NewDust(pos - Vector2.One * 2f, 4, 4, dustType, 0f, 0f, 100, default, intensity);
                 Main.dust[d].noGravity = true;
                 Main.dust[d].velocity *= 0.2f;
-                Main.dust[d].scale = (isAscended ? 2.2f : 1.5f) * Main.rand.NextFloat(1f, 1.4f);
+                Main.dust[d].scale = intensity * Main.rand.NextFloat(0.9f, 1.35f);
             }
-            Star(2, new Vector2(70f, -80f), 0.75f); // δ Sco    (房宿三,头)
-            Star(3, new Vector2(-30f, 80f), 0.75f); // τ Sco    (身躯上段)
-            Star(4, new Vector2(-80f, 150f), 0.75f); // ε Sco    (身躯中段)
-            Star(5, new Vector2(140f, -140f), 0.75f); // β Sco    (房宿四,头顶)
-            Star(6, new Vector2(-120f, 210f), 0.5f);  // μ Sco    (尾部起点)
-            Star(7, new Vector2(-170f, 240f), 0.5f);  // ζ Sco    (钩底拐点)
-            Star(8, new Vector2(-210f, 200f), 0.5f);  // θ Sco    (钩外最远端)
-            Star(9, new Vector2(-140f, 170f), 0.75f); // λ Sco    (Shaula 毒针)
-            Star(10, new Vector2(190f, -100f), 0.5f);  // ρ Sco    (右爪)
-            Star(11, new Vector2(80f, -160f), 0.5f);  // π Sco    (左爪)
         }
 
         private NPC FindTarget(float range)
@@ -289,138 +339,220 @@ namespace TestMod.Projectiles.Minions
         public override bool PreDraw(ref Color lightColor)
         {
             Vector2 center = Projectile.Center;
+            int tier = GetAscensionTier();
+            float time = Main.GlobalTimeWrappedHourly;
 
-            // ── 质变主星光晕（仅 Antares 主星，先于连线绘制） ──
-            if (Projectile.minionSlots > AscensionThreshold)
+            Main.spriteBatch.End();
+            Main.instance.GraphicsDevice.BlendState = BlendState.Additive;
+
+            foreach (ConstellationLine line in Lines)
             {
-                Texture2D pixel = TextureAssets.MagicPixel.Value;
-                Rectangle src = new Rectangle(0, 0, 1, 1);
-                float pulse = 1f + MathF.Sin(Main.GlobalTimeWrappedHourly * 1.8f) * 0.12f;  // 缓慢脉动，体现变星
-                Vector2 starPos = center - Main.screenPosition;
-                float scaleNorm = Projectile.scale / 0.33f;  // 随仆从缩放同步
+                if (!IsLineUnlocked(line))
+                    continue;
 
-                Main.spriteBatch.End();
-                Main.spriteBatch.Begin(
-                    SpriteSortMode.Deferred,
-                    BlendState.Additive,
-                    SamplerState.LinearClamp,
-                    DepthStencilState.None,
-                    RasterizerState.CullNone,
-                    null,
-                    Main.GameViewMatrix.TransformationMatrix);
-
-                // ── 多层光晕（6层，模拟高斯软边） ──
-                // 层参数：(半径, 颜色, 透明度)
-                (float radius, Color color, float alpha)[] haloLayers = new[]
-                {
-                    (52f, new Color(120,  10,   0), 0.18f),  // 最外：极暗深红，大光晕
-                    (42f, new Color(180,  20,   0), 0.25f),  // 外层：深红
-                    (32f, new Color(230,  45,   5), 0.38f),  // 中外：暗橙红
-                    (22f, new Color(255,  80,  15), 0.55f),  // 中层：亮红橙
-                    (13f, new Color(255, 160,  40), 0.75f),  // 内层：橙黄
-                    ( 6f, new Color(255, 230,  90), 0.95f),  // 最内：黄白热核
-                };
-                foreach (var (radius, color, alpha) in haloLayers)
-                {
-                    Main.spriteBatch.Draw(pixel, starPos, src,
-                        color * alpha, 0f, new Vector2(0.5f),
-                        radius * pulse * scaleNorm, SpriteEffects.None, 0f);
-                }
-
-                // ── 星芒（4主芒 + 4斜芒，共8条） ──
-                // 主芒旋转角：让星芒随时间缓慢旋转，增加动感
-                float spikeRot = Main.GlobalTimeWrappedHourly * 0.4f;
-
-                // 每条芒是一个极细长矩形：长=芒长，宽=芒宽
-                void DrawSpike(float angle, float length, float width, Color color, float alpha)
-                {
-                    Main.spriteBatch.Draw(pixel, starPos, src,
-                        color * alpha, angle, new Vector2(0f, 0.5f),  // 原点在左端中心
-                        new Vector2(length * pulse * scaleNorm, width * scaleNorm),
-                        SpriteEffects.None, 0f);
-                    // 反向也画一条，形成双向芒
-                    Main.spriteBatch.Draw(pixel, starPos, src,
-                        color * alpha, angle + MathHelper.Pi, new Vector2(0f, 0.5f),
-                        new Vector2(length * pulse * scaleNorm, width * scaleNorm),
-                        SpriteEffects.None, 0f);
-                }
-
-                // 4条主芒（十字，较长较亮）
-                for (int s = 0; s < 4; s++)
-                {
-                    float angle = spikeRot + MathHelper.PiOver2 * s;
-                    DrawSpike(angle, 27f, 1.8f, new Color(255, 80, 10), 0.55f);   // 外段：橙红
-                    DrawSpike(angle, 15f, 2.8f, new Color(255, 180, 60), 0.70f);  // 内段：橙黄，更粗
-                }
-                // 4条斜芒（×形，较短较暗）
-                for (int s = 0; s < 4; s++)
-                {
-                    float angle = spikeRot + MathHelper.PiOver4 + MathHelper.PiOver2 * s;
-                    DrawSpike(angle, 17f, 1.2f, new Color(220, 50, 5), 0.35f);
-                    DrawSpike(angle, 9f, 2.0f, new Color(255, 150, 40), 0.50f);
-                }
-
-                // 白热芒芯（极短极亮，覆盖在最上面增加刺眼感）
-                for (int s = 0; s < 4; s++)
-                {
-                    float angle = spikeRot + MathHelper.PiOver2 * s;
-                    DrawSpike(angle, 7f, 1.5f, Color.White, 0.80f);
-                }
-
-                Main.spriteBatch.End();
-                Main.spriteBatch.Begin(
-                    SpriteSortMode.Deferred,
-                    BlendState.AlphaBlend,
-                    SamplerState.LinearClamp,
-                    DepthStencilState.None,
-                    RasterizerState.CullNone,
-                    null,
-                    Main.GameViewMatrix.TransformationMatrix);
+                Vector2 start = GetStarPosition(line.From, center);
+                Vector2 end = GetStarPosition(line.To, center);
+                DrawConstellationLine(start, end, line.Weight, tier, time);
             }
 
-            void Connect(float slotReq, Vector2 p1, Vector2 p2)
+            Main.spriteBatch.Begin(
+                SpriteSortMode.Deferred,
+                BlendState.Additive,
+                SamplerState.LinearClamp,
+                DepthStencilState.None,
+                RasterizerState.CullNone,
+                null,
+                Main.GameViewMatrix.TransformationMatrix);
+
+            if (tier >= 2)
             {
-                if (slotReq > 0 && Projectile.minionSlots < slotReq)
-                    return;
-                p1.X *= Projectile.spriteDirection;
-                p2.X *= Projectile.spriteDirection;
-                Color color = Color.SkyBlue * 0.75f * ((MathF.Sin(Main.GlobalTimeWrappedHourly) + 1f) * 0.25f + 0.5f);
-                DrawLine(Main.spriteBatch,
-                    center + p1 * Projectile.scale,
-                    center + p2 * Projectile.scale,
-                    color, 2f);
+                foreach (ConstellationLine line in Lines)
+                {
+                    if (!IsLineUnlocked(line))
+                        continue;
+
+                    Vector2 start = GetStarPosition(line.From, center);
+                    Vector2 end = GetStarPosition(line.To, center);
+                    DrawEnergyPulse(Main.spriteBatch, start, end, line.Weight, tier, time + line.From * 0.19f);
+                }
             }
 
-            // ─── 身躯主线: 从头部经心宿二到毒针 ───
-            Connect(2, new Vector2(0f, 0f), new Vector2(70f, -80f)); // Antares → δ
-            Connect(3, new Vector2(0f, 0f), new Vector2(-30f, 80f)); // Antares → τ
-            Connect(4, new Vector2(-30f, 80f), new Vector2(-80f, 150f)); // τ → ε
-            Connect(5, new Vector2(70f, -80f), new Vector2(140f, -140f)); // δ → β
-            Connect(6, new Vector2(-80f, 150f), new Vector2(-120f, 210f)); // ε → μ
-            Connect(7, new Vector2(-120f, 210f), new Vector2(-170f, 240f)); // μ → ζ 入钩
-            Connect(8, new Vector2(-170f, 240f), new Vector2(-210f, 200f)); // ζ → θ 钩外
-            Connect(9, new Vector2(-210f, 200f), new Vector2(-140f, 170f)); // θ → λ 毒针
-            Connect(10, new Vector2(140f, -140f), new Vector2(190f, -100f)); // β → ρ 右爪
-            Connect(11, new Vector2(140f, -140f), new Vector2(80f, -160f)); // β → π 左爪
+            for (int i = 0; i < Stars.Length; i++)
+            {
+                ConstellationStar star = Stars[i];
+                if (!IsStarUnlocked(star))
+                    continue;
+
+                Vector2 pos = GetStarPosition(i, center);
+                DrawConstellationStar(Main.spriteBatch, pos, star, i, tier, time);
+            }
+
+            Main.spriteBatch.End();
+            Main.spriteBatch.Begin(
+                SpriteSortMode.Deferred,
+                BlendState.AlphaBlend,
+                SamplerState.LinearClamp,
+                DepthStencilState.None,
+                RasterizerState.CullNone,
+                null,
+                Main.GameViewMatrix.TransformationMatrix);
 
             return false;
         }
 
-        private static void DrawLine(SpriteBatch sb, Vector2 start, Vector2 end, Color color, float thickness)
+        private int GetAscensionTier()
+        {
+            if (Projectile.minionSlots > AscensionThreshold3)
+                return 3;
+            if (Projectile.minionSlots > AscensionThreshold2)
+                return 2;
+            if (Projectile.minionSlots > AscensionThreshold)
+                return 1;
+            return 0;
+        }
+
+        private bool IsStarUnlocked(ConstellationStar star) => Projectile.minionSlots >= star.UnlockSlot;
+
+        private bool IsLineUnlocked(ConstellationLine line) => Projectile.minionSlots >= line.UnlockSlot;
+
+        private Vector2 GetStarOffset(ConstellationStar star)
+        {
+            Vector2 offset = star.Offset;
+            offset.X *= Projectile.spriteDirection;
+            return offset;
+        }
+
+        private Vector2 GetStarPosition(int starIndex, Vector2 center) =>
+            center + GetStarOffset(Stars[starIndex]) * Projectile.scale;
+
+        private static void DrawConstellationLine(Vector2 start, Vector2 end, float weight, int tier, float time)
+        {
+            float shimmer = 0.72f + MathF.Sin(time * (1.15f + tier * 0.2f) + start.X * 0.01f) * 0.16f;
+            float tierGlow = 1f + tier * 0.3f;
+            Color outer = Color.Lerp(new Color(45, 120, 255), new Color(255, 70, 22), tier / 3f);
+            Color inner = Color.Lerp(new Color(180, 235, 255), new Color(255, 205, 95), tier / 3f);
+            Vector2[] points = CreateConstellationLinePoints(start, end, weight, tier, time);
+
+            RenderPrimitiveLine(points, outer * (0.17f * shimmer), (3.8f + tier * 1.15f) * weight * tierGlow);
+            RenderPrimitiveLine(points, outer * (0.28f * shimmer), (1.9f + tier * 0.45f) * weight);
+            RenderPrimitiveLine(points, inner * (0.58f * shimmer), (0.72f + tier * 0.11f) * weight);
+        }
+
+        private static Vector2[] CreateConstellationLinePoints(Vector2 start, Vector2 end, float weight, int tier, float time)
+        {
+            Vector2 delta = end - start;
+            Vector2 normal = new Vector2(-delta.Y, delta.X).SafeNormalize(Vector2.Zero);
+            float waveAmplitude = (0.65f + tier * 0.28f) * weight;
+            Vector2[] points = new Vector2[6];
+
+            for (int i = 0; i < points.Length; i++)
+            {
+                float completion = i / (float)(points.Length - 1);
+                float wave = MathF.Sin((completion * MathHelper.Pi + time * 0.55f) + start.X * 0.006f) * waveAmplitude;
+                points[i] = Vector2.Lerp(start, end, completion) + normal * wave;
+            }
+
+            return points;
+        }
+
+        private static void RenderPrimitiveLine(Vector2[] points, Color color, float width)
+        {
+            PrimitiveRenderer.RenderTrail(
+                points,
+                new PrimitiveSettings(
+                    _ => width,
+                    completion =>
+                    {
+                        float fade = MathF.Sin(completion * MathHelper.Pi);
+                        return color * MathHelper.Clamp(fade * 1.18f, 0f, 1f);
+                    },
+                    Smoothen: true),
+                14);
+        }
+
+        private static void DrawEnergyPulse(SpriteBatch sb, Vector2 start, Vector2 end, float weight, int tier, float time)
         {
             Texture2D pixel = TextureAssets.MagicPixel.Value;
-            Vector2 delta = end - start;
-            float angle = delta.ToRotation();
-            float length = delta.Length();
-            sb.Draw(pixel,
-                start - Main.screenPosition,
-                new Rectangle(0, 0, 1, 1),
-                color,
-                angle,
-                new Vector2(0f, 0.5f),
-                new Vector2(length, thickness),
-                SpriteEffects.None,
-                0f);
+            Rectangle src = new Rectangle(0, 0, 1, 1);
+            Vector2 point = Vector2.Lerp(start, end, time * (0.18f + tier * 0.03f) % 1f) - Main.screenPosition;
+            float pulse = 1f + MathF.Sin(time * 6f) * 0.18f;
+            Color color = tier >= 3 ? new Color(255, 190, 70) : new Color(140, 220, 255);
+
+            sb.Draw(pixel, point, src, color * 0.35f, 0f, new Vector2(0.5f), 11f * weight * pulse, SpriteEffects.None, 0f);
+            sb.Draw(pixel, point, src, Color.White * 0.78f, 0f, new Vector2(0.5f), 3.2f * weight * pulse, SpriteEffects.None, 0f);
+        }
+
+        private static void DrawConstellationStar(SpriteBatch sb, Vector2 worldPos, ConstellationStar star, int index, int tier, float time)
+        {
+            Texture2D pixel = TextureAssets.MagicPixel.Value;
+            Rectangle src = new Rectangle(0, 0, 1, 1);
+            Vector2 pos = worldPos - Main.screenPosition;
+            bool isAntares = index == 0;
+            bool isStinger = index == 8;
+            float twinkle = 0.88f + MathF.Sin(time * (1.8f + index * 0.11f) + index * 1.37f) * 0.18f;
+            float tierScale = 1f + tier * 0.18f;
+            float scale = star.Size * star.Brightness * twinkle * tierScale * (isAntares ? AntaresStarVisualScale : 1f);
+
+            if (isAntares && DrawAntaresShaderStar(worldPos, scale, tier, time))
+                return;
+
+            Color glow = Color.Lerp(star.GlowColor, new Color(255, 80, 22), isAntares ? MathHelper.Clamp(tier * 0.32f, 0f, 1f) : tier * 0.08f);
+            Color core = Color.Lerp(star.CoreColor, Color.White, isAntares ? 0.15f + tier * 0.08f : 0.1f);
+
+            sb.Draw(pixel, pos, src, glow * 0.16f, 0f, new Vector2(0.5f), 20f * scale, SpriteEffects.None, 0f);
+            sb.Draw(pixel, pos, src, glow * 0.28f, 0f, new Vector2(0.5f), 11f * scale, SpriteEffects.None, 0f);
+            sb.Draw(pixel, pos, src, core * 0.85f, 0f, new Vector2(0.5f), 4.2f * scale, SpriteEffects.None, 0f);
+            sb.Draw(pixel, pos, src, Color.White * 0.9f, 0f, new Vector2(0.5f), 1.55f * scale, SpriteEffects.None, 0f);
+
+            if (isAntares || (tier >= 3 && isStinger))
+                DrawStarSpikes(sb, pos, isAntares ? new Color(255, 140, 40) : new Color(170, 225, 255), scale, tier, time, isAntares);
+        }
+
+        private static bool DrawAntaresShaderStar(Vector2 worldPos, float scale, int tier, float time)
+        {
+            if (!ShaderManager.TryGetShader("TestMod.AntaresStarShader", out ManagedShader shader))
+                return false;
+
+            Texture2D pixel = TextureAssets.MagicPixel.Value;
+            float sideLength = 82f * scale;
+            Vector2 quadAnchor = worldPos - new Vector2(sideLength * 0.5f, -sideLength * 0.5f);
+
+            shader.TrySetParameter("globalTime", time);
+            shader.TrySetParameter("starTier", (float)tier);
+            shader.TrySetParameter("starIntensity", 0.95f + tier * 0.08f);
+            PrimitiveRenderer.RenderQuad(
+                pixel,
+                quadAnchor,
+                new Vector2(sideLength),
+                0f,
+                Color.White,
+                shader);
+
+            return true;
+        }
+
+        private static void DrawStarSpikes(SpriteBatch sb, Vector2 pos, Color color, float scale, int tier, float time, bool longSpikes)
+        {
+            Texture2D pixel = TextureAssets.MagicPixel.Value;
+            Rectangle src = new Rectangle(0, 0, 1, 1);
+            float rot = time * (longSpikes ? 0.4f : -0.25f);
+            float length = (longSpikes ? 28f : 17f) * (1f + tier * 0.18f) * scale;
+            float width = (longSpikes ? 1.7f : 1.1f) * scale;
+
+            for (int i = 0; i < 4; i++)
+            {
+                float angle = rot + MathHelper.PiOver2 * i;
+                DrawSpike(sb, pixel, src, pos, angle, length, width, color, 0.42f);
+                DrawSpike(sb, pixel, src, pos, angle + MathHelper.PiOver4, length * 0.55f, width * 0.75f, color, 0.24f);
+            }
+        }
+
+        private static void DrawSpike(SpriteBatch sb, Texture2D pixel, Rectangle src, Vector2 pos, float angle, float length, float width, Color color, float alpha)
+        {
+            sb.Draw(pixel, pos, src, color * alpha, angle, new Vector2(0f, 0.5f),
+                new Vector2(length, width), SpriteEffects.None, 0f);
+            sb.Draw(pixel, pos, src, color * alpha, angle + MathHelper.Pi, new Vector2(0f, 0.5f),
+                new Vector2(length, width), SpriteEffects.None, 0f);
         }
 
         public override void SendExtraAI(BinaryWriter writer)

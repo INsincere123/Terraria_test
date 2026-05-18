@@ -3,7 +3,7 @@ using Terraria.ID;
 using Terraria.ModLoader;
 using TestMod.Buffs;
 using TestMod.Common.Systems;
-using TestMod.Projectiles;
+using TestMod.Projectiles.Summon;
 
 namespace TestMod.Common.GlobalProjectiles
 {

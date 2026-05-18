@@ -6,6 +6,7 @@ using Microsoft.Xna.Framework;
 using TestMod.Rarities;
 using TestMod.Common.Players;
 using TestMod.Items.DamageTypes;
+using TestMod.Projectiles.Ranged;
 
 namespace TestMod.Common.GlobalItems
 {
@@ -128,10 +129,10 @@ namespace TestMod.Common.GlobalItems
                 return true;
 
             // 只生成弓体 holdout，由它负责发箭；重复触发时不重复生成
-            if (player.ownedProjectileCounts[ModContent.ProjectileType<Projectiles.PhantasmHoldout>()] <= 0)
+            if (player.ownedProjectileCounts[ModContent.ProjectileType<PhantasmHoldout>()] <= 0)
             {
                 Projectile.NewProjectile(source, position, velocity,
-                    ModContent.ProjectileType<Projectiles.PhantasmHoldout>(),
+                    ModContent.ProjectileType<PhantasmHoldout>(),
                     damage, knockback, player.whoAmI);
             }
             return false;

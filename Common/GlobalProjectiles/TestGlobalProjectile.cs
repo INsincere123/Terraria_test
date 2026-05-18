@@ -9,6 +9,7 @@ using TestMod.Common.Players;
 using TestMod.Items.Accessories.Effects;
 using TestMod.Items.DamageTypes;
 using TestMod.Projectiles.Melee;
+using TestMod.Projectiles.Ranged;
 
 namespace TestMod.Common.GlobalProjectiles
 {
@@ -257,7 +258,7 @@ namespace TestMod.Common.GlobalProjectiles
             if (!player.GetModPlayer<CorePlayer>().godModeBuff) return;
 
             // 🏹 幻影弓强化箭：链式跳跃 + 范围爆炸（绕过无敌帧）
-            if (projectile.type == ModContent.ProjectileType<Projectiles.PhantasmSpecialArrowProj>())
+            if (projectile.type == ModContent.ProjectileType<PhantasmSpecialArrowProj>())
                 HandlePhantasmArrowHit(target, damageDone);
 
             // ☀️ 破晓之光矛：太阳爆发特效（每根矛只触发一次）

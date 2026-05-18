@@ -4,7 +4,7 @@ using Terraria.Audio;
 using Terraria.ID;
 using Terraria.ModLoader;
 
-namespace TestMod.Projectiles
+namespace TestMod.Projectiles.Summon
 {
     /// <summary>
     /// 测试鞭子 tag 效果触发的爆炸弹射物。

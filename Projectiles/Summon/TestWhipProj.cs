@@ -8,7 +8,7 @@ using Terraria.ID;
 using Terraria.ModLoader;
 using TestMod.Buffs;
 
-namespace TestMod.Projectiles
+namespace TestMod.Projectiles.Summon
 {
     /// <summary>
     /// 测试鞭子弹射物。

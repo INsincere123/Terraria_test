@@ -7,7 +7,7 @@ using Terraria.DataStructures;
 using Terraria.ID;
 using Terraria.ModLoader;
 
-namespace TestMod.Projectiles
+namespace TestMod.Projectiles.Ranged
 {
     public class PhantasmHoldout : ModProjectile
     {
