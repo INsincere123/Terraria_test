@@ -102,7 +102,7 @@ namespace TestMod.Common.GlobalNPCs
             for (int i = 0; i < Main.maxPlayers; i++)
             {
                 Player p = Main.player[i];
-                if (p.active && p.GetModPlayer<CorePlayer>().godModeBuff)
+                if (p.active && p.GetModPlayer<GodModePlayer>().GodModeBuff)
                 {
                     anyGodMode = true;
                     break;

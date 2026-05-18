@@ -24,8 +24,8 @@ namespace TestMod.Items
 
         public override bool? UseItem(Player player)
         {
-            player.GetModPlayer<CorePlayer>().godModeBuff2 =
-                !player.GetModPlayer<CorePlayer>().godModeBuff2;
+            player.GetModPlayer<GodModePlayer>().GodModeBuff2 =
+                !player.GetModPlayer<GodModePlayer>().GodModeBuff2;
             return true;
         }
 

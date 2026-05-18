@@ -25,7 +25,7 @@ namespace TestMod.Common.GlobalItems
 
         /// <summary>当前玩家是否处于 godMode 状态。</summary>
         private static bool IsGodMode(Player player) =>
-            player?.active == true && player.GetModPlayer<CorePlayer>().godModeBuff;
+            player?.active == true && player.GetModPlayer<GodModePlayer>().GodModeBuff;
 
         // ══════════════════════════════════════════════════════════════
         //   SetDefaults — 固定数值调整（不受 godMode 开关影响）

@@ -108,7 +108,7 @@ namespace TestMod.Common.GlobalProjectiles
             Player player = Main.player[projectile.owner];
             if (!player.active) return;
 
-            bool godMode = player.GetModPlayer<CorePlayer>().godModeBuff;
+            bool godMode = player.GetModPlayer<GodModePlayer>().GodModeBuff;
 
             // ─────────────── 专属处理分支 (优先级最高) ───────────────
 
@@ -199,7 +199,7 @@ namespace TestMod.Common.GlobalProjectiles
             // 鞭子 tag 效果：不依赖 godMode
             WhipTag_ModifyHitNPC(projectile, target, ref modifiers);
 
-            if (!player.active || !player.GetModPlayer<CorePlayer>().godModeBuff) return;
+            if (!player.active || !player.GetModPlayer<GodModePlayer>().GodModeBuff) return;
 
             // 🐉 星尘龙 ×8
             if (ProjectileID.Sets.StardustDragon[projectile.type])
@@ -255,7 +255,7 @@ namespace TestMod.Common.GlobalProjectiles
             WhipTag_OnHitNPC(projectile, target, hit, damageDone);
 
             // ─────────────── 以下为 godMode 专属效果 ───────────────
-            if (!player.GetModPlayer<CorePlayer>().godModeBuff) return;
+            if (!player.GetModPlayer<GodModePlayer>().GodModeBuff) return;
 
             // 🏹 幻影弓强化箭：链式跳跃 + 范围爆炸（绕过无敌帧）
             if (projectile.type == ModContent.ProjectileType<PhantasmSpecialArrowProj>())
