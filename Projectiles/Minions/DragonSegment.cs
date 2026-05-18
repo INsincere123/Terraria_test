@@ -1,9 +1,9 @@
 using System;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
+using TestMod.Common.Utilities;
 
 namespace TestMod.Projectiles.Minions
 {
@@ -63,8 +63,10 @@ namespace TestMod.Projectiles.Minions
         public const int TailRow      = 2;
 
         // ── 链结构 ──
-        public const float SegmentDist     = 69f;
-        public const float RotationDamping = 0.15f;
+        public const float SegmentDist     = 54f;
+        public const float VisualOverlapDistance = 44f;
+        public const float RotationDamping = 0.22f;
+        public const float FollowLerp = 0.78f;
 
         // ── Idle 悬浮 ──
         public const float IdleOffsetX     = 60f;
@@ -98,10 +100,14 @@ namespace TestMod.Projectiles.Minions
         //   localAI[2] : 卡死计时器
         // ──────────────────────────────────────────────────────────
 
-        private int   PrevWhoAmI   => (int)Projectile.ai[0];
-        private int   SegmentIndex => (int)Projectile.ai[1];
-        private bool  IsHead       => SegmentIndex == 0;
-        private bool  IsTail       => SegmentIndex == 2;
+        public const int HeadSegmentKind = 0;
+        public const int BodySegmentKind = 1;
+        public const int TailSegmentKind = 2;
+
+        private int PrevWhoAmI => (int)Projectile.ai[0];
+        internal int SegmentKind => (int)Projectile.ai[1];
+        internal bool IsHeadSegment => SegmentKind == HeadSegmentKind;
+        internal bool IsTailSegment => SegmentKind == TailSegmentKind;
 
         public override string Texture => "TestMod/Projectiles/Minions/DragonSegment";
 
@@ -146,7 +152,7 @@ namespace TestMod.Projectiles.Minions
                 return;
             }
 
-            if (IsHead)
+            if (IsHeadSegment)
                 HeadAI(owner);
             // 非头节点：等待头节点调用 SegmentMove()，timeLeft 由 Summoner 刷新
         }
@@ -338,7 +344,7 @@ namespace TestMod.Projectiles.Minions
                 }
 
                 // 身体用 velocity 前瞻让跟随更紧贴；尾巴不用，避免超前
-                seg.SegmentMove(prev, useVelocityLookahead: !seg.IsTail);
+                seg.SegmentMove(prev, useVelocityLookahead: !seg.IsTailSegment);
             }
         }
 
@@ -347,7 +353,7 @@ namespace TestMod.Projectiles.Minions
         // ══════════════════════════════════════════════════════════════
         public void SegmentMove(Projectile prev, bool useVelocityLookahead)
         {
-            Vector2 anchor = prev.Center + (useVelocityLookahead ? prev.velocity : Vector2.Zero);
+            Vector2 anchor = prev.Center + (useVelocityLookahead ? prev.velocity * 0.45f : Vector2.Zero);
             Vector2 destinationOffset = anchor - Projectile.Center;
 
             // 旋转阻尼：本节点旋转向前节点旋转平滑过渡
@@ -359,8 +365,12 @@ namespace TestMod.Projectiles.Minions
 
             if (destinationOffset != Vector2.Zero)
             {
-                Projectile.rotation = destinationOffset.ToRotation();
-                Projectile.Center   = anchor - destinationOffset.SafeNormalize(Vector2.Zero) * SegmentDist;
+                float targetRotation = destinationOffset.ToRotation();
+                Projectile.rotation = Projectile.rotation.AngleTowards(targetRotation, 0.42f);
+
+                Vector2 direction = Projectile.rotation.ToRotationVector2();
+                Vector2 targetCenter = anchor - direction * SegmentDist;
+                Projectile.Center = Vector2.Lerp(Projectile.Center, targetCenter, FollowLerp);
             }
 
             Projectile.velocity = Vector2.Zero;
@@ -373,36 +383,24 @@ namespace TestMod.Projectiles.Minions
         // ══════════════════════════════════════════════════════════════
         public override bool MinionContactDamage() => true;
 
+        internal bool TryGetPreviousSegment(out Projectile previous)
+        {
+            previous = null;
+
+            if (PrevWhoAmI < 0 || PrevWhoAmI >= Main.maxProjectiles)
+                return false;
+
+            Projectile candidate = Main.projectile[PrevWhoAmI];
+            if (!candidate.active || candidate.owner != Projectile.owner || candidate.type != Projectile.type)
+                return false;
+
+            previous = candidate;
+            return true;
+        }
+
         public override bool PreDraw(ref Color lightColor)
         {
-            int row;
-            if (IsHead)      row = HeadRow;
-            else if (IsTail) row = TailRow;
-            else             row = BodyRow;
-
-            Texture2D tex = ModContent.Request<Texture2D>(Texture).Value;
-
-            Rectangle srcRect = new Rectangle(
-                0,
-                row * FrameHeight,
-                FrameWidth,
-                FrameHeight
-            );
-
-            Vector2 origin = new Vector2(FrameWidth / 2f, FrameHeight / 2f);
-
-            // rotation 已经是速度方向角，直接用即可表达正确朝向
-            Main.EntitySpriteDraw(
-                tex,
-                Projectile.Center - Main.screenPosition,
-                srcRect,
-                lightColor,
-                Projectile.rotation,
-                origin,
-                Projectile.scale,
-                SpriteEffects.None,
-                0
-            );
+            DrawUtils.DrawPhantasmalDragonSegment(this, lightColor);
             return false;
         }
     }

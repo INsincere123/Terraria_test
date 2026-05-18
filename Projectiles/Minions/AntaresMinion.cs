@@ -1,15 +1,15 @@
 using System;
 using System.IO;
-using Luminance.Core.Graphics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Terraria;
 using Terraria.Audio;
-using Terraria.GameContent;
 using Terraria.ID;
 using Terraria.ModLoader;
 using TestMod.Buffs;
 using TestMod.Common.Players;
+using TestMod.Common.Systems;
+using TestMod.Common.Utilities;
 
 namespace TestMod.Projectiles.Minions
 {
@@ -25,6 +25,8 @@ namespace TestMod.Projectiles.Minions
         private const int AscensionThreshold3 = 34;     // 第三质变档位门槛
         private const float AscensionDamageMultiplier3 = 66f;   // 第三质变伤害倍率
         private const float AntaresStarVisualScale = 0.68f;
+        private const float StarParticleDensity = 0.8f;
+        private const int MaxStarMotes = 32;
 
         public Player Owner => Main.player[Projectile.owner];
         public AntaresMinionPlayer ModdedOwner => Owner.GetModPlayer<AntaresMinionPlayer>();
@@ -41,6 +43,7 @@ namespace TestMod.Projectiles.Minions
         public ref float AscensionPulseTimer => ref Projectile.localAI[0];
 
         private bool spawnEffectPlayed;
+        private readonly StarMote[] starMotes = new StarMote[MaxStarMotes];
 
         private readonly struct ConstellationStar
         {
@@ -76,6 +79,19 @@ namespace TestMod.Projectiles.Minions
                 To = to;
                 Weight = weight;
             }
+        }
+
+        private struct StarMote
+        {
+            public bool Active;
+            public Vector2 Position;
+            public Vector2 Velocity;
+            public float Time;
+            public float Lifetime;
+            public float Scale;
+            public float Rotation;
+            public float AngularVelocity;
+            public Color Color;
         }
 
         private static readonly ConstellationStar[] Stars =
@@ -170,6 +186,7 @@ namespace TestMod.Projectiles.Minions
                                 - new Vector2(64 * Projectile.spriteDirection, 96f - Owner.gfxOffY);
             Projectile.velocity = Vector2.Zero;
 
+            UpdateStarMotes();
             SpawnStarDust();
 
             // ── 质变脉冲爆发（每600帧一次，仅质变状态） ──
@@ -203,6 +220,9 @@ namespace TestMod.Projectiles.Minions
 
         private void SpawnStarDust()
         {
+            if (Main.netMode == NetmodeID.Server)
+                return;
+
             Vector2 center = Projectile.Center;
             int tier = GetAscensionTier();
 
@@ -214,17 +234,78 @@ namespace TestMod.Projectiles.Minions
 
                 bool isAntares = i == 0;
                 bool shouldSpawn = Main.rand.NextBool(isAntares || tier > 0 ? 2 : 4);
-                if (!shouldSpawn)
+                if (!shouldSpawn || Main.rand.NextFloat() > StarParticleDensity)
                     continue;
 
                 Vector2 pos = center + GetStarOffset(star) * Projectile.scale;
+                TrySpawnStarMote(pos, star, isAntares, tier);
+
+                if (!Main.rand.NextBool(isAntares ? 5 : 8))
+                    continue;
+
                 int dustType = isAntares ? DustID.RedTorch : (tier >= 2 && Main.rand.NextBool(4) ? DustID.GoldFlame : DustID.BlueTorch);
-                float intensity = star.Brightness * (isAntares ? 1.35f : 0.85f) * (1f + tier * 0.18f);
-                int d = Dust.NewDust(pos - Vector2.One * 2f, 4, 4, dustType, 0f, 0f, 100, default, intensity);
+                float intensity = star.Brightness * (isAntares ? 0.66f : 0.42f) * (1f + tier * 0.12f);
+                int d = Dust.NewDust(pos - Vector2.One, 2, 2, dustType, 0f, 0f, 150, default, intensity);
                 Main.dust[d].noGravity = true;
-                Main.dust[d].velocity *= 0.2f;
-                Main.dust[d].scale = intensity * Main.rand.NextFloat(0.9f, 1.35f);
+                Main.dust[d].velocity *= 0.08f;
+                Main.dust[d].scale = intensity * Main.rand.NextFloat(0.45f, 0.78f);
             }
+        }
+
+        private void UpdateStarMotes()
+        {
+            for (int i = 0; i < starMotes.Length; i++)
+            {
+                if (!starMotes[i].Active)
+                    continue;
+
+                starMotes[i].Time++;
+                if (starMotes[i].Time >= starMotes[i].Lifetime)
+                {
+                    starMotes[i].Active = false;
+                    continue;
+                }
+
+                starMotes[i].Position += starMotes[i].Velocity;
+                starMotes[i].Velocity *= 0.982f;
+                starMotes[i].Velocity = starMotes[i].Velocity.RotatedBy(starMotes[i].AngularVelocity * 0.018f);
+                starMotes[i].Rotation += starMotes[i].AngularVelocity;
+            }
+        }
+
+        private void TrySpawnStarMote(Vector2 position, ConstellationStar star, bool isAntares, int tier)
+        {
+            int index = -1;
+            for (int i = 0; i < starMotes.Length; i++)
+            {
+                if (!starMotes[i].Active)
+                {
+                    index = i;
+                    break;
+                }
+            }
+
+            if (index < 0)
+                return;
+
+            float angle = Main.rand.NextFloat(MathHelper.TwoPi);
+            float speed = Main.rand.NextFloat(isAntares ? 0.10f : 0.06f, isAntares ? 0.42f : 0.28f) * (1f + tier * 0.08f);
+            Vector2 velocity = angle.ToRotationVector2() * speed + new Vector2(-Projectile.spriteDirection * 0.035f, -0.018f);
+            Color warm = Color.Lerp(new Color(255, 74, 18), new Color(255, 191, 88), Main.rand.NextFloat(0.45f));
+            Color cool = Color.Lerp(star.CoreColor, new Color(160, 220, 255), Main.rand.NextFloat(0.35f));
+
+            starMotes[index] = new StarMote
+            {
+                Active = true,
+                Position = position + Main.rand.NextVector2Circular(3.2f, 3.2f),
+                Velocity = velocity,
+                Time = 0f,
+                Lifetime = Main.rand.NextFloat(isAntares ? 34f : 26f, isAntares ? 58f : 44f) * (1f + tier * 0.08f),
+                Scale = star.Brightness * Main.rand.NextFloat(isAntares ? 0.52f : 0.34f, isAntares ? 0.96f : 0.68f),
+                Rotation = Main.rand.NextFloat(MathHelper.TwoPi),
+                AngularVelocity = Main.rand.NextFloat(-0.025f, 0.025f),
+                Color = isAntares ? warm : cool
+            };
         }
 
         private NPC FindTarget(float range)
@@ -342,8 +423,7 @@ namespace TestMod.Projectiles.Minions
             int tier = GetAscensionTier();
             float time = Main.GlobalTimeWrappedHourly;
 
-            Main.spriteBatch.End();
-            Main.instance.GraphicsDevice.BlendState = BlendState.Additive;
+            DrawUtils.PrepareForAdditivePrimitives(Main.spriteBatch);
 
             foreach (ConstellationLine line in Lines)
             {
@@ -352,17 +432,10 @@ namespace TestMod.Projectiles.Minions
 
                 Vector2 start = GetStarPosition(line.From, center);
                 Vector2 end = GetStarPosition(line.To, center);
-                DrawConstellationLine(start, end, line.Weight, tier, time);
+                DrawUtils.DrawConstellationLine(start, end, line.Weight, tier, time);
             }
 
-            Main.spriteBatch.Begin(
-                SpriteSortMode.Deferred,
-                BlendState.Additive,
-                SamplerState.LinearClamp,
-                DepthStencilState.None,
-                RasterizerState.CullNone,
-                null,
-                Main.GameViewMatrix.TransformationMatrix);
+            Main.spriteBatch.BeginSpriteBatch(SpriteSortMode.Deferred, SpriteBatchSettings.AdditiveLinearClamp);
 
             if (tier >= 2)
             {
@@ -373,9 +446,11 @@ namespace TestMod.Projectiles.Minions
 
                     Vector2 start = GetStarPosition(line.From, center);
                     Vector2 end = GetStarPosition(line.To, center);
-                    DrawEnergyPulse(Main.spriteBatch, start, end, line.Weight, tier, time + line.From * 0.19f);
+                    DrawUtils.DrawEnergyPulse(Main.spriteBatch, start, end, line.Weight, tier, time + line.From * 0.19f);
                 }
             }
+
+            DrawStarMotes(Main.spriteBatch, time);
 
             for (int i = 0; i < Stars.Length; i++)
             {
@@ -384,20 +459,45 @@ namespace TestMod.Projectiles.Minions
                     continue;
 
                 Vector2 pos = GetStarPosition(i, center);
-                DrawConstellationStar(Main.spriteBatch, pos, star, i, tier, time);
+                DrawConstellationStar(pos, star, i, tier, time);
             }
 
-            Main.spriteBatch.End();
-            Main.spriteBatch.Begin(
-                SpriteSortMode.Deferred,
-                BlendState.AlphaBlend,
-                SamplerState.LinearClamp,
-                DepthStencilState.None,
-                RasterizerState.CullNone,
-                null,
-                Main.GameViewMatrix.TransformationMatrix);
+            Main.spriteBatch.RestartSpriteBatch(SpriteSortMode.Deferred, SpriteBatchSettings.AlphaBlendLinearClamp);
 
             return false;
+        }
+
+        private void DrawStarMotes(SpriteBatch spriteBatch, float time)
+        {
+            Texture2D texture = AntaresVisualAssetSystem.SoftStarMote;
+            bool hasSoftTexture = AntaresVisualAssetSystem.HasSoftStarMote;
+            Vector2 origin = hasSoftTexture ? texture.Size() * 0.5f : new Vector2(0.5f);
+
+            for (int i = 0; i < starMotes.Length; i++)
+            {
+                if (!starMotes[i].Active)
+                    continue;
+
+                float completion = starMotes[i].Time / starMotes[i].Lifetime;
+                float fadeIn = MathHelper.Clamp(completion / 0.18f, 0f, 1f);
+                float fadeOut = 1f - MathHelper.Clamp((completion - 0.48f) / 0.52f, 0f, 1f);
+                float shimmer = 0.82f + MathF.Sin(time * 5.1f + i * 1.73f) * 0.12f;
+                float opacity = fadeIn * fadeOut * shimmer;
+                float size = starMotes[i].Scale * (hasSoftTexture ? 0.14f : 2.2f) * (1f + completion * 0.34f);
+                Vector2 drawPosition = starMotes[i].Position - Main.screenPosition;
+                Color color = starMotes[i].Color * (0.44f * opacity);
+
+                if (hasSoftTexture)
+                {
+                    spriteBatch.Draw(texture, drawPosition, null, color, starMotes[i].Rotation, origin, size, SpriteEffects.None, 0f);
+                    spriteBatch.Draw(texture, drawPosition, null, Color.White * (0.16f * opacity), starMotes[i].Rotation, origin, size * 0.34f, SpriteEffects.None, 0f);
+                }
+                else
+                {
+                    spriteBatch.Draw(texture, drawPosition, null, color, starMotes[i].Rotation, origin, new Vector2(size), SpriteEffects.None, 0f);
+                    spriteBatch.Draw(texture, drawPosition, null, Color.White * (0.13f * opacity), starMotes[i].Rotation, origin, new Vector2(size * 0.34f), SpriteEffects.None, 0f);
+                }
+            }
         }
 
         private int GetAscensionTier()
@@ -425,134 +525,58 @@ namespace TestMod.Projectiles.Minions
         private Vector2 GetStarPosition(int starIndex, Vector2 center) =>
             center + GetStarOffset(Stars[starIndex]) * Projectile.scale;
 
-        private static void DrawConstellationLine(Vector2 start, Vector2 end, float weight, int tier, float time)
+        private static void DrawConstellationStar(Vector2 worldPos, ConstellationStar star, int index, int tier, float time)
         {
-            float shimmer = 0.72f + MathF.Sin(time * (1.15f + tier * 0.2f) + start.X * 0.01f) * 0.16f;
-            float tierGlow = 1f + tier * 0.3f;
-            Color outer = Color.Lerp(new Color(45, 120, 255), new Color(255, 70, 22), tier / 3f);
-            Color inner = Color.Lerp(new Color(180, 235, 255), new Color(255, 205, 95), tier / 3f);
-            Vector2[] points = CreateConstellationLinePoints(start, end, weight, tier, time);
-
-            RenderPrimitiveLine(points, outer * (0.17f * shimmer), (3.8f + tier * 1.15f) * weight * tierGlow);
-            RenderPrimitiveLine(points, outer * (0.28f * shimmer), (1.9f + tier * 0.45f) * weight);
-            RenderPrimitiveLine(points, inner * (0.58f * shimmer), (0.72f + tier * 0.11f) * weight);
-        }
-
-        private static Vector2[] CreateConstellationLinePoints(Vector2 start, Vector2 end, float weight, int tier, float time)
-        {
-            Vector2 delta = end - start;
-            Vector2 normal = new Vector2(-delta.Y, delta.X).SafeNormalize(Vector2.Zero);
-            float waveAmplitude = (0.65f + tier * 0.28f) * weight;
-            Vector2[] points = new Vector2[6];
-
-            for (int i = 0; i < points.Length; i++)
-            {
-                float completion = i / (float)(points.Length - 1);
-                float wave = MathF.Sin((completion * MathHelper.Pi + time * 0.55f) + start.X * 0.006f) * waveAmplitude;
-                points[i] = Vector2.Lerp(start, end, completion) + normal * wave;
-            }
-
-            return points;
-        }
-
-        private static void RenderPrimitiveLine(Vector2[] points, Color color, float width)
-        {
-            PrimitiveRenderer.RenderTrail(
-                points,
-                new PrimitiveSettings(
-                    _ => width,
-                    completion =>
-                    {
-                        float fade = MathF.Sin(completion * MathHelper.Pi);
-                        return color * MathHelper.Clamp(fade * 1.18f, 0f, 1f);
-                    },
-                    Smoothen: true),
-                14);
-        }
-
-        private static void DrawEnergyPulse(SpriteBatch sb, Vector2 start, Vector2 end, float weight, int tier, float time)
-        {
-            Texture2D pixel = TextureAssets.MagicPixel.Value;
-            Rectangle src = new Rectangle(0, 0, 1, 1);
-            Vector2 point = Vector2.Lerp(start, end, time * (0.18f + tier * 0.03f) % 1f) - Main.screenPosition;
-            float pulse = 1f + MathF.Sin(time * 6f) * 0.18f;
-            Color color = tier >= 3 ? new Color(255, 190, 70) : new Color(140, 220, 255);
-
-            sb.Draw(pixel, point, src, color * 0.35f, 0f, new Vector2(0.5f), 11f * weight * pulse, SpriteEffects.None, 0f);
-            sb.Draw(pixel, point, src, Color.White * 0.78f, 0f, new Vector2(0.5f), 3.2f * weight * pulse, SpriteEffects.None, 0f);
-        }
-
-        private static void DrawConstellationStar(SpriteBatch sb, Vector2 worldPos, ConstellationStar star, int index, int tier, float time)
-        {
-            Texture2D pixel = TextureAssets.MagicPixel.Value;
-            Rectangle src = new Rectangle(0, 0, 1, 1);
-            Vector2 pos = worldPos - Main.screenPosition;
             bool isAntares = index == 0;
-            bool isStinger = index == 8;
-            float twinkle = 0.88f + MathF.Sin(time * (1.8f + index * 0.11f) + index * 1.37f) * 0.18f;
-            float tierScale = 1f + tier * 0.18f;
-            float scale = star.Size * star.Brightness * twinkle * tierScale * (isAntares ? AntaresStarVisualScale : 1f);
+            float visualScale = isAntares ? AntaresStarVisualScale : 1f;
+            float shaderScale = star.Size * star.Brightness * visualScale;
 
-            if (isAntares && DrawAntaresShaderStar(worldPos, scale, tier, time))
+            if (isAntares && DrawAntaresShaderStar(worldPos, shaderScale, tier, time))
                 return;
 
             Color glow = Color.Lerp(star.GlowColor, new Color(255, 80, 22), isAntares ? MathHelper.Clamp(tier * 0.32f, 0f, 1f) : tier * 0.08f);
             Color core = Color.Lerp(star.CoreColor, Color.White, isAntares ? 0.15f + tier * 0.08f : 0.1f);
+            Color spike = isAntares ? new Color(255, 140, 40) : new Color(170, 225, 255);
 
-            sb.Draw(pixel, pos, src, glow * 0.16f, 0f, new Vector2(0.5f), 20f * scale, SpriteEffects.None, 0f);
-            sb.Draw(pixel, pos, src, glow * 0.28f, 0f, new Vector2(0.5f), 11f * scale, SpriteEffects.None, 0f);
-            sb.Draw(pixel, pos, src, core * 0.85f, 0f, new Vector2(0.5f), 4.2f * scale, SpriteEffects.None, 0f);
-            sb.Draw(pixel, pos, src, Color.White * 0.9f, 0f, new Vector2(0.5f), 1.55f * scale, SpriteEffects.None, 0f);
-
-            if (isAntares || (tier >= 3 && isStinger))
-                DrawStarSpikes(sb, pos, isAntares ? new Color(255, 140, 40) : new Color(170, 225, 255), scale, tier, time, isAntares);
+            DrawUtils.DrawPixelStar(
+                Main.spriteBatch,
+                worldPos,
+                new PixelStarSettings(
+                    core,
+                    glow,
+                    spike,
+                    star.Size,
+                    star.Brightness,
+                    visualScale,
+                    isAntares,
+                    isAntares),
+                tier,
+                time,
+                index);
         }
 
         private static bool DrawAntaresShaderStar(Vector2 worldPos, float scale, int tier, float time)
         {
-            if (!ShaderManager.TryGetShader("TestMod.AntaresStarShader", out ManagedShader shader))
-                return false;
-
-            Texture2D pixel = TextureAssets.MagicPixel.Value;
             float sideLength = 82f * scale;
-            Vector2 quadAnchor = worldPos - new Vector2(sideLength * 0.5f, -sideLength * 0.5f);
+            float hasHaloNoise = AntaresVisualAssetSystem.HasHaloNoise ? 1f : 0f;
+            float hasSpikeMask = AntaresVisualAssetSystem.HasSpikeMask ? 1f : 0f;
+            float hasRadialRamp = AntaresVisualAssetSystem.HasRadialRamp ? 1f : 0f;
 
-            shader.TrySetParameter("globalTime", time);
-            shader.TrySetParameter("starTier", (float)tier);
-            shader.TrySetParameter("starIntensity", 0.95f + tier * 0.08f);
-            PrimitiveRenderer.RenderQuad(
-                pixel,
-                quadAnchor,
+            return DrawUtils.TryDrawCenteredShaderQuad(
+                "TestMod.AntaresStarShader",
+                Terraria.GameContent.TextureAssets.MagicPixel.Value,
+                worldPos,
                 new Vector2(sideLength),
-                0f,
-                Color.White,
-                shader);
-
-            return true;
-        }
-
-        private static void DrawStarSpikes(SpriteBatch sb, Vector2 pos, Color color, float scale, int tier, float time, bool longSpikes)
-        {
-            Texture2D pixel = TextureAssets.MagicPixel.Value;
-            Rectangle src = new Rectangle(0, 0, 1, 1);
-            float rot = time * (longSpikes ? 0.4f : -0.25f);
-            float length = (longSpikes ? 28f : 17f) * (1f + tier * 0.18f) * scale;
-            float width = (longSpikes ? 1.7f : 1.1f) * scale;
-
-            for (int i = 0; i < 4; i++)
-            {
-                float angle = rot + MathHelper.PiOver2 * i;
-                DrawSpike(sb, pixel, src, pos, angle, length, width, color, 0.42f);
-                DrawSpike(sb, pixel, src, pos, angle + MathHelper.PiOver4, length * 0.55f, width * 0.75f, color, 0.24f);
-            }
-        }
-
-        private static void DrawSpike(SpriteBatch sb, Texture2D pixel, Rectangle src, Vector2 pos, float angle, float length, float width, Color color, float alpha)
-        {
-            sb.Draw(pixel, pos, src, color * alpha, angle, new Vector2(0f, 0.5f),
-                new Vector2(length, width), SpriteEffects.None, 0f);
-            sb.Draw(pixel, pos, src, color * alpha, angle + MathHelper.Pi, new Vector2(0f, 0.5f),
-                new Vector2(length, width), SpriteEffects.None, 0f);
+                shader =>
+                {
+                    shader.TrySetParameter("globalTime", time);
+                    shader.TrySetParameter("starTier", (float)tier);
+                    shader.TrySetParameter("starIntensity", 0.95f + tier * 0.08f);
+                    shader.TrySetParameter("texturePresence", new Vector3(hasHaloNoise, hasSpikeMask, hasRadialRamp));
+                    shader.SetTexture(AntaresVisualAssetSystem.HaloNoise, 2, SamplerState.LinearWrap);
+                    shader.SetTexture(AntaresVisualAssetSystem.SpikeMask, 3, SamplerState.LinearClamp);
+                    shader.SetTexture(AntaresVisualAssetSystem.RadialRamp, 4, SamplerState.LinearClamp);
+                });
         }
 
         public override void SendExtraAI(BinaryWriter writer)
