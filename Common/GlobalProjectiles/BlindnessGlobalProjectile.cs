@@ -8,9 +8,9 @@ namespace TestMod.Common.GlobalProjectiles
 {
     /// <summary>
     /// 方案四：追踪弹幕失明。
-    /// 当任意 Boss 处于失明状态时（BlindnessGlobalNPC.AnyBlindBossActive），
+    /// 当任意 Boss 处于失明状态时（TestGlobalNPC.AnyBlindBossActive），
     /// 对所有敌方追踪弹幕在 AI 执行前替换玩家坐标为假坐标，AI 执行后立即还原。
-    /// 非追踪弹幕已由 BlindnessGlobalNPC 在 Boss 发射时就打歪了，无需处理。
+    /// 非追踪弹幕已由 TestGlobalNPC 在 Boss 发射时就打歪了，无需处理。
     /// </summary>
     public class BlindnessGlobalProjectile : GlobalProjectile
     {
@@ -32,13 +32,13 @@ namespace TestMod.Common.GlobalProjectiles
             _didSpoof = false;
 
             if (!projectile.hostile
-                || !BlindnessGlobalNPC.AnyBlindBossActive
+                || !TestGlobalNPC.AnyBlindBossActive
                 || !HomingAiStyles.Contains(projectile.aiStyle))
                 return true;
 
-            BlindnessGlobalNPC.SpoofPlayerPositions(
-                BlindnessGlobalNPC.BlindBossCenter,
-                BlindnessGlobalNPC.BlindBossCenter + BlindnessGlobalNPC.CurrentFakeOffset,
+            TestGlobalNPC.SpoofPlayerPositions(
+                TestGlobalNPC.BlindBossCenter,
+                TestGlobalNPC.BlindBossCenter + TestGlobalNPC.CurrentFakeOffset,
                 _projBlindPositions);
             _didSpoof = true;
             return true;
@@ -47,7 +47,7 @@ namespace TestMod.Common.GlobalProjectiles
         public override void PostAI(Projectile projectile)
         {
             if (_didSpoof)
-                BlindnessGlobalNPC.RestorePlayerPositions(_projBlindPositions);
+                TestGlobalNPC.RestorePlayerPositions(_projBlindPositions);
         }
     }
 }
