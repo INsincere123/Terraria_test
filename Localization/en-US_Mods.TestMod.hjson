@@ -1,4 +1,54 @@
+Configs: {
+	TestModClientConfig: {
+		DisplayName: TestMod 客户端设置
+		Headers.Dash: 冲刺
+
+		SingleTapDash: {
+			Label: 单键触发冲刺
+			Tooltip:
+				'''
+				开启后，按【单键冲刺】键（默认 V）即可触发冲刺，无需双击方向键。
+				同时屏蔽原版的双击判定，避免走路时误触。
+				关闭时恢复双击触发（兼容 HelpfulHotkeys 等 mod）。
+				'''
+		}
+	}
+}
+
+Keybinds: {
+	"Omniguardian Dash.DisplayName": 长冲刺
+	"Antares Gravity Well.DisplayName": 引力井
+	PreciseFlightSlowdown.DisplayName: 减速以精确走位
+	PreciseFlightToggle.DisplayName: 精确飞行
+	"Activate Time Stop.DisplayName": 时停
+	"JuLing Ability.DisplayName": 聚灵·灵力凝聚
+	"FocusOrb Ability.DisplayName": 专注·凝神聚气
+	"Omniguardian Blink.DisplayName": 短冲刺
+	SuperRelocator.DisplayName: 闪现
+	VanillaDash.DisplayName: 单键冲刺
+}
+
 Items: {
+	AegisShield: {
+		DisplayName: 神盾
+		Tooltip:
+			'''
+			双击方向键发动盾击冲刺
+			速度 23.3 px/帧，命中后立即停止
+			[c/6495ED:碰撞伤害 200（近战加成），命中无敌 12 帧]
+			'''
+	}
+
+	VoidSash: {
+		DisplayName: 虚空腰带
+		Tooltip:
+			'''
+			双击方向键发动高速冲刺
+			起始速度 64 px/帧，第 10 帧起逐帧衰减
+			[c/9370DB:无碰撞伤害，纯机动]
+			'''
+	}
+
 	HeavenlyCrown: {
 		DisplayName: 天赐华冠
 		Tooltip:
@@ -408,18 +458,6 @@ Projectiles: {
 	DRShieldOrb.DisplayName: D R Shield Orb
 	SwordQiProjectile.DisplayName: 泰拉切割
 	BloodFeedKnifeProj.DisplayName: 血饲匕首
-}
-
-Keybinds: {
-	"Omniguardian Dash.DisplayName": 长冲刺
-	"Antares Gravity Well.DisplayName": 引力井
-	PreciseFlightSlowdown.DisplayName: 减速以精确走位
-	PreciseFlightToggle.DisplayName: 精确飞行
-	"Activate Time Stop.DisplayName": 时停
-	"JuLing Ability.DisplayName": 聚灵·灵力凝聚
-	"FocusOrb Ability.DisplayName": 专注·凝神聚气
-	"Omniguardian Blink.DisplayName": 短冲刺
-	SuperRelocator.DisplayName: 闪现
 }
 
 Prefixes: {

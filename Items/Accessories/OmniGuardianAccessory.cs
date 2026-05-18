@@ -195,8 +195,8 @@ namespace TestMod.Items.Accessories
             player.AddBuff(BuffID.NebulaUpMana3, 2);
 
             // [11] 自定义冲刺 (灾厄风格)
-            player.GetModPlayer<DashPlayer>().ActiveDashId  = "LongDash";   // 长冲刺 (V键)
-            player.GetModPlayer<DashPlayer>().ActiveBlinkId = "ShortDash";  // 短冲刺 (C键)
+            player.GetModPlayer<DashPlayer>().LongDashEffectId  = "LongDash";   // 长冲刺 (V键)
+            player.GetModPlayer<DashPlayer>().ShortDashEffectId = "ShortDash";  // 短冲刺 (C键)
 
             // [12] 红木魔石钩爪效果
             GrappleEffect.Apply(player);
@@ -204,8 +204,8 @@ namespace TestMod.Items.Accessories
 
         public override void ModifyTooltips(List<TooltipLine> tooltips)
         {
-            string longDashKey  = KeybindUtils.GetKeyText(OmniKeybinds.DashKey);
-            string shortDashKey = KeybindUtils.GetKeyText(OmniKeybinds.BlinkKey);
+            string longDashKey  = KeybindUtils.GetKeyText(DashKeybinds.DashKey);
+            string shortDashKey = KeybindUtils.GetKeyText(DashKeybinds.BlinkKey);
 
             tooltips.Add(new TooltipLine(Mod, "OmniDesc",
                 $"获得超级翅膀、奔跑效果\n" +

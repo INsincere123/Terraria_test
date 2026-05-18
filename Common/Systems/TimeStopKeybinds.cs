@@ -6,7 +6,7 @@ using Terraria.ModLoader;
 namespace TestMod.Common.Systems
 {
     /// <summary>
-    /// 时停按键。参考现有 OmniKeybinds / AntaresKeybinds 风格。
+    /// 时停按键。参考现有 DashKeybinds / AntaresKeybinds 风格。
     /// 在 ModSystem.PostUpdateInput 检测，避免与 UI 输入冲突。
     /// </summary>
     public class TimeStopKeybinds : ModSystem
