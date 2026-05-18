@@ -48,16 +48,19 @@ namespace TestMod.Common.Players
 
             if (GodModeBuff2)
             {
+                SummonCritPlayer.Enable(Player);
+
                 Player.statDefense += 6666;
+                Player.lifeRegen += 6666 * 2;
                 Player.statLifeMax2 += 6666;
                 Player.statManaMax2 += 666;
                 Player.endurance = MathHelper.Clamp(Player.endurance + 0.66f, 0f, 0.999f);
-                Player.moveSpeed += 0.1f;
-                Player.maxMinions += 21;
-                Player.maxTurrets += 9;
-                Player.GetDamage(DamageClass.Generic) += 1.23f;
-                Player.GetAttackSpeed(DamageClass.Generic) += 1f;
-                Player.GetCritChance(DamageClass.Generic) += 25;
+                //Player.moveSpeed += 0.1f;
+                Player.maxMinions += 66;
+                Player.maxTurrets += 33;
+                Player.GetDamage(DamageClass.Generic) += 6.66f;
+                Player.GetAttackSpeed(DamageClass.Generic) += 6.6f;
+                Player.GetCritChance(DamageClass.Generic) += 66;
             }
 
             if (GodModeBuff != _prevGodModeBuff)
