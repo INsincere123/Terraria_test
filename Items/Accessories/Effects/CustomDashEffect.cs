@@ -9,7 +9,7 @@ namespace TestMod.Items.Accessories.Effects
     //  一行调用接入项目的 PlayerDashManager 系统 (见 Dashes/ 文件夹)
     //
     //  灾厄 (Calamity) 风格做法:
-    //    [1] 设置 ActiveDashId = 自定义 dash 名字
+    //    [1] 设置 LongDashEffectId = 自定义 dash 名字
     //    [2] 同时把 vanilla dashType 置 0, 禁用 vanilla 双击 dash, 避免冲突
     //
     //  使用示例:
@@ -25,7 +25,7 @@ namespace TestMod.Items.Accessories.Effects
         {
             if (string.IsNullOrEmpty(dashId)) return;
 
-            player.GetModPlayer<DashPlayer>().ActiveDashId = dashId;
+            player.GetModPlayer<DashPlayer>().LongDashEffectId = dashId;
             player.dashType = 0;
         }
     }

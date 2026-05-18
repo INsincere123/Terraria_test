@@ -64,10 +64,6 @@ namespace TestMod.Items.Accessories.Dashes
 		public override int    DashCooldown => CooldownFrames;
 		public override bool   AllowVerticalDash => true;
 
-		// 撞击追踪 (单玩家场景下够用)
-		private bool[] hitTargets = new bool[Main.maxNPCs];
-		private int    totalHits;
-
 		public override bool CanUseDash(Player player) => true;
 
 		// =================================================
@@ -75,9 +71,6 @@ namespace TestMod.Items.Accessories.Dashes
 		// =================================================
 		public override void OnDashStart(Player player, int direction)
 		{
-			Array.Clear(hitTargets, 0, hitTargets.Length);
-			totalHits = 0;
-
 			if (direction != 0)
 				player.direction = Math.Sign(direction);
 
@@ -157,9 +150,8 @@ namespace TestMod.Items.Accessories.Dashes
 		// =================================================
 		public override void OnDashEnd(Player player)
 		{
-			// 取得最后的 dash 方向
 			DashPlayer dp = player.GetModPlayer<DashPlayer>();
-			Vector2 unitDir = new Vector2(dp.DashDirX, dp.DashDirY);
+			Vector2 unitDir = new Vector2(dp.DirX, dp.DirY);
 
 			if (unitDir.LengthSquared() > 0)
 			{
@@ -170,9 +162,6 @@ namespace TestMod.Items.Accessories.Dashes
 				player.velocity.X += exitInertia.X;
 				player.velocity.Y += exitInertia.Y;
 			}
-
-			Array.Clear(hitTargets, 0, hitTargets.Length);
-			totalHits = 0;
 		}
 
 		// =================================================
@@ -180,7 +169,8 @@ namespace TestMod.Items.Accessories.Dashes
 		// =================================================
 		private void CheckContactDamage(Player player, int dirX)
 		{
-			if (totalHits >= MaxHitsPerDash) return;
+			DashPlayer dp = player.GetModPlayer<DashPlayer>();
+			if (dp.HitCount >= MaxHitsPerDash) return;
 
 			Rectangle hitbox = new Rectangle(
 				(int)player.position.X - 6,
@@ -192,11 +182,11 @@ namespace TestMod.Items.Accessories.Dashes
 			{
 				NPC npc = Main.npc[i];
 				if (!npc.active || npc.dontTakeDamage || npc.friendly || npc.immortal) continue;
-				if (hitTargets[i]) continue;
+				if (dp.HitTargets[i]) continue;
 				if (!hitbox.Intersects(npc.Hitbox)) continue;
 
-				hitTargets[i] = true;
-				totalHits++;
+				dp.HitTargets[i] = true;
+				dp.HitCount++;
 
 				bool crit = ContactCritDenom > 0 && Main.rand.Next(ContactCritDenom) == 0;
 
@@ -231,7 +221,7 @@ namespace TestMod.Items.Accessories.Dashes
 				SoundEngine.PlaySound(SoundID.Item14, npc.Center);
 				player.SetImmuneTimeForAllTypes(ContactIFrames);
 
-				if (totalHits >= MaxHitsPerDash) break;
+				if (dp.HitCount >= MaxHitsPerDash) break;
 			}
 		}
 	}

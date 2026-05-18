@@ -29,6 +29,12 @@ namespace TestMod.Items.Accessories.Dashes
 		/// <summary>冲刺结束后的冷却帧数 (期间无法再发动)</summary>
 		public virtual int DashCooldown => 30;
 
+		/// <summary>运行时最大持续帧数；默认返回 DashDuration，子类可结合 player 状态动态调整</summary>
+		public virtual int GetMaxDuration(Player player) => DashDuration;
+
+		/// <summary>运行时冷却帧数；默认返回 DashCooldown，StandardDash 覆盖以读取 DashConfig</summary>
+		public virtual int GetCooldown(Player player) => DashCooldown;
+
 		/// <summary>是否允许垂直冲刺 (上下双击)</summary>
 		public virtual bool AllowVerticalDash => false;
 
