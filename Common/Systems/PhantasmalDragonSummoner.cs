@@ -24,7 +24,7 @@ namespace TestMod.Common.Systems
     /// </summary>
     public static class PhantasmalDragonSummoner
     {
-        public const int SegmentCount = 3;   // 头+身+尾
+        public const int SegmentCount = 13;   // Head, body chain, tail.
 
         // ══════════════════════════════════════════════════════════════
         //   外部接口：维持指定玩家的幻影龙存在

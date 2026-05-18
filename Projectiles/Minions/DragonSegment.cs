@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework;
 using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
+using TestMod.Common.Systems;
 using TestMod.Common.Utilities;
 
 namespace TestMod.Projectiles.Minions
@@ -52,7 +53,7 @@ namespace TestMod.Projectiles.Minions
         // PhantasmalDragonSummoner.MaintainFor(player, DragonSegment.SegmentDamage, DragonSegment.SegmentKnockback);
         public const int   SegmentDamage    = 123;
         public const float SegmentKnockback = 2f;
-        public const int   HitCooldown      = 20;
+        public const int   HitCooldown      = 15;
 
         // ── 贴图 ──
         // 碰撞体积
@@ -63,10 +64,10 @@ namespace TestMod.Projectiles.Minions
         public const int TailRow      = 2;
 
         // ── 链结构 ──
-        public const float SegmentDist     = 54f;
-        public const float VisualOverlapDistance = 44f;
-        public const float RotationDamping = 0.22f;
-        public const float FollowLerp = 0.78f;
+        public const float SegmentDist     = 25.5f;
+        public const float VisualOverlapDistance = 25f;
+        public const float RotationDamping = 0.16f;
+        public const float FollowLerp = 0.86f;
 
         // ── Idle 悬浮 ──
         public const float IdleOffsetX     = 60f;
@@ -80,7 +81,7 @@ namespace TestMod.Projectiles.Minions
         // ── 攻击 ──
         public const float SearchRange        = 16f * 70;
         public const float BreakRange         = 16f * 100;
-        public const float AttackBaseAccel    = 0.18f;
+        public const float AttackBaseAccel    = 0.22f;
         public const float AttackAccelLerp    = 0.3f;
         // 追击速度
         public const float AttackMinSpeed     = 22f;
@@ -105,9 +106,24 @@ namespace TestMod.Projectiles.Minions
         public const int TailSegmentKind = 2;
 
         private int PrevWhoAmI => (int)Projectile.ai[0];
-        internal int SegmentKind => (int)Projectile.ai[1];
+        internal int SegmentIndex => (int)Projectile.ai[1];
+        internal int SegmentKind
+        {
+            get
+            {
+                if (SegmentIndex <= 0)
+                    return HeadSegmentKind;
+
+                if (SegmentIndex >= PhantasmalDragonSummoner.SegmentCount - 1)
+                    return TailSegmentKind;
+
+                return BodySegmentKind;
+            }
+        }
+
         internal bool IsHeadSegment => SegmentKind == HeadSegmentKind;
         internal bool IsTailSegment => SegmentKind == TailSegmentKind;
+        internal bool DealsContactDamage => IsHeadSegment || (SegmentKind == BodySegmentKind && SegmentIndex % 4 == 0);
 
         public override string Texture => "TestMod/Projectiles/Minions/DragonSegment";
 
@@ -312,7 +328,8 @@ namespace TestMod.Projectiles.Minions
         // ══════════════════════════════════════════════════════════════
         private void DriveFollowers()
         {
-            DragonSegment[] followers = new DragonSegment[3];
+            DragonSegment[] segments = new DragonSegment[PhantasmalDragonSummoner.SegmentCount];
+            segments[0] = this;
 
             for (int i = 0; i < Main.maxProjectiles; i++)
             {
@@ -322,13 +339,13 @@ namespace TestMod.Projectiles.Minions
                 if (p.whoAmI == Projectile.whoAmI) continue;
 
                 int idx = (int)p.ai[1];
-                if (idx >= 1 && idx <= 2 && followers[idx] == null)
-                    followers[idx] = (DragonSegment)p.ModProjectile;
+                if (idx >= 1 && idx < segments.Length && segments[idx] == null)
+                    segments[idx] = (DragonSegment)p.ModProjectile;
             }
 
-            for (int idx = 1; idx <= 2; idx++)
+            for (int idx = 1; idx < segments.Length; idx++)
             {
-                DragonSegment seg = followers[idx];
+                DragonSegment seg = segments[idx];
                 if (seg == null) continue;
 
                 Projectile prev;
@@ -338,7 +355,7 @@ namespace TestMod.Projectiles.Minions
                 }
                 else
                 {
-                    DragonSegment prevSeg = followers[idx - 1];
+                    DragonSegment prevSeg = segments[idx - 1];
                     if (prevSeg == null) continue;
                     prev = prevSeg.Projectile;
                 }
@@ -381,7 +398,7 @@ namespace TestMod.Projectiles.Minions
         // ══════════════════════════════════════════════════════════════
         //   PreDraw — 段0=头(行0) / 段1,2,3=身体(行1) / 段4=尾(行2)
         // ══════════════════════════════════════════════════════════════
-        public override bool MinionContactDamage() => true;
+        public override bool MinionContactDamage() => DealsContactDamage;
 
         internal bool TryGetPreviousSegment(out Projectile previous)
         {
@@ -400,7 +417,9 @@ namespace TestMod.Projectiles.Minions
 
         public override bool PreDraw(ref Color lightColor)
         {
-            DrawUtils.DrawPhantasmalDragonSegment(this, lightColor);
+            if (IsHeadSegment)
+                DrawUtils.DrawPhantasmalDragonChain(this, lightColor);
+
             return false;
         }
     }
