@@ -10,7 +10,7 @@ namespace TestMod.Common.Mechanics.Minions
     /// 召唤物增强系统。
     ///
     /// 职责：分类判定 + 追踪行为 + 独立无敌帧 + 命中弹开。
-    /// TestGlobalProjectile 的 SetDefaults/PostAI/OnHitNPC 通过薄包装层调用本类，
+    /// GlobalProjectile 的 SetDefaults/PostAI/OnHitNPC 通过薄包装层调用本类，
     /// 本类不直接持有任何 GlobalProjectile 状态。
     ///
     /// 召唤物分为三类：

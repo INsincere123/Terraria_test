@@ -1,0 +1,88 @@
+using Terraria;
+using Terraria.ID;
+using Microsoft.Xna.Framework;
+
+namespace TestMod.Common.GlobalProjectiles
+{
+    public partial class GlobalProjectile
+    {
+        // ══════════════════════════════════════════════════════════════
+        //   幻影弓命中效果：链式跳跃 + 范围爆炸 + 粒子特效
+        // ══════════════════════════════════════════════════════════════
+        private void HandlePhantasmArrowHit(NPC target, int damageDone)
+        {
+            if (Main.netMode != NetmodeID.MultiplayerClient)
+            {
+                // 链式跳跃：400f 内最近 3 个其他敌人，60% 伤害
+                int chainCount = 0;
+                for (int i = 0; i < Main.npc.Length; i++)
+                {
+                    NPC npc = Main.npc[i];
+                    if (!npc.active || npc.friendly || npc.whoAmI == target.whoAmI) continue;
+                    if (Vector2.Distance(target.Center, npc.Center) > 400f) continue;
+
+                    npc.SimpleStrikeNPC((int)(damageDone * 0.6f), 0, false, 0, null, false, 0);
+                    SpawnSplitVisual(target.Center, npc.Center);
+                    if (++chainCount >= 3) break;
+                }
+
+                // 范围爆炸：300f 内其他敌人，40% 伤害
+                for (int i = 0; i < Main.npc.Length; i++)
+                {
+                    NPC npc = Main.npc[i];
+                    if (!npc.active || npc.friendly || npc.whoAmI == target.whoAmI) continue;
+                    if (Vector2.Distance(target.Center, npc.Center) > 300f) continue;
+
+                    npc.SimpleStrikeNPC((int)(damageDone * 0.4f), 0, false, 0, null, false, 0);
+                }
+            }
+
+            // 命中粒子：小范围从中心散开
+            if (Main.netMode != NetmodeID.Server)
+            {
+                for (int i = 0; i < 5; i++)
+                {
+                    Vector2 vel = Main.rand.NextVector2Circular(2f, 2f);
+                    Dust dust = Dust.NewDustPerfect(target.Center, DustID.Enchanted_Pink, vel, 0,
+                        Color.Cyan, Main.rand.NextFloat(0.6f, 1.2f));
+                    dust.noGravity = true;
+                }
+            }
+        }
+
+        // ══════════════════════════════════════════════════════════════
+        //   通用高阶追踪
+        //   用于:泰拉棱镜 + 所有 MinionShot 召唤物射弹
+        // ══════════════════════════════════════════════════════════════
+        private void ApplyHighTierTracking(Projectile projectile, float minSpeed, float maxSpeed,
+            float lerpAmount, float extraCorrection)
+        {
+            int targetIndex = AcquireNearestTarget(projectile.Center, 2400f);
+            if (targetIndex < 0) return;
+
+            NPC target = Main.npc[targetIndex];
+            Vector2 toTarget = target.Center - projectile.Center;
+            if (toTarget.LengthSquared() <= 1f) return;
+
+            float dist = toTarget.Length();
+            toTarget.Normalize();
+
+            float desiredSpeed = MathHelper.Clamp(minSpeed + dist / 45f, minSpeed, maxSpeed);
+            projectile.velocity  = Vector2.Lerp(projectile.velocity, toTarget * desiredSpeed, lerpAmount);
+            projectile.velocity += toTarget * extraCorrection;
+            projectile.netUpdate = true;
+        }
+
+        // ══════════════════════════════════════════════════════════════
+        //   [已废弃] ApplyGenericMinionTracking
+        //
+        //   原本用于所有普通召唤物的无差别追踪,但存在弊端:
+        //   对"保持距离发射射弹"的召唤物(如星尘细胞)会导致贴敌不开枪。
+        //
+        //   已由新的三分类系统替代,见 GlobalProjectile.MinionClassify.cs:
+        //     · 冲撞型  → ApplyContactMinionTracking
+        //     · 射击型本体 → 保持 vanilla
+        //     · MinionShot → ApplyHighTierTracking
+        // ══════════════════════════════════════════════════════════════
+    }
+}

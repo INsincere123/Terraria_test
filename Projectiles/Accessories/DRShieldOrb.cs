@@ -18,7 +18,7 @@ namespace TestMod.Projectiles.Accessories
     //    → 标记 MarkedForDRShield → 扣自身耐久
     //    → 耐久归零：设重生冷却，自毁（方案A：先完整处理再自毁）
     //
-    //  减免实际执行在 TestGlobalProjectile.ShieldOrbs.cs 的 ModifyHitPlayer
+    //  减免实际执行在 GlobalProjectile.ShieldOrbs.cs 的 ModifyHitPlayer
     // ============================================================================
 
     public class DRShieldOrb : ModProjectile
@@ -85,7 +85,7 @@ namespace TestMod.Projectiles.Accessories
                 Projectile proj = Main.projectile[i];
                 if (!proj.active || !proj.hostile || proj.damage <= 0) continue;
 
-                var gp = proj.GetGlobalProjectile<TestGlobalProjectile>();
+                var gp = proj.GetGlobalProjectile<global::TestMod.Common.GlobalProjectiles.GlobalProjectile>();
                 if (gp.MarkedForDRShield) continue; // 已被本帧或之前标记过
 
                 if (Vector2.Distance(proj.Center, Projectile.Center) > r) continue;

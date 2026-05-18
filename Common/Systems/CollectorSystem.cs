@@ -39,7 +39,7 @@ namespace TestMod.Common.Systems
         private static bool _hadBossLastFrame;
 
         // ── OnKill：仅负责累加 HP，不做"全部死亡"判断 ────────────────
-        /// <summary>由 TestGlobalNPC.OnKill 调用，累加 Boss 血量。</summary>
+        /// <summary>由 GlobalNPC.OnKill 调用，累加 Boss 血量。</summary>
         public static void OnNpcKilled(NPC npc)
         {
             if (!npc.boss) return;

@@ -104,7 +104,7 @@ namespace TestMod.Projectiles.Ranged
 
         // ══════════════════════════════════════════════════════════════
         //   OnHitNPC — 破甲debuff叠加 + 触发冷却
-        //   链式跳跃和范围爆炸在 TestGlobalProjectile.OnHitNPC 里统一处理
+        //   链式跳跃和范围爆炸在 GlobalProjectile.OnHitNPC 里统一处理
         // ══════════════════════════════════════════════════════════════
         public override void OnHitNPC(NPC target, NPC.HitInfo hit, int damageDone)
         {

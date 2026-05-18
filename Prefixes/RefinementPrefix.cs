@@ -27,7 +27,7 @@ namespace TestMod.Prefixes
         public const float ReforgeValueMult   = 20.0f;  // 重铸费用倍率
         // ─────────────────────────────────────────────────────────────
 
-        // Custom：默认不出现在任何武器的重铸池，只由 TestGlobalItem.ChoosePrefix 手动控制
+        // Custom：默认不出现在任何武器的重铸池，只由 GlobalItem.ChoosePrefix 手动控制
         // 防止炼化意外出现在原版近战/远程/魔法武器上
         public override PrefixCategory Category => PrefixCategory.Custom;
 

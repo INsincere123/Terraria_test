@@ -4,7 +4,7 @@ using Terraria.ModLoader;
 namespace TestMod.Buffs
 {
     // 纯标记型 debuff，无逻辑。
-    // 实际失明行为由 TestGlobalNPC / BlindnessGlobalProjectile 驱动。
+    // 实际失明行为由 GlobalNPC / GlobalProjectile 驱动。
     public class BlindnessDebuff : ModBuff
     {
         public override string Texture => "Terraria/Images/Buff_18"; // 借用黑暗 debuff 图标

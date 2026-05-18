@@ -84,7 +84,7 @@ namespace TestMod.Projectiles.Accessories
                 Projectile proj = Main.projectile[i];
                 if (!proj.active || !proj.hostile || proj.damage <= 0) continue;
 
-                var gp = proj.GetGlobalProjectile<TestGlobalProjectile>();
+                var gp = proj.GetGlobalProjectile<global::TestMod.Common.GlobalProjectiles.GlobalProjectile>();
                 if (gp.AlreadyReflected) continue;
 
                 // 碰撞判定：Hitbox 交叉 或 中心距离 < 双方半径之和

@@ -21,7 +21,7 @@ namespace TestMod.Items.Accessories.Effects
     //    });
     //
     //  状态存储在 OmniEffectsPlayer，每次命中自动消耗一次计数。
-    //  追踪计数在弹幕生成时（OnSpawn）消耗，由 TestGlobalProjectile.ForcedHoming 处理。
+    //  追踪计数在弹幕生成时（OnSpawn）消耗，由 GlobalProjectile.ForcedHoming 处理。
     // ============================================================================
 
     public struct ForcedCritConfig

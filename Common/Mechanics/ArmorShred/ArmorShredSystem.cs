@@ -8,7 +8,7 @@ namespace TestMod.Common.Mechanics.ArmorShred
     /// 破甲层数数据管理系统。
     ///
     /// 职责：持有层数字典，提供公共 API，负责世界卸载时清理数据。
-    /// 读写双方（PhantasmSpecialArrowProj、TestGlobalNPC）只与本类交互，
+    /// 读写双方（PhantasmSpecialArrowProj、GlobalNPC）只与本类交互，
     /// 互相不直接依赖。
     ///
     /// 层数上限 10 层，每层降低目标 10 点防御。

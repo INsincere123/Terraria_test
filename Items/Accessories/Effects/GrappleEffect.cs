@@ -40,7 +40,7 @@ namespace TestMod.Items.Accessories.Effects
                 player.endurance += 0.1f; // 10% 伤害减免
         }
 
-        // ── 由 TestGlobalProjectile.PreAI 调用：飞行阶段速度 ×2 ────────
+        // ── 由 GlobalProjectile.PreAI 调用：飞行阶段速度 ×2 ────────
         // 利用 extraUpdates=1 让钩爪弹射物每帧执行两次 AI，等效于飞出速度翻倍。
         // 仅在飞行阶段（ai[0] == 0）生效，附着后自动恢复原节奏。
         public static void TryBoostLaunchSpeed(Projectile projectile)
