@@ -1,4 +1,13 @@
 Items: {
+	HeavenlyCrown: {
+		DisplayName: 天赐华冠
+		Tooltip:
+			'''
+			使你的伤害变为1.3倍
+			死亡后失效
+			'''
+	}
+
 	StatBoostToggle: {
 		DisplayName: 成神之路
 		Tooltip:

@@ -29,7 +29,13 @@ namespace TestMod.Common.GlobalNPCs
         {
             // 光之女皇 1/4 概率掉落 SwordQiSword
             if (npc.type == NPCID.HallowBoss)
+            {
                 npcLoot.Add(ItemDropRule.Common(ModContent.ItemType<SwordQiSword>(), 4));
+                // 全程白天造成伤害时 100% 掉落天赐华冠（与泰拉棱镜相同条件）
+                var rule = new LeadingConditionRule(new Conditions.EmpressOfLightIsGenuinelyEnraged());
+                rule.OnSuccess(ItemDropRule.Common(ModContent.ItemType<HeavenlyCrown>()));
+                npcLoot.Add(rule);
+            }
 
             // 独眼巨鹿 1/4 概率掉落 AshenSeal
             if (npc.type == NPCID.Deerclops)
