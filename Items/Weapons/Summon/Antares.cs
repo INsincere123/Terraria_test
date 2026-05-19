@@ -24,9 +24,9 @@ namespace TestMod.Items.Weapons.Summon
         {
             Item.width = 62;
             Item.height = 62;
-            Item.damage = 27;
-            Item.useAnimation = 20;
-            Item.useTime = 20;
+            Item.damage = 26;
+            Item.useAnimation = 25;
+            Item.useTime = 25;
             Item.mana = 0;
             Item.knockBack = 10f;
             Item.buffType = ModContent.BuffType<AntaresBuff>();
@@ -35,7 +35,7 @@ namespace TestMod.Items.Weapons.Summon
             Item.useStyle = ItemUseStyleID.Swing;
             Item.UseSound = SoundID.Item44;
             Item.rare = ModContent.RarityType<AntaresRarity>();
-            Item.value = Item.buyPrice(gold: 20);
+            Item.value = Item.buyPrice(gold: 70);
             Item.noMelee = true;
             Item.autoReuse = true;
         }

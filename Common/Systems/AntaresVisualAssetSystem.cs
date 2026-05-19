@@ -12,21 +12,25 @@ namespace TestMod.Common.Systems
         public const string SpikeMaskPath = "TestMod/Assets/Textures/Effects/AntaresSpikeMask";
         public const string RadialRampPath = "TestMod/Assets/Textures/Effects/AntaresRadialRamp";
         public const string SoftStarMotePath = "TestMod/Assets/Textures/Effects/SoftStarMote";
+        public const string AntaresBeamHeadPath = "TestMod/Assets/Textures/Effects/AntaresBeamHead";
 
         private static Asset<Texture2D> haloNoise;
         private static Asset<Texture2D> spikeMask;
         private static Asset<Texture2D> radialRamp;
         private static Asset<Texture2D> softStarMote;
+        private static Asset<Texture2D> antaresBeamHead;
 
         public static bool HasHaloNoise => haloNoise?.IsLoaded == true;
         public static bool HasSpikeMask => spikeMask?.IsLoaded == true;
         public static bool HasRadialRamp => radialRamp?.IsLoaded == true;
         public static bool HasSoftStarMote => softStarMote?.IsLoaded == true;
+        public static bool HasAntaresBeamHead => antaresBeamHead?.IsLoaded == true;
 
         public static Texture2D HaloNoise => HasHaloNoise ? haloNoise.Value : TextureAssets.MagicPixel.Value;
         public static Texture2D SpikeMask => HasSpikeMask ? spikeMask.Value : TextureAssets.MagicPixel.Value;
         public static Texture2D RadialRamp => HasRadialRamp ? radialRamp.Value : TextureAssets.MagicPixel.Value;
         public static Texture2D SoftStarMote => HasSoftStarMote ? softStarMote.Value : TextureAssets.MagicPixel.Value;
+        public static Texture2D AntaresBeamHead => HasAntaresBeamHead ? antaresBeamHead.Value : TextureAssets.MagicPixel.Value;
 
         public override void Load()
         {
@@ -37,6 +41,7 @@ namespace TestMod.Common.Systems
             spikeMask = TryRequestTexture(SpikeMaskPath);
             radialRamp = TryRequestTexture(RadialRampPath);
             softStarMote = TryRequestTexture(SoftStarMotePath);
+            antaresBeamHead = TryRequestTexture(AntaresBeamHeadPath);
         }
 
         public override void Unload()
@@ -45,6 +50,7 @@ namespace TestMod.Common.Systems
             spikeMask = null;
             radialRamp = null;
             softStarMote = null;
+            antaresBeamHead = null;
         }
 
         private static Asset<Texture2D> TryRequestTexture(string path)

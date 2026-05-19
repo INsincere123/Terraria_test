@@ -77,8 +77,8 @@ Items: {
 		DisplayName: 心宿二
 		Tooltip:
 			'''
-			召唤蝎子座，发射追踪火焰，命中敌人后爆炸
-			5%概率触发爆发射击
+			召唤天蝎座，发射[c/FF4500:追踪火焰]，命中敌人后[c/FF0000:爆炸]
+			[c/6495ED:5%概率]触发[c/FF69B4:爆发射击]
 			'''
 	}
 
@@ -113,17 +113,32 @@ Items: {
 
 	AntaresBreastplate: {
 		DisplayName: Antares Breastplate
-		Tooltip: ""
+		Tooltip:
+			'''
+			+33%所有伤害 +12%暴击率 +12%攻速 +8护甲穿透
+			+33%最大生命 +33%最大法力 +5%伤害减免 +5防御 +10生命再生
+			+3召唤栏 +1哨兵栏 +1法力恢复倍率
+			'''
 	}
 
 	AntaresHelmet: {
 		DisplayName: Antares Helmet
-		Tooltip: ""
+		Tooltip:
+			'''
+			+33%所有伤害 +12%暴击率 +12%攻速 +8护甲穿透
+			+33%最大生命 +33%最大法力 +5%伤害减免 +5防御 +10生命再生
+			+3召唤栏 +1哨兵栏
+			'''
 	}
 
 	AntaresLeggings: {
 		DisplayName: Antares Leggings
-		Tooltip: ""
+		Tooltip:
+			'''
+			+34%所有伤害 +11%暴击率 +11%攻速 +8护甲穿透
+			+34%最大生命 +34%最大法力 +5%伤害减免 +5防御 +10生命再生
+			+2召唤栏 +1哨兵栏 +10%移动速度
+			'''
 	}
 
 	MoonStride: {

@@ -312,12 +312,32 @@ namespace TestMod.Common.Utilities
         {
             Texture2D pixel = TextureAssets.MagicPixel.Value;
             Rectangle source = new(0, 0, 1, 1);
-            Vector2 point = Vector2.Lerp(start, end, time * (0.18f + tier * 0.03f) % 1f) - Main.screenPosition;
+            float progress = time * (0.18f + tier * 0.03f) % 1f;
             float pulse = 1f + MathF.Sin(time * 6f) * 0.18f;
-            Color color = tier >= 3 ? new Color(255, 190, 70) : new Color(140, 220, 255);
 
-            spriteBatch.Draw(pixel, point, source, color * 0.35f, 0f, new Vector2(0.5f), 11f * weight * pulse, SpriteEffects.None, 0f);
-            spriteBatch.Draw(pixel, point, source, Color.White * 0.78f, 0f, new Vector2(0.5f), 3.2f * weight * pulse, SpriteEffects.None, 0f);
+            if (tier >= 3)
+            {
+                Color color = new(255, 190, 70);
+                for (int i = 0; i < 3; i++)
+                {
+                    float trailProgress = (progress - i * 0.045f + 1f) % 1f;
+                    float fade = 1f - i * 0.24f;
+                    Vector2 point = Vector2.Lerp(start, end, trailProgress) - Main.screenPosition;
+                    float outerSize = (5.2f - i * 0.9f) * weight * pulse;
+                    float coreSize = (1.65f - i * 0.22f) * weight * pulse;
+
+                    spriteBatch.Draw(pixel, point, source, color * (0.22f * fade), 0f, new Vector2(0.5f), outerSize, SpriteEffects.None, 0f);
+                    spriteBatch.Draw(pixel, point, source, Color.White * (0.56f * fade), 0f, new Vector2(0.5f), coreSize, SpriteEffects.None, 0f);
+                }
+
+                return;
+            }
+
+            Vector2 singlePoint = Vector2.Lerp(start, end, progress) - Main.screenPosition;
+            Color singleColor = new(140, 220, 255);
+
+            spriteBatch.Draw(pixel, singlePoint, source, singleColor * 0.35f, 0f, new Vector2(0.5f), 11f * weight * pulse, SpriteEffects.None, 0f);
+            spriteBatch.Draw(pixel, singlePoint, source, Color.White * 0.78f, 0f, new Vector2(0.5f), 3.2f * weight * pulse, SpriteEffects.None, 0f);
         }
 
         public static void DrawPixelStar(SpriteBatch spriteBatch, Vector2 worldPosition, PixelStarSettings settings, int tier, float time, int seed)

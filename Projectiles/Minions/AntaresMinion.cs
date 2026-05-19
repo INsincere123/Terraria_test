@@ -26,7 +26,7 @@ namespace TestMod.Projectiles.Minions
         private const float AscensionDamageMultiplier3 = 66f;   // 第三质变伤害倍率
         private const float AntaresStarVisualScale = 0.68f;
         private const float StarParticleDensity = 0.8f;
-        private const int MaxStarMotes = 32;
+        private const int MaxStarMotes = 64;
 
         public Player Owner => Main.player[Projectile.owner];
         public AntaresMinionPlayer ModdedOwner => Owner.GetModPlayer<AntaresMinionPlayer>();
@@ -94,33 +94,69 @@ namespace TestMod.Projectiles.Minions
             public Color Color;
         }
 
+        // The first 22 entries are projected from Scorpius' bright-star J2000 RA/Dec, centered on Antares.
+        // Later entries are faint guide stars placed as paired legs around the body axis.
         private static readonly ConstellationStar[] Stars =
         [
-            new(0,  new Vector2(0f, 0f),       1.85f, 1.25f, new Color(255, 105, 45), new Color(190, 25, 8)),    // Antares
-            new(2,  new Vector2(70f, -80f),    1.05f, 0.82f, new Color(190, 230, 255), new Color(70, 170, 255)),  // delta Sco
-            new(3,  new Vector2(-30f, 80f),    1.00f, 0.78f, new Color(190, 235, 255), new Color(60, 165, 255)),  // tau Sco
-            new(4,  new Vector2(-80f, 150f),   0.95f, 0.72f, new Color(175, 225, 255), new Color(55, 150, 240)),  // epsilon Sco
-            new(5,  new Vector2(140f, -140f),  1.16f, 0.88f, new Color(210, 240, 255), new Color(85, 180, 255)),  // beta Sco
-            new(6,  new Vector2(-120f, 210f),  0.78f, 0.58f, new Color(165, 220, 255), new Color(45, 135, 225)),  // mu Sco
-            new(7,  new Vector2(-170f, 240f),  0.72f, 0.54f, new Color(160, 215, 255), new Color(40, 125, 215)),  // zeta Sco
-            new(8,  new Vector2(-210f, 200f),  0.72f, 0.56f, new Color(160, 215, 255), new Color(40, 130, 220)),  // theta Sco
-            new(9,  new Vector2(-140f, 170f),  1.25f, 0.96f, new Color(230, 245, 255), new Color(110, 190, 255)), // lambda Sco
-            new(10, new Vector2(190f, -100f),  0.82f, 0.60f, new Color(170, 220, 255), new Color(50, 140, 225)),  // rho Sco
-            new(11, new Vector2(80f, -160f),   0.86f, 0.64f, new Color(175, 225, 255), new Color(55, 145, 235)),  // pi Sco
+            new(1,  new Vector2(0f, 0f),         1.85f, 1.25f, new Color(255, 105, 45), new Color(190, 25, 8)),    // Antares / alpha Sco
+            new(20, new Vector2(-201f, 149f),    1.28f, 1.00f, new Color(190, 230, 255), new Color(70, 170, 255)),  // Shaula / lambda Sco
+            new(17, new Vector2(-213f, 232f),    1.18f, 0.93f, new Color(255, 238, 190), new Color(235, 170, 80)),  // Sargas / theta Sco
+            new(4,  new Vector2(91f, -53f),      1.12f, 0.88f, new Color(190, 230, 255), new Color(70, 170, 255)),  // Dschubba / delta Sco
+            new(5,  new Vector2(-65f, 110f),     1.10f, 0.86f, new Color(255, 190, 120), new Color(220, 95, 35)),   // Larawag / epsilon Sco
+            new(19, new Vector2(-229f, 176f),    1.06f, 0.84f, new Color(190, 230, 255), new Color(70, 170, 255)),  // Girtab / kappa Sco
+            new(6,  new Vector2(75f, -93f),      1.00f, 0.78f, new Color(190, 230, 255), new Color(70, 170, 255)),  // Acrab / beta1 Sco
+            new(21, new Vector2(-192f, 152f),    0.96f, 0.75f, new Color(190, 230, 255), new Color(70, 170, 255)),  // Lesath / upsilon Sco
+            new(3,  new Vector2(-20f, 25f),      0.92f, 0.72f, new Color(190, 230, 255), new Color(70, 170, 255)),  // Paikauhale / tau Sco
+            new(7,  new Vector2(96f, -5f),       0.90f, 0.70f, new Color(190, 230, 255), new Color(70, 170, 255)),  // Fang / pi Sco
+            new(2,  new Vector2(26f, -12f),      0.88f, 0.69f, new Color(190, 230, 255), new Color(70, 170, 255)),  // Alniyat / sigma Sco
+            new(18, new Vector2(-245f, 192f),    0.84f, 0.66f, new Color(255, 238, 190), new Color(235, 170, 80)),  // iota1 Sco
+            new(9,  new Vector2(-70f, 163f),     0.82f, 0.64f, new Color(190, 230, 255), new Color(70, 170, 255)),  // Xamidimura / mu1 Sco
+            new(22, new Vector2(-252f, 149f),    0.78f, 0.61f, new Color(255, 205, 135), new Color(220, 120, 45)),  // G Sco
+            new(16, new Vector2(-134f, 235f),    0.76f, 0.60f, new Color(255, 238, 190), new Color(235, 170, 80)),  // eta Sco
+            new(13, new Vector2(-72f, 162f),     0.74f, 0.58f, new Color(190, 230, 255), new Color(70, 170, 255)),  // Pipirima / mu2 Sco
+            new(15, new Vector2(-79f, 223f),     0.72f, 0.56f, new Color(255, 175, 105), new Color(220, 90, 35)),   // zeta2 Sco
+            new(10, new Vector2(102f, 39f),      0.68f, 0.53f, new Color(190, 230, 255), new Color(70, 170, 255)),  // Iklil / rho Sco
+            new(11, new Vector2(71f, -81f),      0.66f, 0.51f, new Color(190, 230, 255), new Color(70, 170, 255)),  // omega1 Sco
+            new(14, new Vector2(55f, -98f),      0.64f, 0.50f, new Color(190, 230, 255), new Color(70, 170, 255)),  // Jabbah / nu Sco
+            new(8,  new Vector2(0f, 70f),        0.54f, 0.42f, new Color(170, 220, 255), new Color(45, 135, 225)),  // upper right leg joint
+            new(9,  new Vector2(48f, 58f),       0.50f, 0.38f, new Color(165, 215, 255), new Color(40, 125, 215)),  // upper right leg tip
+            new(8,  new Vector2(-74f, 12f),      0.54f, 0.42f, new Color(170, 220, 255), new Color(45, 135, 225)),  // upper left leg joint
+            new(9,  new Vector2(-88f, -28f),     0.50f, 0.38f, new Color(165, 215, 255), new Color(40, 125, 215)),  // upper left leg tip
+            new(12, new Vector2(-56f, 198f),     0.50f, 0.39f, new Color(170, 220, 255), new Color(45, 135, 225)),  // lower right leg joint
+            new(13, new Vector2(-6f, 192f),      0.46f, 0.35f, new Color(165, 215, 255), new Color(40, 125, 215)),  // lower right leg tip
+            new(12, new Vector2(-128f, 146f),    0.50f, 0.39f, new Color(170, 220, 255), new Color(45, 135, 225)),  // lower left leg joint
+            new(13, new Vector2(-142f, 96f),     0.46f, 0.35f, new Color(165, 215, 255), new Color(40, 125, 215)),  // lower left leg tip
         ];
 
         private static readonly ConstellationLine[] Lines =
         [
-            new(2, 0, 1, 1.00f),
-            new(3, 0, 2, 1.00f),
-            new(4, 2, 3, 0.95f),
-            new(5, 1, 4, 0.92f),
-            new(6, 3, 5, 0.85f),
-            new(7, 5, 6, 0.78f),
-            new(8, 6, 7, 0.76f),
-            new(9, 7, 8, 1.00f),
-            new(10, 4, 9, 0.72f),
-            new(11, 4, 10, 0.72f),
+            new(2, 0, 10, 1.00f),
+            new(3, 0, 8, 0.90f),
+            new(4, 10, 3, 0.86f),
+            new(5, 8, 4, 0.88f),
+            new(6, 3, 6, 0.78f),
+            new(7, 3, 9, 0.72f),
+            new(8, 8, 20, 0.34f),
+            new(8, 8, 22, 0.34f),
+            new(9, 4, 12, 0.78f),
+            new(9, 20, 21, 0.30f),
+            new(9, 22, 23, 0.30f),
+            new(10, 9, 17, 0.54f),
+            new(11, 6, 18, 0.50f),
+            new(12, 12, 24, 0.32f),
+            new(12, 12, 26, 0.32f),
+            new(13, 12, 15, 0.42f),
+            new(13, 24, 25, 0.28f),
+            new(13, 26, 27, 0.28f),
+            new(14, 18, 19, 0.44f),
+            new(15, 15, 16, 0.72f),
+            new(16, 16, 14, 0.74f),
+            new(17, 14, 2, 0.86f),
+            new(18, 2, 11, 0.76f),
+            new(19, 11, 5, 0.72f),
+            new(20, 5, 1, 0.90f),
+            new(21, 1, 7, 0.56f),
+            new(22, 5, 13, 0.52f),
         ];
 
         public override void SetStaticDefaults()
@@ -371,9 +407,9 @@ namespace TestMod.Projectiles.Minions
 
             SoundEngine.PlaySound(SoundID.Item9 with { Pitch = -0.15f }, Projectile.Center);
 
-            for (int d = 0; d < 50; d++)
+            for (int d = 0; d < 16; d++)
             {
-                float angle = MathHelper.TwoPi / 50 * d;
+                float angle = MathHelper.TwoPi / 16 * d;
                 Vector2 v = angle.ToRotationVector2() * 20f;
                 Dust dust = Dust.NewDustPerfect(Projectile.Center, DustID.PurificationPowder, v);
                 dust.noGravity = true;
@@ -513,7 +549,10 @@ namespace TestMod.Projectiles.Minions
 
         private bool IsStarUnlocked(ConstellationStar star) => Projectile.minionSlots >= star.UnlockSlot;
 
-        private bool IsLineUnlocked(ConstellationLine line) => Projectile.minionSlots >= line.UnlockSlot;
+        private bool IsLineUnlocked(ConstellationLine line) =>
+            Projectile.minionSlots >= line.UnlockSlot &&
+            (uint)line.From < Stars.Length &&
+            (uint)line.To < Stars.Length;
 
         private Vector2 GetStarOffset(ConstellationStar star)
         {
@@ -531,8 +570,8 @@ namespace TestMod.Projectiles.Minions
             float visualScale = isAntares ? AntaresStarVisualScale : 1f;
             float shaderScale = star.Size * star.Brightness * visualScale;
 
-            if (isAntares && DrawAntaresShaderStar(worldPos, shaderScale, tier, time))
-                return;
+            if (isAntares)
+                DrawAntaresShaderStar(worldPos, shaderScale, tier, time);
 
             Color glow = Color.Lerp(star.GlowColor, new Color(255, 80, 22), isAntares ? MathHelper.Clamp(tier * 0.32f, 0f, 1f) : tier * 0.08f);
             Color core = Color.Lerp(star.CoreColor, Color.White, isAntares ? 0.15f + tier * 0.08f : 0.1f);
@@ -548,11 +587,37 @@ namespace TestMod.Projectiles.Minions
                     star.Size,
                     star.Brightness,
                     visualScale,
-                    isAntares,
-                    isAntares),
+                    false,
+                    false),
                 tier,
                 time,
                 index);
+
+            if (isAntares)
+                DrawAntaresSoftStarMote(worldPos, star, tier, time);
+        }
+
+        private static void DrawAntaresSoftStarMote(Vector2 worldPos, ConstellationStar star, int tier, float time)
+        {
+            Texture2D texture = AntaresVisualAssetSystem.SoftStarMote;
+            bool hasSoftTexture = AntaresVisualAssetSystem.HasSoftStarMote;
+            Vector2 origin = hasSoftTexture ? texture.Size() * 0.5f : new Vector2(0.5f);
+            Vector2 drawPosition = worldPos - Main.screenPosition;
+            float twinkle = 0.92f + MathF.Sin(time * 3.1f) * 0.08f;
+            float scale = star.Size * star.Brightness * AntaresStarVisualScale * (0.72f + tier * 0.045f) * twinkle;
+            Color warmCore = Color.Lerp(new Color(255, 86, 24), new Color(255, 220, 92), 0.42f + tier * 0.08f);
+
+            if (hasSoftTexture)
+            {
+                Main.spriteBatch.Draw(texture, drawPosition, null, new Color(255, 70, 18) * 0.58f, time * 0.28f, origin, scale * 0.18f, SpriteEffects.None, 0f);
+                Main.spriteBatch.Draw(texture, drawPosition, null, warmCore * 0.84f, -time * 0.18f, origin, scale * 0.1f, SpriteEffects.None, 0f);
+                Main.spriteBatch.Draw(texture, drawPosition, null, Color.White * 0.68f, 0f, origin, scale * 0.036f, SpriteEffects.None, 0f);
+            }
+            else
+            {
+                Main.spriteBatch.Draw(texture, drawPosition, null, warmCore * 0.88f, 0f, origin, new Vector2(scale * 2.8f), SpriteEffects.None, 0f);
+                Main.spriteBatch.Draw(texture, drawPosition, null, Color.White * 0.72f, 0f, origin, new Vector2(scale * 1.1f), SpriteEffects.None, 0f);
+            }
         }
 
         private static bool DrawAntaresShaderStar(Vector2 worldPos, float scale, int tier, float time)
