@@ -3,6 +3,7 @@ using Terraria.Audio;
 using Terraria.GameContent.UI;
 using Terraria.ID;
 using Terraria.ModLoader;
+using Terraria.ModLoader.IO;
 
 namespace TestMod.Common.Players
 {
@@ -27,6 +28,13 @@ namespace TestMod.Common.Players
 
         /// <summary>本帧是否装备了收集者（ResetEffects 清空，UpdateAccessory 设置）。</summary>
         public bool IsEquipped;
+
+        /// <summary>累计由收集者处决触发杀死的 Boss 数。</summary>
+        public int ExecutedBossCount;
+
+        public bool ExecutedPlantera;
+        public bool ExecutedGolem;
+        public bool ExecutedMoonLord;
 
         // 本帧已处决过的 NPC whoAmI，防止多发弹幕在同帧重复触发处决效果
         private int _lastExecutedWhoAmI = -1;
@@ -74,9 +82,47 @@ namespace TestMod.Common.Players
             // 处决音效（MoonLord = NPC_Killed_10，SoundType.Sound，MaxInstances=0，全局播放）
             SoundEngine.PlaySound(SoundID.MoonLord, null);
 
+            RecordExecution(target);
+
             // 若 Boss 被本次命中打至低于 7% 但尚未死亡（伤害不足以杀死），补一刀确保死亡
             if (target.active && target.life > 0)
                 target.StrikeInstantKill();
+        }
+
+        private void RecordExecution(NPC target)
+        {
+            ExecutedBossCount++;
+
+            switch (target.type)
+            {
+                case NPCID.Plantera:
+                    ExecutedPlantera = true;
+                    break;
+                case NPCID.Golem:
+                    ExecutedGolem = true;
+                    break;
+                case NPCID.MoonLordCore:
+                case NPCID.MoonLordHead:
+                case NPCID.MoonLordHand:
+                    ExecutedMoonLord = true;
+                    break;
+            }
+        }
+
+        public override void SaveData(TagCompound tag)
+        {
+            tag["collectorExecutedBossCount"] = ExecutedBossCount;
+            tag["collectorExecutedPlantera"] = ExecutedPlantera;
+            tag["collectorExecutedGolem"] = ExecutedGolem;
+            tag["collectorExecutedMoonLord"] = ExecutedMoonLord;
+        }
+
+        public override void LoadData(TagCompound tag)
+        {
+            ExecutedBossCount = tag.GetInt("collectorExecutedBossCount");
+            ExecutedPlantera = tag.GetBool("collectorExecutedPlantera");
+            ExecutedGolem = tag.GetBool("collectorExecutedGolem");
+            ExecutedMoonLord = tag.GetBool("collectorExecutedMoonLord");
         }
     }
 }

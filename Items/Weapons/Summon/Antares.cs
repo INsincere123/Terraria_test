@@ -25,9 +25,9 @@ namespace TestMod.Items.Weapons.Summon
             Item.width = 62;
             Item.height = 62;
             Item.damage = 27;
-            Item.useAnimation = 12;
-            Item.useTime = 12;
-            Item.mana = 10;
+            Item.useAnimation = 20;
+            Item.useTime = 20;
+            Item.mana = 0;
             Item.knockBack = 10f;
             Item.buffType = ModContent.BuffType<AntaresBuff>();
             Item.shoot = ModContent.ProjectileType<AntaresMinion>();
