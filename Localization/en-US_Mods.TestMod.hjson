@@ -336,6 +336,11 @@ Items: {
 		Tooltip: ""
 		DisplayName: Test Wing
 	}
+
+	TestWeapon: {
+		Tooltip: ""
+		DisplayName: Test Weapon
+	}
 }
 
 Buffs: {
@@ -475,6 +480,7 @@ Projectiles: {
 	DRShieldOrb.DisplayName: D R Shield Orb
 	SwordQiProjectile.DisplayName: 泰拉切割
 	BloodFeedKnifeProj.DisplayName: 血饲匕首
+	TestProjectile.DisplayName: Test Projectile
 }
 
 Prefixes: {

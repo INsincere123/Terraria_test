@@ -11,6 +11,8 @@
 	<!-- 让 .fx 文件不被排除，tModLoader 构建系统能扫描到并触发 Luminance 编译 -->
 	<ItemGroup>
 		<None Remove="Assets\AutoloadedEffects\Filters\TimeStopFilter.fx" />
+		<None Remove="Assets\AutoloadedEffects\Filters\GravitationalLensFilter.fx" />
+		<None Remove="Assets\AutoloadedEffects\Shaders\Primitives\BlackHoleShader.fx" />
 	</ItemGroup>
 
 	<!-- References -->
