@@ -33,7 +33,7 @@ namespace TestMod.Projectiles.Minions
         // 游走中心每隔多少帧重新选一个随机目标点。
         // 最小/最大值组成随机区间，60 帧约等于 1 秒。
         private const int WanderTargetRetargetTimeMin = 90;
-        private const int WanderTargetRetargetTimeMax = 150;
+        private const int WanderTargetRetargetTimeMax = 210;
 
         // 游走中心追向目标点的平滑速度。越大越灵敏，越小越漂浮。
         private const float WanderCenterLerp = 0.025f;
@@ -59,7 +59,7 @@ namespace TestMod.Projectiles.Minions
 
         // ==================== 敌方弹幕吸收参数 ====================
         // 敌方弹幕进入这个半径后会被轻微拉向黑洞，但还不会立刻消失。
-        private const float ProjectilePullRadius = 320f;
+        private const float ProjectilePullRadius = 420f;
 
         // 敌方弹幕进入这个半径后会被黑洞直接吞掉。可以比视觉黑洞大几倍，表现强引力。
         private const float ProjectileAbsorbRadius = 120f;
@@ -72,10 +72,10 @@ namespace TestMod.Projectiles.Minions
 
         // ==================== 类星体喷流参数 ====================
         // 黑洞索敌范围。没有目标时不会发射。
-        private const float TargetSearchRange = 1200f;
+        private const float TargetSearchRange = 1800f;
 
         // 每个黑洞的基础开火间隔，单位是帧。
-        private const int QuasarFireRate = 42;
+        private const int QuasarFireRate = 60;
 
         // 多个黑洞之间的开火错峰帧数，避免所有黑洞同一帧齐射。
         private const int QuasarFireOffsetPerIndex = 8;
@@ -86,12 +86,12 @@ namespace TestMod.Projectiles.Minions
         // 发射口沿吸积盘高速旋转，制造狂暴活动感。
         private const float QuasarDiskSpinSpeed = 0.22f;
 
-        // 喷流主要沿吸积盘切线甩出，只轻微偏向目标，不进行追踪。
+        // 喷流主要沿吸积盘切线甩出
         private const float QuasarTargetBias = 0.18f;
         private const float QuasarSpread = 0.16f;
 
         // 类星体喷流射弹的初速度。
-        private const float QuasarShotSpeed = 66f;
+        private const float QuasarShotSpeed = 120f;
 
         private Vector2 orbitCenter;
 
@@ -109,7 +109,7 @@ namespace TestMod.Projectiles.Minions
         {
             Projectile.width = 32;
             Projectile.height = 32;
-            Projectile.minionSlots = 1f;
+            Projectile.minionSlots = 9f;
             Projectile.penetrate = -1;
             Projectile.netImportant = true;
             Projectile.friendly = true;

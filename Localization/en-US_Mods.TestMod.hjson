@@ -343,8 +343,13 @@ Items: {
 	}
 
 	BlackHoleStaff: {
-		DisplayName: Black Hole Staff
-		Tooltip: ""
+		DisplayName: 黑洞
+		Tooltip:
+			'''
+			召唤[c/5FAAFF:黑洞]，发射[c/FFFF88:高能类星体喷流]
+			黑洞占用9个[c/FFB86B:召唤栏]，最多召唤4个[c/5FAAFF:黑洞]
+			强大的[c/5FAAFF:天体]可吸引并吸收[c/5FAAFF:敌方弹幕]
+			'''
 	}
 }
 

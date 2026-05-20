@@ -5,34 +5,46 @@ using Terraria;
 using Terraria.GameContent;
 using Terraria.ID;
 using Terraria.ModLoader;
+using TestMod.Common.Players;
+using TestMod.Common.Systems;
 
 namespace TestMod.Projectiles.Minions
 {
     public class QuasarJetProjectile : ModProjectile
     {
+        private const int TrailCacheLength = 30;
+        private const float OuterTrailWidth = 24f;
+        private const float InnerTrailWidth = 7f;
+        private const float TrailSegmentOverlap = 10f;
+        private const float HeadScale = 0.46f;
+        private const float GlowScale = 0.38f;
+        private const float GlowOpacity = 0.22f;
+        private static readonly Color JetColor = new(55, 160, 255);
+        private static readonly Color HotCoreColor = new(235, 250, 255);
+
         public override string Texture => "Terraria/Images/Projectile_12";
 
         public override void SetStaticDefaults()
         {
-            ProjectileID.Sets.TrailCacheLength[Type] = 18;
+            ProjectileID.Sets.TrailCacheLength[Type] = TrailCacheLength;
             ProjectileID.Sets.TrailingMode[Type] = 2;
+            ProjectileID.Sets.MinionShot[Type] = true;
         }
 
         public override void SetDefaults()
         {
-            Projectile.width = 32;
-            Projectile.height = 32;
+            Projectile.width = 24;
+            Projectile.height = 24;
             Projectile.friendly = true;
             Projectile.hostile = false;
-            Projectile.timeLeft = 60;
+            Projectile.timeLeft = 90;
             Projectile.penetrate = -1;
             Projectile.tileCollide = false;
             Projectile.ignoreWater = true;
             Projectile.DamageType = DamageClass.Summon;
-            Projectile.MaxUpdates = 6;
+            Projectile.MaxUpdates = 2;
             Projectile.usesLocalNPCImmunity = true;
-            Projectile.localNPCHitCooldown = 12;
-            ProjectileID.Sets.MinionShot[Type] = true;
+            Projectile.localNPCHitCooldown = 2;
         }
 
         public override void AI()
@@ -47,58 +59,131 @@ namespace TestMod.Projectiles.Minions
             }
         }
 
+        public override void ModifyHitNPC(NPC target, ref NPC.HitModifiers modifiers)
+        {
+            Player owner = Main.player[Projectile.owner];
+            var summonCritPlayer = owner.GetModPlayer<SummonCritPlayer>();
+
+            if (!summonCritPlayer.Enabled)
+                SummonCritPlayer.TryApplySummonCrit(owner, Projectile, ref modifiers, requireEnabled: false);
+        }
+
         public override bool PreDraw(ref Color lightColor)
         {
-            Texture2D pixel = TextureAssets.MagicPixel.Value;
-            Vector2 unit = Projectile.velocity.SafeNormalize(Vector2.UnitX);
-            Vector2 origin = new(0.5f, 0.5f);
+            DrawTexturedTrail();
+            DrawHead();
+            return false;
+        }
+
+        private void DrawTexturedTrail()
+        {
+            Texture2D trailTexture = QuasarJetVisualAssetSystem.TrailTexture;
 
             for (int i = Projectile.oldPos.Length - 1; i >= 0; i--)
             {
-                Vector2 oldPosition = Projectile.oldPos[i];
-                if (oldPosition == Vector2.Zero)
+                Vector2 start = Projectile.oldPos[i];
+                if (start == Vector2.Zero)
+                    continue;
+
+                Vector2 startCenter = start + Projectile.Size * 0.5f;
+                Vector2 endCenter = i == 0 ? Projectile.Center : Projectile.oldPos[i - 1] + Projectile.Size * 0.5f;
+                Vector2 segment = endCenter - startCenter;
+                float length = segment.Length();
+                if (length <= 1f)
                     continue;
 
                 float completion = 1f - i / (float)Projectile.oldPos.Length;
-                float width = MathHelper.Lerp(3f, 11f, completion);
-                float length = MathHelper.Lerp(12f, 26f, completion);
-                Color color = Color.Lerp(new Color(45, 95, 255), Color.White, completion) * (completion * 0.75f);
+                float opacity = completion * completion;
+                Vector2 direction = segment / length;
+                float drawLength = length + TrailSegmentOverlap;
+                Vector2 drawPosition = (startCenter + endCenter) * 0.5f + direction * (TrailSegmentOverlap * 0.5f) - Main.screenPosition;
+                float rotation = segment.ToRotation();
 
-                Main.spriteBatch.Draw(
-                    pixel,
-                    oldPosition + Projectile.Size * 0.5f - Main.screenPosition,
-                    new Rectangle(0, 0, 1, 1),
-                    color,
-                    Projectile.rotation,
-                    origin,
-                    new Vector2(length, width),
-                    SpriteEffects.None,
-                    0f);
+                float widthFade = MathHelper.Lerp(0.35f, 1f, completion);
+                DrawTrailLayer(trailTexture, drawPosition, rotation, drawLength, OuterTrailWidth * widthFade, JetColor * (0.34f * opacity));
+                DrawTrailLayer(trailTexture, drawPosition, rotation, drawLength, InnerTrailWidth * widthFade, HotCoreColor * (0.82f * opacity));
             }
+        }
+
+        private static void DrawTrailLayer(Texture2D texture, Vector2 position, float rotation, float length, float width, Color color)
+        {
+            Rectangle frame = texture.Frame();
+            Vector2 origin = frame.Size() * 0.5f;
+            Vector2 scale = QuasarJetVisualAssetSystem.HasTrailTexture
+                ? new Vector2(length / frame.Width, width / frame.Height)
+                : new Vector2(length, width);
 
             Main.spriteBatch.Draw(
+                texture,
+                position,
+                frame,
+                color,
+                rotation,
+                origin,
+                scale,
+                SpriteEffects.None,
+                0f);
+        }
+
+        private void DrawHead()
+        {
+            Vector2 screenPosition = Projectile.Center - Main.screenPosition;
+            float rotation = Projectile.velocity.ToRotation();
+
+            if (QuasarJetVisualAssetSystem.HasGlowTexture)
+                DrawCentered(QuasarJetVisualAssetSystem.GlowTexture, screenPosition, rotation, JetColor * GlowOpacity, GlowScale);
+            else
+                DrawFallbackGlow(screenPosition, rotation);
+
+            if (QuasarJetVisualAssetSystem.HasHeadTexture)
+                DrawCentered(QuasarJetVisualAssetSystem.HeadTexture, screenPosition, rotation, Color.White, HeadScale);
+            else
+                DrawFallbackHead(screenPosition, rotation);
+        }
+
+        private static void DrawCentered(Texture2D texture, Vector2 position, float rotation, Color color, float scale)
+        {
+            Rectangle frame = texture.Frame();
+            Main.spriteBatch.Draw(
+                texture,
+                position,
+                frame,
+                color,
+                rotation,
+                frame.Size() * 0.5f,
+                scale,
+                SpriteEffects.None,
+                0f);
+        }
+
+        private static void DrawFallbackGlow(Vector2 position, float rotation)
+        {
+            Texture2D pixel = TextureAssets.MagicPixel.Value;
+            Main.spriteBatch.Draw(
                 pixel,
-                Projectile.Center - Main.screenPosition,
+                position,
+                new Rectangle(0, 0, 1, 1),
+                JetColor * GlowOpacity,
+                rotation,
+                new Vector2(0.5f),
+                new Vector2(26f, 8f),
+                SpriteEffects.None,
+                0f);
+        }
+
+        private static void DrawFallbackHead(Vector2 position, float rotation)
+        {
+            Texture2D pixel = TextureAssets.MagicPixel.Value;
+            Main.spriteBatch.Draw(
+                pixel,
+                position,
                 new Rectangle(0, 0, 1, 1),
                 Color.White,
-                Projectile.rotation,
-                origin,
-                new Vector2(24f, 7f),
+                rotation,
+                new Vector2(0.5f),
+                new Vector2(18f, 5f),
                 SpriteEffects.None,
                 0f);
-
-            Main.spriteBatch.Draw(
-                pixel,
-                Projectile.Center - Main.screenPosition - unit * 8f,
-                new Rectangle(0, 0, 1, 1),
-                new Color(65, 175, 255) * 0.8f,
-                Projectile.rotation,
-                origin,
-                new Vector2(40f, 14f),
-                SpriteEffects.None,
-                0f);
-
-            return false;
         }
     }
 }

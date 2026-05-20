@@ -13,22 +13,21 @@ namespace TestMod.Items.Weapons.Summon
     {
         private const int MaxBlackHoles = 4;
 
-        public override string Texture => "Terraria/Images/Item_4952";
 
         public override void SetStaticDefaults()
         {
-            ItemID.Sets.StaffMinionSlotsRequired[Type] = 1f;
+            ItemID.Sets.StaffMinionSlotsRequired[Type] = 9f;
         }
 
         public override void SetDefaults()
         {
             Item.width = 42;
             Item.height = 42;
-            Item.damage = 800;
+            Item.damage = 9999;
             Item.mana = 0;
             Item.useAnimation = 24;
             Item.useTime = 24;
-            Item.useStyle = ItemUseStyleID.Swing;
+            Item.useStyle = ItemUseStyleID.HoldUp;
             Item.noMelee = true;
             Item.knockBack = 60f;
             Item.value = Item.sellPrice(platinum: 10);

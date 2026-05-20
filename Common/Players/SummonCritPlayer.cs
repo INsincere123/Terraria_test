@@ -18,15 +18,23 @@ namespace TestMod.Common.Players
 
         public override void ModifyHitNPCWithProj(Projectile proj, NPC target, ref NPC.HitModifiers modifiers)
         {
-            if (!Enabled || proj.hostile || !IsSummonDamage(proj))
+            TryApplySummonCrit(Player, proj, ref modifiers, requireEnabled: true);
+        }
+
+        public static void TryApplySummonCrit(Player player, Projectile proj, ref NPC.HitModifiers modifiers, bool requireEnabled = true)
+        {
+            if (requireEnabled && !player.GetModPlayer<SummonCritPlayer>().Enabled)
                 return;
 
-            float critChance = Player.GetTotalCritChance(DamageClass.Generic);
+            if (proj.hostile || !IsSummonDamage(proj))
+                return;
+
+            float critChance = player.GetTotalCritChance(DamageClass.Generic);
             if (critChance > 0f && Main.rand.NextFloat(100f) < critChance)
                 modifiers.SetCrit();
         }
 
-        private static bool IsSummonDamage(Projectile projectile)
+        public static bool IsSummonDamage(Projectile projectile)
         {
             return projectile.CountsAsClass(DamageClass.Summon)
                 || projectile.CountsAsClass(DamageClass.SummonMeleeSpeed)
