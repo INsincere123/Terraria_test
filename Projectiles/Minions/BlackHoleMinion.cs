@@ -1,8 +1,6 @@
 using System;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 using Terraria;
-using Terraria.GameContent;
 using Terraria.ID;
 using Terraria.ModLoader;
 using TestMod.Buffs;
@@ -48,27 +46,27 @@ namespace TestMod.Projectiles.Minions
         private const float MaxOrbitSpeed = 15f;
 
         // 黑洞离玩家超过这个距离时，直接传送回轨道附近，避免丢失。
-        private const float ReturnDistance = 2200f;
+        private const float ReturnDistance = 1700f;
 
         // ==================== 黑洞视觉参数 ====================
         // 传给现有引力透镜系统的半径，同时影响黑洞视觉大小和透镜范围。
-        private const float BlackHoleVisualRadius = 24f;
+        private const float BlackHoleVisualRadius = 27f;
 
         // 吸积盘颜色。这里只影响现有黑洞 shader 的亮环颜色。
         private static readonly Color AccretionDiskColor = new(95, 170, 255);
 
         // ==================== 敌方弹幕吸收参数 ====================
         // 敌方弹幕进入这个半径后会被轻微拉向黑洞，但还不会立刻消失。
-        private const float ProjectilePullRadius = 420f;
+        private const float ProjectilePullRadius = 360f;
 
         // 敌方弹幕进入这个半径后会被黑洞直接吞掉。可以比视觉黑洞大几倍，表现强引力。
         private const float ProjectileAbsorbRadius = 120f;
 
         // 拉拽敌弹的力度。越大敌弹转向越明显，太大会显得突兀。
-        private const float ProjectilePullStrength = 1f;
+        private const float ProjectilePullStrength = 1.6f;
 
         // 每个黑洞每帧最多处理多少个敌弹，避免密集弹幕时性能波动。
-        private const int MaxProjectilePullsPerFrame = 16;
+        private const int MaxProjectilePullsPerFrame = 20;
 
         // ==================== 类星体喷流参数 ====================
         // 黑洞索敌范围。没有目标时不会发射。
@@ -141,7 +139,7 @@ namespace TestMod.Projectiles.Minions
             TryShootQuasarJet(target, index);
 
             if (!Main.dedServ)
-                GravitationalLensSystem.RegisterBlackHole(Projectile.Center, BlackHoleVisualRadius, 1f, AccretionDiskColor, GetCoreTexture());
+                GravitationalLensSystem.RegisterBlackHole(Projectile.Center, BlackHoleVisualRadius, 1f, AccretionDiskColor, GetVisualStyle());
 
             Projectile.rotation += 0.035f;
             Projectile.spriteDirection = Projectile.velocity.X >= 0f ? 1 : -1;
@@ -150,16 +148,21 @@ namespace TestMod.Projectiles.Minions
 
         private void CheckActive()
         {
-            Owner.AddBuff(ModContent.BuffType<BlackHoleMinionBuff>(), 2);
-
             if (Owner.dead || !Owner.active)
             {
                 ModdedOwner.blackHoleMinion = false;
                 return;
             }
 
-            if (ModdedOwner.blackHoleMinion)
+            int buffType = ModContent.BuffType<BlackHoleMinionBuff>();
+            bool shouldStayAlive = Owner.HasBuff(buffType) || ModdedOwner.blackHoleMinion;
+
+            if (shouldStayAlive)
+            {
+                Owner.AddBuff(buffType, 2);
+                ModdedOwner.blackHoleMinion = true;
                 Projectile.timeLeft = 2;
+            }
         }
 
         private NPC FindTarget()
@@ -369,8 +372,8 @@ namespace TestMod.Projectiles.Minions
 
         public override bool PreDraw(ref Color lightColor) => false;
 
-        private Texture2D GetCoreTexture() => null;
-        //private Texture2D GetCoreTexture()
-        //    => TextureAssets.Projectile[Type].Value;
+        private static BlackHoleVisualStyle GetVisualStyle()
+            // 默认仍使用 BlackHoleCore；放入 BlackHoleDisk/BlackHoleDiskFlow 后自动启用精细吸积盘。
+            => BlackHoleVisualStyle.DefaultCoreMaterialDisk;
     }
 }

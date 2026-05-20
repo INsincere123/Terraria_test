@@ -23,7 +23,7 @@ namespace TestMod.Common.Systems
 
         // AccretionOuterRadiusFactor：吸积盘外缘范围，相对于注册进来的黑洞半径。
         // 数值越大，吸积盘越宽，也越容易把外部画面视觉上连接到中心。
-        public const float AccretionOuterRadiusFactor = 1.18f;
+        public const float AccretionOuterRadiusFactor = 3f;
 
         // AccretionInnerStartFactor / AccretionInnerFullFactor：吸积盘从黑核外侧开始出现的位置。
         // 数值越低，吸积盘越贴近黑核，可以减少核心和吸积盘之间的透明隔离带。
@@ -31,12 +31,12 @@ namespace TestMod.Common.Systems
         public const float AccretionInnerFullFactor = 0.66f;
 
         // AccretionNoiseStrength：流动噪声对吸积盘亮度的贡献。
-        public const float AccretionNoiseStrength = 1.55f;
+        public const float AccretionNoiseStrength = 2.55f;
 
         // HotRingRadiusFactor / HotRingWidthFactor：事件视界亮环的位置和厚度，相对于黑核半径。
         // 亮环越宽，越能遮住黑核边缘附近的透镜断层感。
         public const float HotRingRadiusFactor = 1.02f;
-        public const float HotRingWidthFactor = 0.28f;
+        public const float HotRingWidthFactor = 0.48f;
 
         // LensingAngle：最大 UV 旋转角度。透镜边界太硬、像透明隔离层时可以适当调低。
         public const float LensingAngle = 16f;
@@ -51,7 +51,10 @@ namespace TestMod.Common.Systems
         private static readonly float[] sourceOcclusionOpacities = new float[MaxLensSources];
         private static readonly float[] sourceAccretionOpacities = new float[MaxLensSources];
         private static readonly Vector3[] sourceAccretionColors = new Vector3[MaxLensSources];
+        private static readonly float[] sourceDiskModes = new float[MaxLensSources];
         private static Texture2D requestedOcclusionTexture;
+        private static Texture2D requestedDiskTexture;
+        private static Texture2D requestedDiskFlowTexture;
         private static int requestCount;
 
         /// <summary>
@@ -67,7 +70,7 @@ namespace TestMod.Common.Systems
             float occlusionRadius = 0f,
             float occlusionOpacity = 0f,
             Texture2D occlusionTexture = null)
-            => RegisterSource(worldCenter, radius, strength, occlusionRadius, occlusionOpacity, 0f, Vector3.Zero, occlusionTexture);
+            => RegisterSource(worldCenter, radius, strength, occlusionRadius, occlusionOpacity, 0f, Vector3.Zero, occlusionTexture, BlackHoleVisualStyle.Default);
 
         public static void RegisterBlackHole(
             Vector2 worldCenter,
@@ -75,7 +78,21 @@ namespace TestMod.Common.Systems
             float opacity,
             Color accretionDiskColor,
             Texture2D coreTexture = null)
-            => RegisterSource(worldCenter, radius, opacity, radius * CoreRadiusFactor, opacity, opacity, accretionDiskColor.ToVector3(), coreTexture);
+        {
+            BlackHoleVisualStyle style = coreTexture is null
+                ? BlackHoleVisualStyle.Default
+                : new BlackHoleVisualStyle(BlackHoleCoreMode.Texture, BlackHoleDiskMode.Default, coreTexture);
+
+            RegisterBlackHole(worldCenter, radius, opacity, accretionDiskColor, style);
+        }
+
+        public static void RegisterBlackHole(
+            Vector2 worldCenter,
+            float radius,
+            float opacity,
+            Color accretionDiskColor,
+            BlackHoleVisualStyle visualStyle)
+            => RegisterSource(worldCenter, radius, opacity, radius * CoreRadiusFactor, opacity, opacity, accretionDiskColor.ToVector3(), null, visualStyle);
 
         private static void RegisterSource(
             Vector2 worldCenter,
@@ -85,7 +102,8 @@ namespace TestMod.Common.Systems
             float occlusionOpacity,
             float accretionOpacity,
             Vector3 accretionColor,
-            Texture2D occlusionTexture)
+            Texture2D occlusionTexture,
+            BlackHoleVisualStyle visualStyle)
         {
             if (Main.dedServ || requestCount >= MaxLensSources || radius <= 0f || strength <= 0f)
                 return;
@@ -108,7 +126,16 @@ namespace TestMod.Common.Systems
             sourceOcclusionOpacities[requestCount] = MathHelper.Clamp(occlusionOpacity, 0f, 1f);
             sourceAccretionOpacities[requestCount] = MathHelper.Clamp(accretionOpacity, 0f, 1f);
             sourceAccretionColors[requestCount] = accretionColor;
-            requestedOcclusionTexture ??= occlusionTexture;
+            Texture2D coreTexture = visualStyle.GetRequestedCoreTexture() ?? occlusionTexture;
+            Texture2D diskTexture = visualStyle.GetRequestedDiskTexture();
+            Texture2D diskFlowTexture = visualStyle.GetRequestedDiskFlowTexture();
+            bool useMaterialDisk = visualStyle.DiskMode == BlackHoleDiskMode.Material
+                && (diskTexture is not null && diskFlowTexture is not null || BlackHoleVisualAssetSystem.HasDiskMaterial);
+
+            sourceDiskModes[requestCount] = useMaterialDisk ? 1f : 0f;
+            requestedOcclusionTexture ??= coreTexture;
+            requestedDiskTexture ??= diskTexture;
+            requestedDiskFlowTexture ??= diskFlowTexture;
             requestCount++;
         }
 
@@ -146,6 +173,7 @@ namespace TestMod.Common.Systems
             float[] packedOcclusionOpacities = new float[MaxLensSources];
             float[] packedAccretionOpacities = new float[MaxLensSources];
             Vector3[] packedAccretionColors = new Vector3[MaxLensSources];
+            float[] packedDiskModes = new float[MaxLensSources];
             Array.Copy(sourcePositions, packedPositions, MaxLensSources);
             Array.Copy(sourceRadii, packedRadii, MaxLensSources);
             Array.Copy(sourceStrengths, packedStrengths, MaxLensSources);
@@ -153,6 +181,7 @@ namespace TestMod.Common.Systems
             Array.Copy(sourceOcclusionOpacities, packedOcclusionOpacities, MaxLensSources);
             Array.Copy(sourceAccretionOpacities, packedAccretionOpacities, MaxLensSources);
             Array.Copy(sourceAccretionColors, packedAccretionColors, MaxLensSources);
+            Array.Copy(sourceDiskModes, packedDiskModes, MaxLensSources);
 
             Vector2 screenSize = new(Main.screenWidth, Main.screenHeight);
             filter.TrySetParameter("sourcePositions", packedPositions);
@@ -162,6 +191,7 @@ namespace TestMod.Common.Systems
             filter.TrySetParameter("sourceOcclusionOpacities", packedOcclusionOpacities);
             filter.TrySetParameter("sourceAccretionOpacities", packedAccretionOpacities);
             filter.TrySetParameter("sourceAccretionColors", packedAccretionColors);
+            filter.TrySetParameter("sourceDiskModes", packedDiskModes);
             filter.TrySetParameter("sourceCount", requestCount);
             filter.TrySetParameter("time", Main.GlobalTimeWrappedHourly);
             filter.TrySetParameter("distortionStrength", 1f);
@@ -177,6 +207,8 @@ namespace TestMod.Common.Systems
             filter.TrySetParameter("zoom", Main.GameViewMatrix.Zoom);
             filter.SetTexture(requestedOcclusionTexture ?? BlackHoleVisualAssetSystem.CoreTexture, 1, SamplerState.LinearClamp);
             filter.SetTexture(AntaresVisualAssetSystem.HaloNoise, 2, SamplerState.LinearWrap);
+            filter.SetTexture(requestedDiskTexture ?? BlackHoleVisualAssetSystem.DiskTexture, 3, SamplerState.LinearWrap);
+            filter.SetTexture(requestedDiskFlowTexture ?? BlackHoleVisualAssetSystem.DiskFlowTexture, 4, SamplerState.LinearWrap);
             filter.Activate();
         }
 
@@ -184,6 +216,8 @@ namespace TestMod.Common.Systems
         {
             requestCount = 0;
             requestedOcclusionTexture = null;
+            requestedDiskTexture = null;
+            requestedDiskFlowTexture = null;
             for (int i = 0; i < MaxLensSources; i++)
             {
                 sourcePositions[i] = Vector2.One * -9999f;
@@ -193,6 +227,7 @@ namespace TestMod.Common.Systems
                 sourceOcclusionOpacities[i] = 0f;
                 sourceAccretionOpacities[i] = 0f;
                 sourceAccretionColors[i] = Vector3.Zero;
+                sourceDiskModes[i] = 0f;
             }
         }
     }

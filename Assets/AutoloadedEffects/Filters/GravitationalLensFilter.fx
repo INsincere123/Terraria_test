@@ -1,6 +1,8 @@
 sampler uImage0 : register(s0);
 sampler occlusionTexture : register(s1);
 sampler accretionNoiseTexture : register(s2);
+sampler diskTexture : register(s3);
+sampler diskFlowTexture : register(s4);
 
 float time;
 float distortionStrength;
@@ -18,6 +20,7 @@ float sourceOcclusionRadii[5];
 float sourceOcclusionOpacities[5];
 float sourceAccretionOpacities[5];
 float3 sourceAccretionColors[5];
+float sourceDiskModes[5];
 float2 sourcePositions[5];
 float2 aspectRatioCorrectionFactor;
 float2 zoom;
@@ -50,8 +53,10 @@ float4 PixelShaderFunction(float4 sampleColor : COLOR0, float2 coords : TEXCOORD
         if (i >= sourceCount)
             break;
 
-        float angle = CalculateLensingAngle(sourceRadii[i], sourceStrengths[i], coords, sourcePositions[i]);
-        distortedCoords = RotatedBy(distortedCoords - 0.5, angle) + 0.5;
+        float angle = CalculateLensingAngle(sourceRadii[i], sourceStrengths[i], distortedCoords, sourcePositions[i]);
+        float2 localDistortedCoords = (distortedCoords - sourcePositions[i]) * aspectRatioCorrectionFactor;
+        localDistortedCoords = RotatedBy(localDistortedCoords, angle);
+        distortedCoords = sourcePositions[i] + localDistortedCoords / aspectRatioCorrectionFactor;
     }
 
     float4 color = tex2D(uImage0, distortedCoords);
@@ -75,10 +80,25 @@ float4 PixelShaderFunction(float4 sampleColor : COLOR0, float2 coords : TEXCOORD
             float noise = tex2D(accretionNoiseTexture, noiseCoords).r;
             float outerMask = InverseLerp(sourceRadius * accretionOuterRadiusFactor, sourceRadius * 0.28, radialDistance);
             float innerMask = InverseLerp(occlusionRadius * accretionInnerStartFactor, occlusionRadius * accretionInnerFullFactor, radialDistance);
-            float diskMask = saturate(outerMask * innerMask * noise * accretionNoiseStrength);
             float hotRing = exp(-pow((radialDistance - occlusionRadius * hotRingRadiusFactor) / max(occlusionRadius * hotRingWidthFactor, 0.0001), 2.0));
             float3 hotColor = lerp(sourceAccretionColors[j], float3(1.0, 0.92, 0.7), 0.72);
-            color.rgb += (sourceAccretionColors[j] * diskMask * 0.85 + hotColor * hotRing * 0.72) * accretionOpacity;
+
+            if (sourceDiskModes[j] > 0.5)
+            {
+                float2 flowCoords = float2(angle * 2.0 - time * 0.16, radialDistance / max(sourceRadius, 0.0001) * 1.7 + time * 0.07);
+                float2 flow = tex2D(diskFlowTexture, flowCoords).rg * 2.0 - 1.0;
+                float2 diskCoords = float2(angle * 2.8 + time * 0.32, radialDistance / max(sourceRadius, 0.0001) * 0.88 - time * 0.12);
+                float4 diskSample = tex2D(diskTexture, diskCoords + flow * 0.028);
+                float luma = dot(diskSample.rgb, float3(0.299, 0.587, 0.114));
+                float materialMask = saturate((luma * 1.35 + diskSample.a * 0.55) * outerMask * innerMask);
+                float3 materialColor = lerp(sourceAccretionColors[j] * max(luma, 0.18), diskSample.rgb, 0.42);
+                color.rgb += (materialColor * materialMask * (0.9 + noise * 0.28) + hotColor * hotRing * 0.62) * accretionOpacity;
+            }
+            else
+            {
+                float diskMask = saturate(outerMask * innerMask * noise * accretionNoiseStrength);
+                color.rgb += (sourceAccretionColors[j] * diskMask * 0.85 + hotColor * hotRing * 0.72) * accretionOpacity;
+            }
         }
 
         if (occlusionRadius <= 0.0 || occlusionOpacity <= 0.0)

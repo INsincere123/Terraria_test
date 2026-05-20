@@ -23,11 +23,27 @@ namespace TestMod.Common.Utilities
             bool registerLens = true,
             Texture2D coreTexture = null)
         {
+            BlackHoleVisualStyle visualStyle = coreTexture is null
+                ? BlackHoleVisualStyle.Default
+                : new BlackHoleVisualStyle(BlackHoleCoreMode.Texture, BlackHoleDiskMode.Default, coreTexture);
+
+            return DrawBlackHole(spriteBatch, worldCenter, radius, accretionDiskColor, opacity, registerLens, visualStyle);
+        }
+
+        public static bool DrawBlackHole(
+            SpriteBatch spriteBatch,
+            Vector2 worldCenter,
+            float radius,
+            Color accretionDiskColor,
+            float opacity,
+            bool registerLens,
+            BlackHoleVisualStyle visualStyle)
+        {
             if (Main.dedServ || radius <= 0f || opacity <= 0f)
                 return false;
 
             if (registerLens)
-                GravitationalLensSystem.RegisterBlackHole(worldCenter, radius, opacity, accretionDiskColor, coreTexture);
+                GravitationalLensSystem.RegisterBlackHole(worldCenter, radius, opacity, accretionDiskColor, visualStyle);
 
             if (registerLens)
                 return true;
