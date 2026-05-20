@@ -1,7 +1,11 @@
 Configs: {
 	TestModClientConfig: {
 		DisplayName: TestMod 客户端设置
-		Headers.Dash: 冲刺
+
+		Headers: {
+			Dash: 冲刺
+			ShieldUI: 护盾 UI
+		}
 
 		SingleTapDash: {
 			Label: 单键触发冲刺
@@ -11,6 +15,21 @@ Configs: {
 				同时屏蔽原版的双击判定，避免走路时误触。
 				关闭时恢复双击触发（兼容 HelpfulHotkeys 等 mod）。
 				'''
+		}
+
+		ShowStandaloneShieldBar: {
+			Label: 显示独立护盾条
+			Tooltip: 在原版生命条左侧绘制一个独立的实心能量护盾条。
+		}
+
+		StandaloneShieldBarOffsetX: {
+			Label: 独立护盾条 X 偏移
+			Tooltip: 调整独立护盾条的水平位置。正数向右，负数向左。
+		}
+
+		StandaloneShieldBarOffsetY: {
+			Label: 独立护盾条 Y 偏移
+			Tooltip: 调整独立护盾条的垂直位置。正数向下，负数向上。
 		}
 	}
 }

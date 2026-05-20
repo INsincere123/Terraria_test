@@ -17,5 +17,19 @@ namespace TestMod.Common.Configs
 		[Header("Dash")]
 		[DefaultValue(false)]
 		public bool SingleTapDash { get; set; }
+
+		// ── 护盾 UI ───────────────────────────────────────────────────────
+
+		[Header("ShieldUI")]
+		[DefaultValue(true)]
+		public bool ShowStandaloneShieldBar { get; set; }
+
+		[Range(-1000, 1000)]
+		[DefaultValue(0)]
+		public int StandaloneShieldBarOffsetX { get; set; }
+
+		[Range(-600, 600)]
+		[DefaultValue(0)]
+		public int StandaloneShieldBarOffsetY { get; set; }
 	}
 }

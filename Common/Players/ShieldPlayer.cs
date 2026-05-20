@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using Luminance.Core.Graphics;
 using Microsoft.Xna.Framework;
 using Terraria;
+using Terraria.Audio;
+using Terraria.DataStructures;
+using Terraria.ID;
 using Terraria.ModLoader;
 using TestMod.DataStructures;
 
@@ -16,14 +19,13 @@ namespace TestMod.Common.Players
     ///   2. 饰品 UpdateAccessory()  → ShieldEffect.Apply() 向 _defs 注入定义
     ///   3. PostUpdateMiscEffects() → 汇总 MaxShield；若护盾 > 0 执行 OnActive 加成
     ///   4. PostUpdate()            → 衰减、恢复计时、护盾恢复
-    ///   5. ModifyHitByX()          → 受击时重置恢复计时器，标记吸收
-    ///   6. OnHurt()                → 用护盾抵消实际伤害，Heal 还回已扣 HP
+    ///   5. ModifyHurt()            → 受击时扣除护盾并在完全吸收时取消 Hurt
     ///
     /// ── 架构要点 ──────────────────────────────────────────────────────────────────
     ///   · 全量吸收：护盾血量足够时，玩家不损失任何 HP
     ///   · 多来源加算：MaxShield = 所有激活 def 的 GetMaxShield() 之和
     ///   · 衰减取最大：多个 def 同时生效时取各自 DecayPerSecond 的最大值
-    ///   · 恢复取最优：取最短延迟、最快速率
+    ///   · 恢复取最保守：取最长延迟、最慢速率
     ///   · 颜色取首个：优先使用第一个提供了颜色的 def 的颜色
     /// </summary>
     public class ShieldPlayer : ModPlayer
@@ -52,7 +54,6 @@ namespace TestMod.Common.Players
 
         private int   _hitTimer        = int.MaxValue; // 距上次受击的帧数
         private bool  _wasShielded     = false;        // 上帧是否有护盾（用于 OnBreak 检测）
-        private bool  _absorbingHit    = false;        // 本帧是否正在吸收受击
 
         // Luminance 滤镜名称（与 fx 文件名对应）
         public const string FilterName = "TestMod.EnergyShieldFilter";
@@ -60,6 +61,8 @@ namespace TestMod.Common.Players
         // 滤镜动画：平滑淡入淡出的护盾强度（0~1）
         private float _filterStrength  = 0f;
         private const float FadeSpeed  = 0.06f; // 每帧变化量
+        private int _shieldHitFlashTimer;
+        private const int ShieldHitFlashFrames = 10;
 
         // ── ShieldEffect.Apply 注入入口 ───────────────────────────────────
         internal void AddDefinition(ShieldDefinition def) => _defs.Add(def);
@@ -95,17 +98,17 @@ namespace TestMod.Common.Players
 
             float newMax     = 0f;
             float maxDecay   = 0f;
-            int   minDelay   = int.MaxValue;
-            float maxRate    = 0f;
+            int   maxDelay   = 0;
+            float minRate    = float.MaxValue;
             bool  colorSet   = false;
 
             foreach (var def in _defs)
             {
                 newMax   += def.GetMaxShield?.Invoke(Player) ?? 0f;
                 maxDecay  = Math.Max(maxDecay, def.DecayPerSecond);
-                minDelay  = Math.Min(minDelay, def.RechargeDelayFrames);
+                maxDelay  = Math.Max(maxDelay, def.RechargeDelayFrames);
                 float rate = def.GetRechargePerSecond?.Invoke(Player) ?? def.RechargePerSecond;
-                maxRate   = Math.Max(maxRate,  rate);
+                minRate   = Math.Min(minRate,  rate);
 
                 // 颜色：取第一个提供了非默认颜色的 def
                 if (!colorSet && def.ShieldColor != default)
@@ -122,8 +125,8 @@ namespace TestMod.Common.Players
 
             MaxShield       = Math.Max(0f, newMax);
             _decayPerSecond = maxDecay;
-            _rechargeDelay  = minDelay == int.MaxValue ? 0 : minDelay;
-            _rechargeRate   = maxRate;
+            _rechargeDelay  = maxDelay;
+            _rechargeRate   = minRate == float.MaxValue ? 0f : minRate;
 
             // 护盾上限缩小时同步裁剪当前值
             if (CurrentShield > MaxShield)
@@ -171,44 +174,104 @@ namespace TestMod.Common.Players
             // lerp 系数 0.18：约 5 帧追上，视觉流畅但无明显滞后
             DisplayShield = MathHelper.Lerp(DisplayShield, CurrentShield, 0.18f);
 
+            if (_shieldHitFlashTimer > 0)
+                _shieldHitFlashTimer--;
+
             UpdateShieldFilter();
         }
 
-        // ════════════════════════════════════════════════════════════════
-        //   ModifyHitByX — 受击时重置恢复计时、标记本帧吸收
-        // ════════════════════════════════════════════════════════════════
-        public override void ModifyHitByProjectile(Projectile proj, ref Player.HurtModifiers modifiers)
+        public override void TransformDrawData(ref PlayerDrawSet drawInfo)
         {
+            if (MaxShield <= 0f || CurrentShield <= 0f)
+                return;
+
+            float shieldRatio = MathHelper.Clamp(CurrentShield / MaxShield, 0f, 1f);
+            Color baseOverlayColor = ShieldColor * MathHelper.Lerp(0.086f, 0.150f, shieldRatio);
+
+            int drawCount = drawInfo.DrawDataCache.Count;
+            for (int i = 0; i < drawCount; i++)
+            {
+                DrawData data = drawInfo.DrawDataCache[i];
+                if (data.texture is null)
+                    continue;
+
+                DrawData baseOverlay = data;
+                baseOverlay.color = baseOverlayColor;
+                drawInfo.DrawDataCache.Add(baseOverlay);
+            }
+        }
+
+        // ════════════════════════════════════════════════════════════════
+        //   ModifyHurt — 在真正 Hurt 前扣除护盾
+        // ════════════════════════════════════════════════════════════════
+        public override void ModifyHurt(ref Player.HurtModifiers modifiers)
+        {
+            if (MaxShield <= 0f)
+                return;
+
             _hitTimer = 0; // 受击始终重置计时器，护盾破碎后再被打也要重新等待
-            if (CurrentShield > 0f) _absorbingHit = true;
+
+            if (CurrentShield > 0f)
+                modifiers.ModifyHurtInfo += AbsorbDamageWithShield;
         }
 
-        public override void ModifyHitByNPC(NPC npc, ref Player.HurtModifiers modifiers)
+        private void AbsorbDamageWithShield(ref Player.HurtInfo info)
         {
-            _hitTimer = 0;
-            if (CurrentShield > 0f) _absorbingHit = true;
-        }
+            if (CurrentShield <= 0f || info.Damage <= 0)
+                return;
 
-        // ════════════════════════════════════════════════════════════════
-        //   OnHurt — 护盾全量吸收伤害，还回已扣 HP
-        //   tModLoader 保证此时 info.Damage 为实际扣除的 HP 量
-        // ════════════════════════════════════════════════════════════════
-        public override void OnHurt(Player.HurtInfo info)
-        {
-            if (!_absorbingHit || CurrentShield <= 0f || info.Damage <= 0) { _absorbingHit = false; return; }
-            _absorbingHit = false;
+            int incomingDamage = info.Damage;
+            int absorbed       = (int)Math.Min(incomingDamage, CurrentShield);
+            if (absorbed <= 0)
+                return;
 
-            // 护盾最多吸收 info.Damage 点
-            int absorbed  = (int)Math.Min(info.Damage, CurrentShield);
-            CurrentShield -= absorbed;
+            CurrentShield = Math.Max(0f, CurrentShield - absorbed);
+            _shieldHitFlashTimer = ShieldHitFlashFrames;
+            PlayShieldHitSound();
 
-            // 把被护盾吸收掉的 HP 还回去（玩家实际零扣血）
-            if (absorbed > 0)
-                Player.statLife = Math.Min(Player.statLifeMax2, Player.statLife + absorbed);
-
-            // 护盾归零触发破盾效果
             if (CurrentShield <= 0f && _wasShielded)
                 TriggerOnBreak();
+
+            // 命中时只要还有护盾，本次 Hurt 就完全由护盾接住。
+            // 即使伤害超过剩余护盾，也只打空护盾，不把溢出伤害传给玩家。
+            info.Cancelled     = true;
+            info.SoundDisabled = true;
+            info.DustDisabled  = true;
+            GiveVanillaHurtIFrames(info, incomingDamage);
+        }
+
+        private void PlayShieldHitSound()
+        {
+            SoundStyle sound = SoundID.Shatter;
+            sound.Volume = 0.7f;
+            sound.Pitch = 0.2f;
+            sound.PitchVariance = 0.25f;
+            SoundEngine.PlaySound(sound, Player.Center);
+        }
+
+        private void GiveVanillaHurtIFrames(Player.HurtInfo info, int damage)
+        {
+            int time = info.PvP
+                ? 8
+                : damage == 1
+                    ? Player.longInvince ? 40 : 20
+                    : Player.longInvince ? 80 : 40;
+
+            switch (info.CooldownCounter)
+            {
+                case -1:
+                    Player.immune = true;
+                    Player.immuneTime = Math.Max(Player.immuneTime, time);
+                    break;
+
+                case 0:
+                case 1:
+                case 3:
+                case 4:
+                    if (info.CooldownCounter < Player.hurtCooldowns.Length)
+                        Player.hurtCooldowns[info.CooldownCounter] = Math.Max(Player.hurtCooldowns[info.CooldownCounter], time);
+                    break;
+            }
         }
 
         // ════════════════════════════════════════════════════════════════
@@ -229,9 +292,13 @@ namespace TestMod.Common.Players
         {
             if (Main.dedServ || Player.whoAmI != Main.myPlayer) return;
 
-            // 目标强度：护盾存活时 1，否则 0（淡入淡出）
-            float targetStrength = (MaxShield > 0f && CurrentShield > 0f)
+            float shieldRatio = (MaxShield > 0f && CurrentShield > 0f)
                 ? CurrentShield / MaxShield
+                : 0f;
+
+            // 护盾很低时也保留最低可见度，让玩家明确知道自己仍处于护盾罩内。
+            float targetStrength = shieldRatio > 0f
+                ? MathHelper.Lerp(0.28f, 1f, shieldRatio)
                 : 0f;
 
             _filterStrength = _filterStrength < targetStrength
@@ -246,6 +313,7 @@ namespace TestMod.Common.Players
             filter.SetFocusPosition(Player.Center);
             filter.TrySetParameter("time",          Main.GlobalTimeWrappedHourly);
             filter.TrySetParameter("shieldStrength", _filterStrength);
+            filter.TrySetParameter("hitFlash",      _shieldHitFlashTimer / (float)ShieldHitFlashFrames);
             // 护盾半径约等于玩家宽度的 2.5 倍（像素）
             filter.TrySetParameter("shieldRadius",  Player.width * 2.5f);
             filter.TrySetParameter("shieldColor",   ShieldColor.ToVector3());

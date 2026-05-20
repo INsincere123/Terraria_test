@@ -1,3 +1,4 @@
+using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Terraria;
@@ -9,118 +10,158 @@ using TestMod.Common.Players;
 namespace TestMod.Common.Overlays
 {
     /// <summary>
-    /// 护盾 UI — 类英雄联盟风格，叠加在血量显示上。
-    ///
-    /// Classic / Fancy 模式（心形图标）：
-    ///   在"已用完但护盾能补到"的空血心格上画半透明蓝心，
-    ///   让玩家直观感受护盾等效于多少血。
-    ///
-    /// 横条 (HorizontalBars) 模式：
-    ///   在血量条上叠加护盾覆盖层（浅蓝边框 + 近透明内部）。
-    ///   宽度比例 = 当前护盾值 / 最大生命值。
-    ///
-    /// 原理：
-    ///   PostDrawResource  — 每绘制完一颗心/星后回调；
-    ///                       通过贴图类型区分血（心）和魔（星）。
-    ///   PostDrawResourceDisplay — 整组绘制完毕后回调；
-    ///                       用于横条模式的护盾条叠加。
+    /// Draws the shield overlay for vanilla horizontal resource bars.
+    /// Classic/Fancy heart UI support was intentionally removed.
     /// </summary>
     [Autoload(Side = ModSide.Client)]
     public class ShieldResourceOverlay : ModResourceOverlay
     {
-        // Classic / Fancy 护盾心叠色
-        private static readonly Color HeartShieldTint = new Color(80, 160, 255, 150);
+        private static readonly Color BarFill = new(150, 210, 255, 254);
+        private static readonly Color BarBorder = new(150, 210, 255, 210);
 
-        // 横条模式：护盾覆盖层颜色
-        private static readonly Color BarFill   = new Color(150, 210, 255, 3);   // 内部近透明（薄层）
-        private static readonly Color BarBorder = new Color(150, 210, 255, 210); // 外框清晰
+        private const int BorderSize = 4;
+        private const int BarPanelInset = 6;
 
-        // ── 横条 HP 条位置常量（若 UI 错位请在此调整）────────────────────
-        private const int HpBarX      = 0;    // 相对 Main.screenWidth - 306 的 X 偏移
-        private const int HpBarY      = 21;   // HP 条在屏幕中的 Y 坐标（像素）
-        private const int HpBarWidth  = 268;  // HP 条总宽度（像素）
-        private const int HpBarHeight = 24;   // HP 条高度（像素）
-        private const int BorderSize  = 3;    // 护盾边框厚度（像素）
-        // ─────────────────────────────────────────────────────────────────
+        private Rectangle? _horizontalLifePanelBounds;
+        private Rectangle? _horizontalLifeFillBounds;
+        private int _horizontalLifeFillSegmentWidth;
 
-        // ════════════════════════════════════════════════════════════════
-        //   PostDrawResource — Classic / Fancy：在护盾区心格上叠蓝心
-        // ════════════════════════════════════════════════════════════════
         public override void PostDrawResource(ResourceOverlayDrawContext context)
         {
-            // 通过贴图类型判断是否是血量心（Heart / Heart2）
-            // 魔力星使用不同贴图，此判断可靠区分两者
-            Texture2D tex = context.texture.Value;
-            bool isLifeHeart = (tex == TextureAssets.Heart.Value)
-                            || (tex == TextureAssets.Heart2.Value);
-            if (!isLifeHeart) return;
+            if (context.DisplaySet is HorizontalBarsPlayerResourcesDisplaySet)
+                CaptureHorizontalLifeBarBounds(context);
+        }
 
-            Player player = Main.LocalPlayer;
-            ShieldPlayer sp = player.GetModPlayer<ShieldPlayer>();
-            if (sp.MaxShield <= 0f || sp.CurrentShield <= 0f) return;
+        private void CaptureHorizontalLifeBarBounds(ResourceOverlayDrawContext context)
+        {
+            Rectangle bounds = GetContextBounds(context);
+            if (bounds.Width <= 0 || bounds.Height <= 0)
+                return;
 
-            // 此格代表的 HP 起始值（0-indexed resourceNumber）
-            float lifePerHeart = context.snapshot.LifePerSegment;
-            float heartStart   = context.resourceNumber * lifePerHeart;
-            float life         = context.snapshot.Life;
-            float shieldEnd    = life + sp.CurrentShield;
-
-            // 护盾区：life ~ (life + shield) 之间的空格
-            if (heartStart >= life && heartStart < shieldEnd)
+            if (IsHorizontalLifeFill(context))
             {
-                context.SpriteBatch.Draw(
-                    tex,
-                    context.position,
-                    context.source,
-                    HeartShieldTint,
-                    context.rotation,
-                    context.origin,
-                    context.scale,
-                    context.effects,
-                    0f);
+                _horizontalLifeFillBounds = Union(_horizontalLifeFillBounds, bounds);
+                _horizontalLifeFillSegmentWidth = Math.Max(_horizontalLifeFillSegmentWidth, context.texture.Value.Width);
+            }
+            else
+            {
+                _horizontalLifePanelBounds = Union(_horizontalLifePanelBounds, bounds);
             }
         }
 
-        // ════════════════════════════════════════════════════════════════
-        //   PostDrawResourceDisplay — 横条模式：护盾层叠加在 HP 条上方
-        //
-        //   护盾条宽度 / HP条总宽度 = 当前护盾值 / 最大生命值
-        //   视觉风格：浅蓝粗边框 + 内部近透明填充（能量容器感）
-        // ════════════════════════════════════════════════════════════════
         public override void PostDrawResourceDisplay(
             PlayerStatsSnapshot snapshot,
             IPlayerResourcesDisplaySet displaySet,
-            bool drawingLife, Color textColor, bool drawText)
+            bool drawingLife,
+            Color textColor,
+            bool drawText)
         {
-            if (!drawingLife) return;
-            if (displaySet is not HorizontalBarsPlayerResourcesDisplaySet) return;
+            if (!drawingLife)
+                return;
+
+            if (displaySet is not HorizontalBarsPlayerResourcesDisplaySet)
+                return;
 
             Player player = Main.LocalPlayer;
-            ShieldPlayer sp = player.GetModPlayer<ShieldPlayer>();
-            if (sp.CurrentShield <= 0f) return;
+            ShieldPlayer shieldPlayer = player.GetModPlayer<ShieldPlayer>();
+            if (shieldPlayer.CurrentShield <= 0f)
+            {
+                ResetHorizontalCapture();
+                return;
+            }
 
-            // 护盾条宽度 = (DisplayShield / MaxHP) × HP条总宽度
-            // 使用平滑显示值，避免整数截断引起的每帧跳变感
-            int shieldWidth = (int)(sp.DisplayShield / snapshot.LifeMax * HpBarWidth);
-            if (shieldWidth < BorderSize * 2) return; // 太窄时不画（避免边框重叠）
+            if (!_horizontalLifePanelBounds.HasValue)
+            {
+                ResetHorizontalCapture();
+                return;
+            }
 
-            int x      = Main.screenWidth - 306 + HpBarX;
-            int y      = HpBarY;
-            int w      = shieldWidth;
-            int h      = HpBarHeight;
-            int b      = BorderSize;
+            Rectangle panelBounds = _horizontalLifePanelBounds.Value;
+            Rectangle barBounds = ResolveHorizontalLifeBarBounds(panelBounds, snapshot);
+            ResetHorizontalCapture();
 
-            SpriteBatch sb    = Main.spriteBatch;
-            Texture2D   pixel = TextureAssets.MagicPixel.Value;
+            float shieldRatio = MathHelper.Clamp(shieldPlayer.DisplayShield / snapshot.LifeMax, 0f, 1f);
+            if (shieldRatio <= 0f)
+                return;
 
-            // 内部填充（近透明）
-            sb.Draw(pixel, new Rectangle(x + b, y + b, w - b * 2, h - b * 2), BarFill);
+            int x = barBounds.X;
+            int right = barBounds.X + (int)MathF.Round(barBounds.Width * shieldRatio);
+            int w = Math.Max(0, right - x);
+            int h = barBounds.Height;
+            int y = barBounds.Y;
+            int b = Math.Min(BorderSize, Math.Max(1, h / 2));
+            if (w < b * 2)
+                return;
 
-            // 四条边框（清晰浅蓝）
-            sb.Draw(pixel, new Rectangle(x,         y,         w, b), BarBorder); // 上
-            sb.Draw(pixel, new Rectangle(x,         y + h - b, w, b), BarBorder); // 下
-            sb.Draw(pixel, new Rectangle(x,         y,         b, h), BarBorder); // 左
-            sb.Draw(pixel, new Rectangle(x + w - b, y,         b, h), BarBorder); // 右（护盾量末端）
+            SpriteBatch spriteBatch = Main.spriteBatch;
+            Texture2D pixel = TextureAssets.MagicPixel.Value;
+
+            for (int lineX = x + b + 1; lineX < x + w - b; lineX += 3)
+                spriteBatch.Draw(pixel, new Rectangle(lineX, y + b, 1, h - b * 2), BarFill);
+
+            spriteBatch.Draw(pixel, new Rectangle(x, y, w, b), BarBorder);
+            spriteBatch.Draw(pixel, new Rectangle(x, y + h - b, w, b), BarBorder);
+            spriteBatch.Draw(pixel, new Rectangle(x, y, b, h), BarBorder);
+            spriteBatch.Draw(pixel, new Rectangle(x + w - b, y, b, h), BarBorder);
+        }
+
+        private Rectangle ResolveHorizontalLifeBarBounds(Rectangle panelBounds, PlayerStatsSnapshot snapshot)
+        {
+            if (_horizontalLifeFillBounds.HasValue)
+            {
+                Rectangle fillBounds = _horizontalLifeFillBounds.Value;
+                int fullFillWidth = _horizontalLifeFillSegmentWidth * snapshot.AmountOfLifeHearts;
+                if (fullFillWidth > 0)
+                {
+                    return new Rectangle(
+                        fillBounds.Right - fullFillWidth,
+                        fillBounds.Y,
+                        fullFillWidth,
+                        fillBounds.Height);
+                }
+
+                return new Rectangle(
+                    panelBounds.X + BarPanelInset,
+                    fillBounds.Y,
+                    Math.Max(0, panelBounds.Width - BarPanelInset * 2),
+                    fillBounds.Height);
+            }
+
+            return new Rectangle(
+                panelBounds.X + BarPanelInset,
+                panelBounds.Y + BarPanelInset,
+                Math.Max(0, panelBounds.Width - BarPanelInset * 2),
+                Math.Max(0, panelBounds.Height - BarPanelInset * 2));
+        }
+
+        private static Rectangle GetContextBounds(ResourceOverlayDrawContext context)
+        {
+            Rectangle source = context.source ?? context.texture.Frame();
+            Vector2 topLeft = context.position - context.origin * context.scale;
+            Vector2 size = source.Size() * context.scale;
+            return new Rectangle(
+                (int)MathF.Round(topLeft.X),
+                (int)MathF.Round(topLeft.Y),
+                (int)MathF.Round(size.X),
+                (int)MathF.Round(size.Y));
+        }
+
+        private static bool IsHorizontalLifeFill(ResourceOverlayDrawContext context)
+        {
+            string name = context.texture.Name.Replace('\\', '/');
+            return name.EndsWith("/HP_Fill") || name.EndsWith("/HP_Fill_Honey");
+        }
+
+        private static Rectangle Union(Rectangle? current, Rectangle next)
+        {
+            return current.HasValue ? Rectangle.Union(current.Value, next) : next;
+        }
+
+        private void ResetHorizontalCapture()
+        {
+            _horizontalLifePanelBounds = null;
+            _horizontalLifeFillBounds = null;
+            _horizontalLifeFillSegmentWidth = 0;
         }
     }
 }

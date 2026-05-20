@@ -14,7 +14,7 @@ namespace TestMod.Items.Accessories
     ///
     /// 护盾数值：固定 20 + 10% 最大生命值
     /// 护盾效果：护盾存活时 +5 防御力
-    /// 恢复规则：不自动衰减；破碎后 6 秒未受击瞬间恢复满
+    /// 恢复规则：不自动衰减；受击后 6 秒未再受击瞬间恢复满
     ///
     /// ⚠️ 占位贴图：当前指向原版 Shackle 物品。
     ///    替换为 Items/Accessories/EnergyShieldItem.png 后删除 Texture override。
@@ -28,7 +28,7 @@ namespace TestMod.Items.Accessories
         public const float ShieldBase       = 20f;   // 固定护盾基础值
         public const float ShieldLifeRatio  = 0.06f; // 最大生命值转化系数（+10%最大生命）
         public const int   DefenseBonus     = 5;     // 护盾存活时的防御加成
-        public const int   RechargeDelaySec = 6;     // 破碎后多少秒才开始恢复
+        public const int   RechargeDelaySec = 6;     // 受击后多少秒未再受击才开始恢复
         // ─────────────────────────────────────────────────────────────
 
         // 护盾颜色（蓝色系能量感）
@@ -55,7 +55,7 @@ namespace TestMod.Items.Accessories
                 // 不自动衰减，仅受击消耗
                 DecayPerSecond      = 0f,
 
-                // 5 秒未受击后瞬间恢复满
+                // 6 秒未受击后瞬间恢复满
                 RechargeDelayFrames = RechargeDelaySec * 60,
                 RechargePerSecond   = float.MaxValue,
 

@@ -14,7 +14,7 @@ namespace TestMod.Items.Accessories
     ///
     /// 护盾数值：60 + 120% 防御力
     /// 护盾效果：+5% 减伤、+4% 伤害、+2% 暴击率、免疫击退（来自 ShieldPlayer 全局）
-    /// 恢复规则：不衰减；破碎后 5 秒未受击、2 秒逐渐恢复满
+    /// 恢复规则：不衰减；受击后 5 秒未再受击、2 秒逐渐恢复满
     /// 紧急护盾：生命值跌破 30% 时触发，护盾值 = 50%最大生命 + 100%防御，
     ///           4.5 秒内线性衰减，冷却 120 秒（Buff 图标显示倒计时）
     ///
@@ -32,7 +32,7 @@ namespace TestMod.Items.Accessories
         public const float EnduranceBonus   = 0.05f; // 护盾存活时减伤加成（5%）
         public const float DamageBonus      = 0.04f; // 护盾存活时伤害加成（4%）
         public const int   CritBonus        = 2;     // 护盾存活时暴击加成（2%）
-        public const int   RechargeDelaySec = 5;     // 破碎后延迟恢复（秒）
+        public const int   RechargeDelaySec = 5;     // 受击后延迟恢复（秒）
         // ─────────────────────────────────────────────────────────────
 
         // 护盾颜色（比能量护盾偏蓝紫，有升级感）

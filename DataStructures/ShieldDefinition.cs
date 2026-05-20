@@ -16,7 +16,7 @@ namespace TestMod.DataStructures
     //     {
     //         GetMaxShield        = p => 20f + p.statDefense * 0.10f,
     //         DecayPerSecond      = 0f,                      // 不衰减
-    //         RechargeDelayFrames = 5 * 60,                  // 破碎 5 秒后开始恢复
+    //         RechargeDelayFrames = 5 * 60,                  // 受击后 5 秒未再受击才开始恢复
     //         RechargePerSecond   = float.MaxValue,          // 瞬间恢复满
     //         OnActive            = p => p.statDefense += 5, // 护盾存活时 +5 防御
     //         OnBreak             = null,                    // 无破盾特效
@@ -32,7 +32,7 @@ namespace TestMod.DataStructures
     //                         0        = 不衰减，护盾只被受击消耗
     //                         30       = 每秒流失 30 点
     //
-    //   RechargeDelayFrames — 护盾归零后，距上次受击多少帧才开始恢复
+    //   RechargeDelayFrames — 距上次受击多少帧才开始恢复
     //                         300 = 5 秒未受击才恢复
     //
     //   RechargePerSecond   — 恢复速率
@@ -57,7 +57,7 @@ namespace TestMod.DataStructures
         /// <summary>每秒自动减少的护盾量。0 = 不衰减。</summary>
         public float DecayPerSecond;
 
-        /// <summary>护盾归零后，多少帧内未受击才开始恢复（0 = 立刻恢复）。</summary>
+        /// <summary>受击后，多少帧内未再受击才开始恢复（0 = 立刻恢复）。</summary>
         public int RechargeDelayFrames;
 
         /// <summary>
