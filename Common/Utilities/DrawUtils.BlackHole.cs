@@ -20,13 +20,14 @@ namespace TestMod.Common.Utilities
             float radius,
             Color accretionDiskColor,
             float opacity = 1f,
-            bool registerLens = true)
+            bool registerLens = true,
+            Texture2D coreTexture = null)
         {
             if (Main.dedServ || radius <= 0f || opacity <= 0f)
                 return false;
 
             if (registerLens)
-                GravitationalLensSystem.RegisterBlackHole(worldCenter, radius, opacity, accretionDiskColor);
+                GravitationalLensSystem.RegisterBlackHole(worldCenter, radius, opacity, accretionDiskColor, coreTexture);
 
             if (registerLens)
                 return true;

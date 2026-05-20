@@ -341,6 +341,11 @@ Items: {
 		Tooltip: ""
 		DisplayName: Test Weapon
 	}
+
+	BlackHoleStaff: {
+		DisplayName: Black Hole Staff
+		Tooltip: ""
+	}
 }
 
 Buffs: {
@@ -463,6 +468,11 @@ Buffs: {
 		Description: Mods.TestMod.Buffs.BlindnessDebuff.Description
 		DisplayName: Blindness Debuff
 	}
+
+	BlackHoleMinionBuff: {
+		DisplayName: 黑洞
+		Description: ""
+	}
 }
 
 Projectiles: {
@@ -481,6 +491,8 @@ Projectiles: {
 	SwordQiProjectile.DisplayName: 泰拉切割
 	BloodFeedKnifeProj.DisplayName: 血饲匕首
 	TestProjectile.DisplayName: Test Projectile
+	BlackHoleMinion.DisplayName: Black Hole Minion
+	QuasarJetProjectile.DisplayName: 高能喷流
 }
 
 Prefixes: {

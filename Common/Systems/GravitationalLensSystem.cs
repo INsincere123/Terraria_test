@@ -51,6 +51,7 @@ namespace TestMod.Common.Systems
         private static readonly float[] sourceOcclusionOpacities = new float[MaxLensSources];
         private static readonly float[] sourceAccretionOpacities = new float[MaxLensSources];
         private static readonly Vector3[] sourceAccretionColors = new Vector3[MaxLensSources];
+        private static Texture2D requestedOcclusionTexture;
         private static int requestCount;
 
         /// <summary>
@@ -59,11 +60,22 @@ namespace TestMod.Common.Systems
         /// <param name="worldCenter">World-space center of the distortion.</param>
         /// <param name="radius">Approximate visual radius in pixels.</param>
         /// <param name="strength">0-1 distortion strength multiplier.</param>
-        public static void Register(Vector2 worldCenter, float radius, float strength = 1f, float occlusionRadius = 0f, float occlusionOpacity = 0f)
-            => RegisterSource(worldCenter, radius, strength, occlusionRadius, occlusionOpacity, 0f, Vector3.Zero);
+        public static void Register(
+            Vector2 worldCenter,
+            float radius,
+            float strength = 1f,
+            float occlusionRadius = 0f,
+            float occlusionOpacity = 0f,
+            Texture2D occlusionTexture = null)
+            => RegisterSource(worldCenter, radius, strength, occlusionRadius, occlusionOpacity, 0f, Vector3.Zero, occlusionTexture);
 
-        public static void RegisterBlackHole(Vector2 worldCenter, float radius, float opacity, Color accretionDiskColor)
-            => RegisterSource(worldCenter, radius, opacity, radius * CoreRadiusFactor, opacity, opacity, accretionDiskColor.ToVector3());
+        public static void RegisterBlackHole(
+            Vector2 worldCenter,
+            float radius,
+            float opacity,
+            Color accretionDiskColor,
+            Texture2D coreTexture = null)
+            => RegisterSource(worldCenter, radius, opacity, radius * CoreRadiusFactor, opacity, opacity, accretionDiskColor.ToVector3(), coreTexture);
 
         private static void RegisterSource(
             Vector2 worldCenter,
@@ -72,7 +84,8 @@ namespace TestMod.Common.Systems
             float occlusionRadius,
             float occlusionOpacity,
             float accretionOpacity,
-            Vector3 accretionColor)
+            Vector3 accretionColor,
+            Texture2D occlusionTexture)
         {
             if (Main.dedServ || requestCount >= MaxLensSources || radius <= 0f || strength <= 0f)
                 return;
@@ -81,19 +94,29 @@ namespace TestMod.Common.Systems
             if (screenSize.X <= 0f || screenSize.Y <= 0f)
                 return;
 
-            Vector2 screenPosition = worldCenter - Main.screenPosition;
-            float padding = radius * 3f;
+            Vector2 zoom = Main.GameViewMatrix.Zoom;
+            Vector2 screenPosition = WorldToZoomedScreenPosition(worldCenter, screenSize, zoom);
+            float zoomScale = Math.Max(zoom.X, zoom.Y);
+            float padding = radius * zoomScale * 3f;
             if (screenPosition.X < -padding || screenPosition.Y < -padding || screenPosition.X > screenSize.X + padding || screenPosition.Y > screenSize.Y + padding)
                 return;
 
             sourcePositions[requestCount] = screenPosition / screenSize;
-            sourceRadii[requestCount] = MathHelper.Clamp(radius / screenSize.Y, 0.0001f, 1f);
+            sourceRadii[requestCount] = MathHelper.Clamp(radius * zoom.Y / screenSize.Y, 0.0001f, 1f);
             sourceStrengths[requestCount] = MathHelper.Clamp(strength, 0f, 1f);
-            sourceOcclusionRadii[requestCount] = MathHelper.Clamp(occlusionRadius / screenSize.Y, 0f, 1f);
+            sourceOcclusionRadii[requestCount] = MathHelper.Clamp(occlusionRadius * zoom.Y / screenSize.Y, 0f, 1f);
             sourceOcclusionOpacities[requestCount] = MathHelper.Clamp(occlusionOpacity, 0f, 1f);
             sourceAccretionOpacities[requestCount] = MathHelper.Clamp(accretionOpacity, 0f, 1f);
             sourceAccretionColors[requestCount] = accretionColor;
+            requestedOcclusionTexture ??= occlusionTexture;
             requestCount++;
+        }
+
+        private static Vector2 WorldToZoomedScreenPosition(Vector2 worldPosition, Vector2 screenSize, Vector2 zoom)
+        {
+            Vector2 unzoomedScreenPosition = worldPosition - Main.screenPosition;
+            Vector2 screenCenter = screenSize * 0.5f;
+            return (unzoomedScreenPosition - screenCenter) * zoom + screenCenter;
         }
 
         public override void PostUpdateEverything()
@@ -152,7 +175,7 @@ namespace TestMod.Common.Systems
             filter.TrySetParameter("hotRingWidthFactor", HotRingWidthFactor);
             filter.TrySetParameter("aspectRatioCorrectionFactor", new Vector2(screenSize.X / screenSize.Y, 1f));
             filter.TrySetParameter("zoom", Main.GameViewMatrix.Zoom);
-            filter.SetTexture(BlackHoleVisualAssetSystem.CoreTexture, 1, SamplerState.LinearClamp);
+            filter.SetTexture(requestedOcclusionTexture ?? BlackHoleVisualAssetSystem.CoreTexture, 1, SamplerState.LinearClamp);
             filter.SetTexture(AntaresVisualAssetSystem.HaloNoise, 2, SamplerState.LinearWrap);
             filter.Activate();
         }
@@ -160,6 +183,7 @@ namespace TestMod.Common.Systems
         private static void ClearRequests()
         {
             requestCount = 0;
+            requestedOcclusionTexture = null;
             for (int i = 0; i < MaxLensSources; i++)
             {
                 sourcePositions[i] = Vector2.One * -9999f;
