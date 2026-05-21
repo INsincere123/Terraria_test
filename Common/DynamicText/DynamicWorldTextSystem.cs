@@ -7,6 +7,7 @@ using Terraria.GameContent;
 using Terraria.ID;
 using Terraria.ModLoader;
 using Terraria.UI;
+using TestMod.Common.DynamicText.Fonts;
 
 namespace TestMod.Common.DynamicText
 {
@@ -175,7 +176,8 @@ namespace TestMod.Common.DynamicText
                 if (opacity <= 0f)
                     return;
 
-                DynamicSpriteFont font = FontAssets.CombatText[crit ? 1 : 0].Value;
+                DynamicSpriteFont fallbackFont = FontAssets.CombatText[crit ? 1 : 0].Value;
+                DynamicTextFont font = DynamicTextFontSystem.Resolve(style.FontSpec, fallbackFont);
                 Vector2 textSize = font.MeasureString(Text);
                 Vector2 scale = Vector2.One * style.GetWorldScale(progress, crit, requestScale);
                 Vector2 drawPosition = position - Main.screenPosition;

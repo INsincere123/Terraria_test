@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using ReLogic.Graphics;
+using TestMod.Common.DynamicText.Fonts;
 
 namespace TestMod.Common.DynamicText
 {
@@ -15,7 +15,7 @@ namespace TestMod.Common.DynamicText
     public readonly struct DynamicTextDrawContext
     {
         public readonly SpriteBatch SpriteBatch;
-        public readonly DynamicSpriteFont Font;
+        public readonly DynamicTextFont Font;
         public readonly string Text;
         public readonly Vector2 Position;
         public readonly float Rotation;
@@ -34,7 +34,7 @@ namespace TestMod.Common.DynamicText
 
         public DynamicTextDrawContext(
             SpriteBatch spriteBatch,
-            DynamicSpriteFont font,
+            DynamicTextFont font,
             string text,
             Vector2 position,
             float rotation,
@@ -89,6 +89,7 @@ namespace TestMod.Common.DynamicText
         public float BaseScale { get; init; } = 1f;
         public float EndScale { get; init; } = 0.86f;
         public float CritScaleBonus { get; init; } = 0.24f;
+        public DynamicTextFontSpec FontSpec { get; init; } = DynamicTextFontSpec.Default;
         public IReadOnlyList<IDynamicTextLayer> Layers { get; init; } = [];
 
         public DynamicTextStyle(string key)

@@ -1,0 +1,126 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using ReLogic.Graphics;
+using Terraria;
+using Terraria.ID;
+using Terraria.ModLoader;
+
+namespace TestMod.Common.DynamicText.Fonts
+{
+    public sealed class DynamicTextFontSystem : ModSystem
+    {
+        private static readonly Dictionary<string, SystemDynamicTextFont> ResolvedFonts = [];
+        private static readonly HashSet<string> FailedKeys = [];
+        private static object installedFonts;
+
+        public static DynamicTextFont Resolve(DynamicTextFontSpec spec, DynamicSpriteFont fallbackFont)
+        {
+            if (fallbackFont is null)
+                return default;
+
+            if (Main.netMode == NetmodeID.Server || !OperatingSystem.IsWindows() || spec is null || !spec.HasCandidates)
+                return new DynamicTextFont(fallbackFont);
+
+            foreach (DynamicTextFontCandidate candidate in spec.Candidates)
+            {
+                if (TryResolveSystemFont(candidate, spec.Size, out SystemDynamicTextFont systemFont))
+                    return new DynamicTextFont(fallbackFont, systemFont);
+            }
+
+            return new DynamicTextFont(fallbackFont);
+        }
+
+        public override void Unload()
+        {
+            foreach (SystemDynamicTextFont font in ResolvedFonts.Values)
+                font.Dispose();
+
+            ResolvedFonts.Clear();
+            FailedKeys.Clear();
+            if (installedFonts is IDisposable disposable)
+                disposable.Dispose();
+            installedFonts = null;
+        }
+
+        private static bool TryResolveSystemFont(DynamicTextFontCandidate candidate, float size, out SystemDynamicTextFont systemFont)
+        {
+            systemFont = null;
+
+            if (string.IsNullOrWhiteSpace(candidate.Value))
+                return false;
+
+            string key = $"{candidate.Source}|{candidate.Value}|{candidate.FamilyName}|{size}";
+            if (ResolvedFonts.TryGetValue(key, out systemFont))
+                return true;
+
+            if (FailedKeys.Contains(key))
+                return false;
+
+            try
+            {
+                systemFont = candidate.Source switch
+                {
+                    DynamicTextFontSource.InstalledFamily => CreateFromInstalledFamily(candidate, size),
+                    DynamicTextFontSource.FilePath => CreateFromFile(candidate, size),
+                    _ => null
+                };
+
+                if (systemFont is not null)
+                {
+                    ResolvedFonts[key] = systemFont;
+                    return true;
+                }
+            }
+            catch (Exception exception)
+            {
+                ModContent.GetInstance<global::TestMod.TestMod>().Logger.Debug($"Failed to resolve dynamic text font '{candidate.Value}': {exception.Message}");
+            }
+
+            FailedKeys.Add(key);
+            return false;
+        }
+
+        private static SystemDynamicTextFont CreateFromInstalledFamily(DynamicTextFontCandidate candidate, float size)
+        {
+            installedFonts ??= SystemDrawingTextInterop.CreateInstalledFontCollection();
+            object family = SystemDrawingTextInterop.GetFamilies(installedFonts)
+                .Cast<object>()
+                .FirstOrDefault(f => string.Equals(SystemDrawingTextInterop.GetFamilyName(f), candidate.Value, StringComparison.OrdinalIgnoreCase));
+
+            if (family is null)
+                return null;
+
+            return new SystemDynamicTextFont(family, size, null, $"installed:{SystemDrawingTextInterop.GetFamilyName(family)}");
+        }
+
+        private static SystemDynamicTextFont CreateFromFile(DynamicTextFontCandidate candidate, float size)
+        {
+            string path = Environment.ExpandEnvironmentVariables(candidate.Value);
+            if (!Path.IsPathFullyQualified(path) || !File.Exists(path))
+                return null;
+
+            object collection = SystemDrawingTextInterop.CreatePrivateFontCollection();
+            SystemDrawingTextInterop.AddFontFile(collection, path);
+
+            object family = null;
+            if (!string.IsNullOrWhiteSpace(candidate.FamilyName))
+            {
+                family = SystemDrawingTextInterop.GetFamilies(collection)
+                    .Cast<object>()
+                    .FirstOrDefault(f => string.Equals(SystemDrawingTextInterop.GetFamilyName(f), candidate.FamilyName, StringComparison.OrdinalIgnoreCase));
+            }
+
+            family ??= SystemDrawingTextInterop.GetFamilies(collection).Cast<object>().FirstOrDefault();
+            if (family is null)
+            {
+                if (collection is IDisposable disposable)
+                    disposable.Dispose();
+                return null;
+            }
+
+            return new SystemDynamicTextFont(family, size, collection, $"file:{path}");
+        }
+    }
+}

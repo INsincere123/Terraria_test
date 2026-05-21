@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Terraria.ModLoader;
+using TestMod.Common.DynamicText.Fonts;
 using TestMod.Items.DamageTypes;
 
 namespace TestMod.Common.DynamicText
@@ -132,6 +133,11 @@ namespace TestMod.Common.DynamicText
 
             Register(new DynamicTextStyle(DamageTrue)
             {
+                FontSpec = DynamicTextFontSpec.Create(
+                    30f,
+                    DynamicTextFontCandidate.ByName("宋体"),
+                    DynamicTextFontCandidate.ByName("SimSun"),
+                    DynamicTextFontCandidate.ByPath(@"C:\Windows\Fonts\simsun.ttc", "SimSun")),
                 PrimaryColor = Color.White,
                 SecondaryColor = new Color(210, 245, 255),
                 Velocity = new Vector2(0f, -2.35f),

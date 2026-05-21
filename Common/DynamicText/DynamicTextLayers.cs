@@ -3,7 +3,6 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Terraria;
 using Terraria.GameContent;
-using Terraria.UI.Chat;
 
 namespace TestMod.Common.DynamicText
 {
@@ -23,9 +22,8 @@ namespace TestMod.Common.DynamicText
             Color color = context.PrimaryColor * (context.Opacity * opacity);
             if (drawMain)
             {
-                ChatManager.DrawColorCodedStringWithShadow(
+                context.Font.DrawColorCodedStringWithShadow(
                     context.SpriteBatch,
-                    context.Font,
                     context.Text,
                     context.Position,
                     color,
@@ -37,9 +35,8 @@ namespace TestMod.Common.DynamicText
                 return;
             }
 
-            ChatManager.DrawColorCodedString(
+            context.Font.DrawColorCodedString(
                 context.SpriteBatch,
-                context.Font,
                 context.Text,
                 context.Position,
                 color,
@@ -74,9 +71,8 @@ namespace TestMod.Common.DynamicText
             {
                 float angle = MathHelper.TwoPi * i / 8f;
                 Vector2 offset = new(MathF.Cos(angle) * radius, MathF.Sin(angle) * radius);
-                ChatManager.DrawColorCodedString(
+                context.Font.DrawColorCodedString(
                     context.SpriteBatch,
-                    context.Font,
                     context.Text,
                     context.Position + offset,
                     outline,
@@ -85,9 +81,8 @@ namespace TestMod.Common.DynamicText
                     context.Scale);
             }
 
-            ChatManager.DrawColorCodedString(
+            context.Font.DrawColorCodedString(
                 context.SpriteBatch,
-                context.Font,
                 context.Text,
                 context.Position,
                 fill,
@@ -127,9 +122,8 @@ namespace TestMod.Common.DynamicText
             {
                 float angle = MathHelper.TwoPi * i / layers + context.Time * 0.8f;
                 Vector2 offset = new(MathF.Cos(angle) * pulseRadius, MathF.Sin(angle) * pulseRadius * verticalSquash);
-                ChatManager.DrawColorCodedString(
+                context.Font.DrawColorCodedString(
                     context.SpriteBatch,
-                    context.Font,
                     context.Text,
                     context.Position + offset,
                     color,
@@ -177,9 +171,8 @@ namespace TestMod.Common.DynamicText
 
                 if (intensity > 0.01f)
                 {
-                    ChatManager.DrawColorCodedString(
+                    context.Font.DrawColorCodedString(
                         context.SpriteBatch,
-                        context.Font,
                         glyph,
                         context.Position + Vector2.UnitX * charOffset,
                         color * (intensity * opacity * context.Opacity),
@@ -226,9 +219,8 @@ namespace TestMod.Common.DynamicText
 
         private void DrawShift(in DynamicTextDrawContext context, Vector2 offsetVector, Color color, float weight)
         {
-            ChatManager.DrawColorCodedString(
+            context.Font.DrawColorCodedString(
                 context.SpriteBatch,
-                context.Font,
                 context.Text,
                 context.Position + offsetVector,
                 color * (opacity * weight * context.Opacity),
@@ -270,9 +262,8 @@ namespace TestMod.Common.DynamicText
                 float wave = MathF.Sin(context.Time * speed + i * phaseStep + context.Seed * 0.01f);
                 Vector2 offset = direction * amplitude * wave;
 
-                ChatManager.DrawColorCodedString(
+                context.Font.DrawColorCodedString(
                     context.SpriteBatch,
-                    context.Font,
                     glyph,
                     context.Position + Vector2.UnitX * charOffset + offset,
                     color * (opacity * context.Opacity * (0.72f + 0.28f * MathF.Abs(wave))),
@@ -800,9 +791,8 @@ namespace TestMod.Common.DynamicText
                 Color color = Color.Lerp(context.PrimaryColor, context.SecondaryColor, t) * ((1f - t) * opacity * context.Opacity);
                 Vector2 offset = travel * t;
 
-                ChatManager.DrawColorCodedString(
+                context.Font.DrawColorCodedString(
                     context.SpriteBatch,
-                    context.Font,
                     context.Text,
                     context.Position + offset,
                     color,

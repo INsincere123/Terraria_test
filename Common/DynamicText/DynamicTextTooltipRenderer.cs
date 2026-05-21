@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using ReLogic.Graphics;
 using Terraria;
 using Terraria.ModLoader;
+using TestMod.Common.DynamicText.Fonts;
 
 namespace TestMod.Common.DynamicText
 {
@@ -51,9 +52,10 @@ namespace TestMod.Common.DynamicText
             DynamicTextSurface surface = DynamicTextSurface.Tooltip)
         {
             Color primary = overrideColor ?? style.PrimaryColor;
+            DynamicTextFont resolvedFont = new(font);
             DynamicTextDrawContext context = new(
                 spriteBatch,
-                font,
+                resolvedFont,
                 text,
                 position,
                 rotation,
