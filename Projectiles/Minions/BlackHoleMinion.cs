@@ -69,6 +69,9 @@ namespace TestMod.Projectiles.Minions
         private const int MaxProjectilePullsPerFrame = 20;
 
         // ==================== 类星体喷流参数 ====================
+        // 临时测试开关：关闭后黑洞只保留吸积盘扣血和敌弹吸收，不再发射喷流/碎片弹幕。
+        private static readonly bool EnableQuasarProjectiles = false;
+
         // 黑洞索敌范围。没有目标时不会发射。
         private const float TargetSearchRange = 1800f;
 
@@ -86,6 +89,20 @@ namespace TestMod.Projectiles.Minions
 
         // 喷流从吸积盘边缘射出。这个值控制发射点离黑洞中心多远。
         private const float QuasarEmissionRadius = 48f;
+
+        // ==================== 吸积盘核心扣血参数 ====================
+        // 以吸积盘为圆形范围，范围内直接流失生命，不走撞击/命中判定。
+        private const float AccretionDiskDrainRadius = BlackHoleVisualRadius * GravitationalLensSystem.AccretionOuterRadiusFactor;
+
+        // 扣血间隔。数值越小文本越密、伤害越平滑；数值越大越像周期脉冲。
+        private const int AccretionDiskDrainInterval = 2;
+
+        // 每秒按 NPC 最大生命值扣除的比例。越靠近圆心越接近中心比例，越靠近边缘越接近边缘比例。
+        private const float AccretionDiskEdgeDrainLifeMaxPercentPerSecond = 0.07f;
+        private const float AccretionDiskCenterDrainLifeMaxPercentPerSecond = 0.21f;
+
+        // 每次结算至少扣多少血，避免低血量小怪被百分比向下取整到 0。
+        private const int AccretionDiskMinDrainDamage = 1;
 
         // 爆发时附带的射弹数量和伤害继承比例。
         private const int QuasarBurstShardCount = 4;
@@ -148,8 +165,19 @@ namespace TestMod.Projectiles.Minions
 
             MoveToOrbit(orbitCenter + GetOrbitOffset(index, Math.Max(total, 1)));
             AbsorbHostileProjectiles();
-            TryShootQuasarJet(target, index);
-            ProcessPendingQuasarBurstShards();
+            DrainNPCsInAccretionDisk();
+
+            if (EnableQuasarProjectiles)
+            {
+                TryShootQuasarJet(target, index);
+                ProcessPendingQuasarBurstShards();
+            }
+            else
+            {
+                Projectile.localAI[0] = 0f;
+                Projectile.localAI[1] = 0f;
+                pendingBurstShardCount = 0;
+            }
 
             if (!Main.dedServ)
                 GravitationalLensSystem.RegisterBlackHole(Projectile.Center, BlackHoleVisualRadius, 1f, AccretionDiskColor, GetVisualStyle());
@@ -343,6 +371,80 @@ namespace TestMod.Projectiles.Minions
                 if (handled >= MaxProjectilePullsPerFrame)
                     return;
             }
+        }
+
+        private void DrainNPCsInAccretionDisk()
+        {
+            if (Main.netMode == NetmodeID.MultiplayerClient)
+                return;
+
+            if ((Main.GameUpdateCount + (uint)Projectile.whoAmI) % AccretionDiskDrainInterval != 0)
+                return;
+
+            float drainRadiusSq = AccretionDiskDrainRadius * AccretionDiskDrainRadius;
+
+            for (int i = 0; i < Main.maxNPCs; i++)
+            {
+                NPC npc = Main.npc[i];
+                if (!CanBeDrainedByAccretionDisk(npc))
+                    continue;
+
+                float distanceSq = DistanceFromPointToRectangleSquared(Projectile.Center, npc.Hitbox);
+                if (distanceSq > drainRadiusSq)
+                    continue;
+
+                float distance = MathF.Sqrt(distanceSq);
+                float centerCloseness = 1f - MathHelper.Clamp(distance / AccretionDiskDrainRadius, 0f, 1f);
+                float drainPercentPerSecond = MathHelper.Lerp(
+                    AccretionDiskEdgeDrainLifeMaxPercentPerSecond,
+                    AccretionDiskCenterDrainLifeMaxPercentPerSecond,
+                    centerCloseness);
+
+                int damage = Math.Max(
+                    AccretionDiskMinDrainDamage,
+                    (int)MathF.Round(npc.lifeMax * drainPercentPerSecond * AccretionDiskDrainInterval / 60f));
+
+                damage = Math.Min(damage, npc.life);
+                if (damage <= 0)
+                    continue;
+
+                npc.life -= damage;
+                npc.lastInteraction = Projectile.owner;
+                ShowAccretionDiskDrainText(npc, damage);
+
+                if (npc.life <= 0)
+                    npc.checkDead();
+
+                npc.netUpdate = true;
+            }
+        }
+
+        private static bool CanBeDrainedByAccretionDisk(NPC npc)
+            => npc.active
+            && !npc.friendly
+            && !npc.dontTakeDamage
+            && npc.life > 0
+            && npc.lifeMax > 0;
+
+        private static float DistanceFromPointToRectangleSquared(Vector2 point, Rectangle rectangle)
+        {
+            float closestX = MathHelper.Clamp(point.X, rectangle.Left, rectangle.Right);
+            float closestY = MathHelper.Clamp(point.Y, rectangle.Top, rectangle.Bottom);
+            return Vector2.DistanceSquared(point, new Vector2(closestX, closestY));
+        }
+
+        private static void ShowAccretionDiskDrainText(NPC npc, int damage)
+        {
+            Rectangle hitbox = npc.Hitbox;
+            Color textColor = Color.DarkGoldenrod;
+
+            if (Main.dedServ)
+            {
+                NetMessage.SendData(MessageID.CombatTextInt, -1, -1, null, (int)textColor.PackedValue, hitbox.Center.X, hitbox.Center.Y, damage);
+                return;
+            }
+
+            CombatText.NewText(hitbox, textColor, damage.ToString(), false, true);
         }
 
         private void TryShootQuasarJet(NPC target, int index)
