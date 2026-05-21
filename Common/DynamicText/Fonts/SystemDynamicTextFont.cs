@@ -83,18 +83,43 @@ namespace TestMod.Common.DynamicText.Fonts
 
         public void Dispose()
         {
+            QueueTextureDisposal(DisposeAndCollectTextures());
+        }
+
+        public List<Texture2D> DisposeAndCollectTextures()
+        {
             if (disposed)
-                return;
+                return [];
 
             disposed = true;
             DisposeObject(font);
             DisposeObject(privateFontCollection);
 
+            List<Texture2D> textures = [];
             foreach (CachedTextTexture cached in textureCache.Values)
-                cached.Texture?.Dispose();
+            {
+                if (cached.Texture is not null && !cached.Texture.IsDisposed)
+                    textures.Add(cached.Texture);
+            }
 
             textureCache.Clear();
             measureCache.Clear();
+            return textures;
+        }
+
+        private static void QueueTextureDisposal(List<Texture2D> textures)
+        {
+            if (textures.Count <= 0)
+                return;
+
+            Main.QueueMainThreadAction(() =>
+            {
+                foreach (Texture2D texture in textures)
+                {
+                    if (texture is not null && !texture.IsDisposed)
+                        texture.Dispose();
+                }
+            });
         }
 
         private Vector2 MeasureStringUncached(string text)

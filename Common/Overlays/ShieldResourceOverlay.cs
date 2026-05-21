@@ -63,7 +63,7 @@ namespace TestMod.Common.Overlays
                 return;
 
             Player player = Main.LocalPlayer;
-            ShieldPlayer shieldPlayer = player.GetModPlayer<ShieldPlayer>();
+            EnergyShieldPlayer shieldPlayer = player.GetModPlayer<EnergyShieldPlayer>();
             if (shieldPlayer.CurrentShield <= 0f)
             {
                 ResetHorizontalCapture();

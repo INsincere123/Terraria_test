@@ -31,7 +31,7 @@ namespace TestMod.Common.Systems
             if (player is null || !player.active)
                 return;
 
-            ShieldPlayer shieldPlayer = player.GetModPlayer<ShieldPlayer>();
+            EnergyShieldPlayer shieldPlayer = player.GetModPlayer<EnergyShieldPlayer>();
             if (shieldPlayer.MaxShield <= 0f)
                 return;
 
@@ -51,7 +51,7 @@ namespace TestMod.Common.Systems
             return new Vector2(lifeBarX - BarWidth - GapFromLifeBar, lifeBarY);
         }
 
-        private static void DrawShieldBar(SpriteBatch spriteBatch, Vector2 position, float shieldRatio, ShieldPlayer shieldPlayer)
+        private static void DrawShieldBar(SpriteBatch spriteBatch, Vector2 position, float shieldRatio, EnergyShieldPlayer shieldPlayer)
         {
             Texture2D pixel = TextureAssets.MagicPixel.Value;
             int x = (int)MathF.Round(position.X);

@@ -88,8 +88,8 @@ namespace TestMod.Common.Players
             EmergencyTimer    = EmergencyFrames;
             Cooldown          = CooldownFrames;
 
-            // 直接追加护盾量；ShieldPlayer 下一帧 PostUpdateMiscEffects 会同步上限
-            Player.GetModPlayer<ShieldPlayer>().AddShield(value);
+            // 直接追加护盾量；EnergyShieldPlayer 下一帧 PostUpdateMiscEffects 会同步上限
+            Player.GetModPlayer<EnergyShieldPlayer>().AddShield(value);
         }
     }
 }

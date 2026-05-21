@@ -16,8 +16,8 @@ namespace TestMod.Items.Accessories.Effects
         Endurance,      // player.endurance（0~0.999，0.1 = 减伤 10%）
         LifeRegen,      // player.lifeRegen（每秒回血帧值）
         MaxMana,        // player.statManaMax2
-        ShieldCurrent,  // ShieldPlayer.CurrentShield
-        ShieldMax,      // ShieldPlayer.MaxShield
+        ShieldCurrent,  // EnergyShieldPlayer.CurrentShield
+        ShieldMax,      // EnergyShieldPlayer.MaxShield
     }
 
     // ── 目标属性枚举 ────────────────────────────────────────────────────────────
@@ -143,8 +143,8 @@ namespace TestMod.Items.Accessories.Effects
             SourceStatType.Endurance     => player.endurance,
             SourceStatType.LifeRegen     => player.lifeRegen,
             SourceStatType.MaxMana       => player.statManaMax2,
-            SourceStatType.ShieldCurrent => player.GetModPlayer<ShieldPlayer>().CurrentShield,
-            SourceStatType.ShieldMax     => player.GetModPlayer<ShieldPlayer>().MaxShield,
+            SourceStatType.ShieldCurrent => player.GetModPlayer<EnergyShieldPlayer>().CurrentShield,
+            SourceStatType.ShieldMax     => player.GetModPlayer<EnergyShieldPlayer>().MaxShield,
             _                            => 0f,
         };
 

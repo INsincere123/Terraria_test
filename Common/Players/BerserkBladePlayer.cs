@@ -32,7 +32,7 @@ namespace TestMod.Common.Players
             UseCrit             = false,
             Knockback           = 0f,
             NoPlayerInteraction = false, // 同步网络包；_extraHitActive 防递归
-            CombatTextColor     = new Color(255, 24, 34),
+            CombatTextColor     = new Color(255, 255, 255),
             CombatTextStyleKey  = DynamicTextStyleRegistry.DamageTrue,
         };
 

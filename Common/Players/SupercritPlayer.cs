@@ -13,11 +13,29 @@ namespace TestMod.Common.Players
     /// </summary>
     public class SupercritPlayer : ModPlayer
     {
+        private const int SupercritTextCooldownTicks = 30;
+
         public bool supercritEnabled;
+        private int supercritTextCooldown;
 
         public override void ResetEffects()
         {
             supercritEnabled = false;
+        }
+
+        public override void PostUpdate()
+        {
+            if (supercritTextCooldown > 0)
+                supercritTextCooldown--;
+        }
+
+        public bool CanShowSupercritText()
+        {
+            if (supercritTextCooldown > 0)
+                return false;
+
+            supercritTextCooldown = SupercritTextCooldownTicks;
+            return true;
         }
     }
 
@@ -59,11 +77,15 @@ namespace TestMod.Common.Players
                 return;
 
             Player player = Main.player[projectile.owner];
-            if (!player.active || player.dead || !player.GetModPlayer<SupercritPlayer>().supercritEnabled)
+            SupercritPlayer modPlayer = player.GetModPlayer<SupercritPlayer>();
+            if (!player.active || player.dead || !modPlayer.supercritEnabled)
                 return;
 
             float critOver100 = player.GetTotalCritChance(projectile.DamageType) - 100f;
             if (critOver100 <= 0f)
+                return;
+
+            if (!modPlayer.CanShowSupercritText())
                 return;
 
             int bonusPercent = (int)MathF.Round(critOver100 * SupercritBuff.CritOverflowToCritDamageRatio);
@@ -75,6 +97,50 @@ namespace TestMod.Common.Players
                 crit: true,
                 scale: 0.78f,
                 seed: projectile.identity * 31 + npc.whoAmI * 197 + (int)Main.GameUpdateCount));
+        }
+
+        public override void ModifyHitByItem(NPC npc, Player player, Item item, ref NPC.HitModifiers modifiers)
+        {
+            if (!player.active || player.dead)
+                return;
+
+            SupercritPlayer modPlayer = player.GetModPlayer<SupercritPlayer>();
+            if (!modPlayer.supercritEnabled)
+                return;
+
+            float critOver100 = player.GetTotalCritChance(item.DamageType) - 100f;
+            if (critOver100 <= 0f)
+                return;
+
+            float bonusCritDamage = critOver100 * SupercritBuff.CritOverflowToCritDamageRatio / 100f;
+            modifiers.CritDamage += bonusCritDamage;
+        }
+
+        public override void OnHitByItem(NPC npc, Player player, Item item, NPC.HitInfo hit, int damageDone)
+        {
+            if (!hit.Crit || !player.active || player.dead)
+                return;
+
+            SupercritPlayer modPlayer = player.GetModPlayer<SupercritPlayer>();
+            if (!modPlayer.supercritEnabled)
+                return;
+
+            float critOver100 = player.GetTotalCritChance(item.DamageType) - 100f;
+            if (critOver100 <= 0f)
+                return;
+
+            if (!modPlayer.CanShowSupercritText())
+                return;
+
+            int bonusPercent = (int)MathF.Round(critOver100 * SupercritBuff.CritOverflowToCritDamageRatio);
+            DynamicWorldTextSystem.Spawn(new DynamicWorldTextRequest(
+                $"+{bonusPercent}%暴伤",
+                npc.Center + Vector2.UnitY * 8f,
+                DynamicTextStyleRegistry.Supercrit,
+                new Color(255, 214, 62),
+                crit: true,
+                scale: 0.78f,
+                seed: item.type * 31 + npc.whoAmI * 197 + (int)Main.GameUpdateCount));
         }
     }
 }

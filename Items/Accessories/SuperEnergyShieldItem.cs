@@ -13,7 +13,7 @@ namespace TestMod.Items.Accessories
     /// 超能护盾 — 能量护盾的升级版。
     ///
     /// 护盾数值：60 + 120% 防御力
-    /// 护盾效果：+5% 减伤、+4% 伤害、+2% 暴击率、免疫击退（来自 ShieldPlayer 全局）
+    /// 护盾效果：+5% 减伤、+4% 伤害、+2% 暴击率、免疫击退（来自 EnergyShieldPlayer 全局）
     /// 恢复规则：不衰减；受击后 5 秒未再受击、2 秒逐渐恢复满
     /// 紧急护盾：生命值跌破 30% 时触发，护盾值 = 50%最大生命 + 100%防御，
     ///           4.5 秒内线性衰减，冷却 120 秒（Buff 图标显示倒计时）
@@ -29,6 +29,7 @@ namespace TestMod.Items.Accessories
         // ── 数值调节区 ────────────────────────────────────────────────
         public const float ShieldBase       = 60f;   // 固定护盾基础值
         public const float ShieldDefRatio   = 1.20f; // 防御力转化系数（+120%防御）
+        public const float ShieldLifeRatio  = 0.09f; // 最大生命值转化系数
         public const float EnduranceBonus   = 0.05f; // 护盾存活时减伤加成（5%）
         public const float DamageBonus      = 0.04f; // 护盾存活时伤害加成（4%）
         public const int   CritBonus        = 2;     // 护盾存活时暴击加成（2%）
@@ -61,7 +62,7 @@ namespace TestMod.Items.Accessories
                 // 若紧急护盾激活，额外叠加随时间衰减的紧急护盾值
                 GetMaxShield = p =>
                 {
-                    float normal = ShieldBase + p.statDefense * ShieldDefRatio;
+                    float normal = ShieldBase + p.statDefense * ShieldDefRatio + p.statLifeMax2 * ShieldLifeRatio;
                     if (!ssp.EmergencyActive) return normal;
                     float frac = (float)ssp.EmergencyTimer / SuperEnergyShieldPlayer.EmergencyFrames;
                     return normal + ssp.EmergencyMaxValue * frac;
@@ -93,8 +94,8 @@ namespace TestMod.Items.Accessories
         {
             Player player    = Main.LocalPlayer;
             var    ssp       = player.GetModPlayer<SuperEnergyShieldPlayer>();
-            var    sp        = player.GetModPlayer<ShieldPlayer>();
-            int    maxShield = (int)(ShieldBase + player.statDefense * ShieldDefRatio);
+            var    sp        = player.GetModPlayer<EnergyShieldPlayer>();
+            int    maxShield = (int)(ShieldBase + player.statDefense * ShieldDefRatio + player.statLifeMax2 * ShieldLifeRatio);
 
             int idx = tooltips.FindIndex(t => t.Name == "Tooltip0");
             if (idx >= 0)

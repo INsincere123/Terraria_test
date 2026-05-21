@@ -6,6 +6,25 @@ using Terraria.GameContent;
 
 namespace TestMod.Common.DynamicText
 {
+    public sealed class TextPlainLayer : IDynamicTextLayer
+    {
+        public void Draw(in DynamicTextDrawContext context)
+        {
+            if (context.Opacity <= 0f)
+                return;
+
+            context.Font.DrawColorCodedString(
+                context.SpriteBatch,
+                context.Text,
+                context.Position,
+                context.PrimaryColor * context.Opacity,
+                context.Rotation,
+                context.Origin,
+                context.Scale,
+                context.MaxWidth);
+        }
+    }
+
     public sealed class TextShadowLayer : IDynamicTextLayer
     {
         private readonly float opacity;

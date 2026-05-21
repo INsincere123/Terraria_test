@@ -7,6 +7,7 @@ using Terraria.Audio;
 using Terraria.DataStructures;
 using Terraria.ID;
 using Terraria.ModLoader;
+using TestMod.Common.DynamicText;
 using TestMod.DataStructures;
 
 namespace TestMod.Common.Players
@@ -28,7 +29,7 @@ namespace TestMod.Common.Players
     ///   · 恢复取最保守：取最长延迟、最慢速率
     ///   · 颜色取首个：优先使用第一个提供了颜色的 def 的颜色
     /// </summary>
-    public class ShieldPlayer : ModPlayer
+    public class EnergyShieldPlayer : ModPlayer
     {
         // ── 公开状态 ──────────────────────────────────────────────────────
         public float CurrentShield  { get; private set; }
@@ -54,6 +55,7 @@ namespace TestMod.Common.Players
 
         private int   _hitTimer        = int.MaxValue; // 距上次受击的帧数
         private bool  _wasShielded     = false;        // 上帧是否有护盾（用于 OnBreak 检测）
+        private bool  _wasRecovering   = false;
 
         // Luminance 滤镜名称（与 fx 文件名对应）
         public const string FilterName = "TestMod.EnergyShieldFilter";
@@ -63,6 +65,7 @@ namespace TestMod.Common.Players
         private const float FadeSpeed  = 0.06f; // 每帧变化量
         private int _shieldHitFlashTimer;
         private const int ShieldHitFlashFrames = 10;
+        private static readonly Color ShieldTextColor = new(64, 224, 255);
 
         // ── ShieldEffect.Apply 注入入口 ───────────────────────────────────
         internal void AddDefinition(ShieldDefinition def) => _defs.Add(def);
@@ -145,6 +148,7 @@ namespace TestMod.Common.Players
             if (MaxShield <= 0f)
             {
                 CurrentShield = 0f;
+                _wasRecovering = false;
                 UpdateShieldFilter();
                 return;
             }
@@ -160,13 +164,19 @@ namespace TestMod.Common.Players
             if (_hitTimer < int.MaxValue) _hitTimer++;
 
             // 恢复条件：护盾不满 + 延迟已过
+            bool isRecovering = false;
             if (CurrentShield < MaxShield && _hitTimer >= _rechargeDelay)
             {
+                isRecovering = true;
+                if (!_wasRecovering)
+                    SpawnShieldRecoveringText();
+
                 if (_rechargeRate >= float.MaxValue / 2f)
                     CurrentShield = MaxShield;           // 瞬间恢复
                 else
                     CurrentShield = Math.Min(MaxShield, CurrentShield + _rechargeRate / 60f);
             }
+            _wasRecovering = isRecovering;
 
             _wasShielded = CurrentShield > 0f;
 
@@ -228,6 +238,7 @@ namespace TestMod.Common.Players
             CurrentShield = Math.Max(0f, CurrentShield - absorbed);
             _shieldHitFlashTimer = ShieldHitFlashFrames;
             PlayShieldHitSound();
+            SpawnShieldDamageText(absorbed);
 
             if (CurrentShield <= 0f && _wasShielded)
                 TriggerOnBreak();
@@ -247,6 +258,48 @@ namespace TestMod.Common.Players
             sound.Pitch = 0.2f;
             sound.PitchVariance = 0.25f;
             SoundEngine.PlaySound(sound, Player.Center);
+        }
+
+        private void SpawnShieldDamageText(int absorbed)
+        {
+            if (Main.netMode == NetmodeID.Server || Player.whoAmI != Main.myPlayer)
+                return;
+
+            DynamicWorldTextSystem.Spawn(new DynamicWorldTextRequest(
+                $"-{absorbed}",
+                Player.Center + new Vector2(0f, -Player.height * 0.62f),
+                DynamicTextStyleRegistry.EnergyShieldDamage,
+                ShieldTextColor,
+                scale: 1f,
+                seed: unchecked((int)Main.GameUpdateCount + absorbed * 31 + Player.whoAmI * 997)));
+        }
+
+        private void SpawnShieldBreakText()
+        {
+            if (Main.netMode == NetmodeID.Server || Player.whoAmI != Main.myPlayer)
+                return;
+
+            DynamicWorldTextSystem.Spawn(new DynamicWorldTextRequest(
+                "护盾已破碎",
+                Player.Center + new Vector2(0f, -Player.height * 0.95f),
+                DynamicTextStyleRegistry.EnergyShieldBreak,
+                ShieldTextColor,
+                scale: 1f,
+                seed: unchecked((int)Main.GameUpdateCount + Player.whoAmI * 1297)));
+        }
+
+        private void SpawnShieldRecoveringText()
+        {
+            if (Main.netMode == NetmodeID.Server || Player.whoAmI != Main.myPlayer)
+                return;
+
+            DynamicWorldTextSystem.Spawn(new DynamicWorldTextRequest(
+                "\u62A4\u76FE\u6B63\u5728\u6062\u590D",
+                Player.Center + new Vector2(0f, -Player.height * 0.95f),
+                DynamicTextStyleRegistry.EnergyShieldBreak,
+                ShieldTextColor,
+                scale: 0.82f,
+                seed: unchecked((int)Main.GameUpdateCount + Player.whoAmI * 1423)));
         }
 
         private void GiveVanillaHurtIFrames(Player.HurtInfo info, int damage)
@@ -280,6 +333,7 @@ namespace TestMod.Common.Players
         private void TriggerOnBreak()
         {
             _wasShielded = false;
+            SpawnShieldBreakText();
             foreach (var def in _defs)
                 def.OnBreak?.Invoke(Player);
         }

@@ -8,7 +8,7 @@ namespace TestMod.DataStructures
     //   ShieldDefinition — 护盾行为配置结构体
     //
     //   一种护盾 = 一份 ShieldDefinition。多个饰品可以各自提供定义，
-    //   ShieldPlayer 会把所有定义的 MaxShield 加算，共享同一个护盾血池。
+    //   EnergyShieldPlayer 会把所有定义的 MaxShield 加算，共享同一个护盾血池。
     //
     //   ── 使用示例（在饰品的 UpdateAccessory 中一行调用）─────────────────────────
     //

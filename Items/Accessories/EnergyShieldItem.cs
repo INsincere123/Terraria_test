@@ -26,7 +26,7 @@ namespace TestMod.Items.Accessories
 
         // ── 数值调节区 ────────────────────────────────────────────────
         public const float ShieldBase       = 20f;   // 固定护盾基础值
-        public const float ShieldLifeRatio  = 0.06f; // 最大生命值转化系数（+10%最大生命）
+        public const float ShieldLifeRatio  = 0.06f; // 最大生命值转化系数
         public const int   DefenseBonus     = 5;     // 护盾存活时的防御加成
         public const int   RechargeDelaySec = 6;     // 受击后多少秒未再受击才开始恢复
         // ─────────────────────────────────────────────────────────────
@@ -75,7 +75,7 @@ namespace TestMod.Items.Accessories
             // 计算当前护盾上限供显示（用本地玩家属性实时计算）
             Player   player    = Main.LocalPlayer;
             int      maxShield = (int)(ShieldBase + player.statLifeMax2 * ShieldLifeRatio);
-            float    current   = player.GetModPlayer<ShieldPlayer>().CurrentShield;
+            float    current   = player.GetModPlayer<EnergyShieldPlayer>().CurrentShield;
 
             // 在第一行描述后追加动态护盾量信息
             int idx = tooltips.FindIndex(t => t.Name == "Tooltip0");
@@ -90,6 +90,12 @@ namespace TestMod.Items.Accessories
         {
             CreateRecipe()
                 .AddIngredient(ItemID.IronBar, 10)  // 10 个铁锭
+                .AddIngredient(ItemID.FallenStar, 3)
+                .AddTile(TileID.Anvils)
+                .Register();
+            CreateRecipe()
+                .AddIngredient(ItemID.LeadBar, 10)  // 10 个铅锭
+                .AddIngredient(ItemID.FallenStar, 3)
                 .AddTile(TileID.Anvils)
                 .Register();
         }

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Terraria;
 using TestMod.Common.DynamicText.Fonts;
 
 namespace TestMod.Common.DynamicText
@@ -84,6 +85,8 @@ namespace TestMod.Common.DynamicText
         public Color ShadowColor { get; init; } = Color.Black;
         public int Lifetime { get; init; } = 72;
         public Vector2 Velocity { get; init; } = new(0f, -1.6f);
+        public Vector2? RandomVelocityMin { get; init; }
+        public Vector2? RandomVelocityMax { get; init; }
         public float Gravity { get; init; } = 0.018f;
         public float Drag { get; init; } = 0.985f;
         public float BaseScale { get; init; } = 1f;
@@ -116,6 +119,20 @@ namespace TestMod.Common.DynamicText
             float settle = MathHelper.Lerp(1f, EndScale, MathF.Pow(progress, 1.35f));
             float critBonus = crit ? CritScaleBonus : 0f;
             return requestScale * BaseScale * settle * (1f + pop * (0.18f + critBonus));
+        }
+
+        public Vector2 GetInitialVelocity()
+        {
+            if (RandomVelocityMin.HasValue && RandomVelocityMax.HasValue)
+            {
+                Vector2 min = RandomVelocityMin.Value;
+                Vector2 max = RandomVelocityMax.Value;
+                return new Vector2(
+                    Main.rand.NextFloat(min.X, max.X),
+                    Main.rand.NextFloat(min.Y, max.Y));
+            }
+
+            return Velocity;
         }
 
         private static float SmoothStep(float from, float to, float value)

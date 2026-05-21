@@ -8,7 +8,7 @@ namespace TestMod.Items.Accessories.Effects
     /// 护盾效果注入入口。
     ///
     /// 在饰品的 UpdateAccessory() 中调用 Apply()，
-    /// ShieldPlayer 将在 PostUpdateMiscEffects 阶段收集并汇总所有护盾定义。
+    /// EnergyShieldPlayer 将在 PostUpdateMiscEffects 阶段收集并汇总所有护盾定义。
     ///
     /// 多个饰品同时装备时，各自的 GetMaxShield 加算，共享同一护盾血池。
     ///
@@ -35,7 +35,7 @@ namespace TestMod.Items.Accessories.Effects
         /// </summary>
         public static void Apply(Player player, ShieldDefinition def)
         {
-            player.GetModPlayer<ShieldPlayer>().AddDefinition(def);
+            player.GetModPlayer<EnergyShieldPlayer>().AddDefinition(def);
         }
     }
 }

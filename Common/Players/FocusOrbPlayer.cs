@@ -80,7 +80,7 @@ namespace TestMod.Common.Players
             });
 
             Player.AddBuff(ModContent.BuffType<FocusOrbCooldownBuff>(), CooldownDuration);
-            SoundEngine.PlaySound(SoundID.MaxMana, Player.Center);
+            SoundEngine.PlaySound(SoundID.DrumKick, Player.Center);
         }
     }
 }

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Microsoft.Xna.Framework.Graphics;
 using ReLogic.Graphics;
 using Terraria;
 using Terraria.ID;
@@ -13,7 +14,9 @@ namespace TestMod.Common.DynamicText.Fonts
     {
         private static readonly Dictionary<string, SystemDynamicTextFont> ResolvedFonts = [];
         private static readonly HashSet<string> FailedKeys = [];
+        private static readonly List<string> PendingMissingFontReports = [];
         private static object installedFonts;
+        private static int missingFontReportTimer = -1;
 
         public static DynamicTextFont Resolve(DynamicTextFontSpec spec, DynamicSpriteFont fallbackFont)
         {
@@ -32,16 +35,106 @@ namespace TestMod.Common.DynamicText.Fonts
             return new DynamicTextFont(fallbackFont);
         }
 
+        public override void OnWorldLoad()
+        {
+            PendingMissingFontReports.Clear();
+            missingFontReportTimer = -1;
+
+            if (Main.netMode == NetmodeID.Server)
+                return;
+
+            foreach (DynamicTextStyle style in DynamicTextStyleRegistry.RegisteredStyles)
+            {
+                DynamicTextFontSpec spec = style.FontSpec;
+                if (spec is null || !spec.HasCandidates)
+                    continue;
+
+                if (CanResolveFontSpec(spec))
+                    continue;
+
+                PendingMissingFontReports.Add($"{style.Key}: {DescribeCandidates(spec)}");
+            }
+
+            if (PendingMissingFontReports.Count > 0)
+                missingFontReportTimer = 150;   //延迟发送消息
+        }
+
+        public override void OnWorldUnload()
+        {
+            PendingMissingFontReports.Clear();
+            missingFontReportTimer = -1;
+        }
+
+        public override void PostUpdateEverything()
+        {
+            if (Main.netMode == NetmodeID.Server || missingFontReportTimer < 0)
+                return;
+
+            if (missingFontReportTimer-- > 0)
+                return;
+
+            Main.NewText("Missing fonts: " + string.Join("; ", PendingMissingFontReports), 255, 190, 80);
+            PendingMissingFontReports.Clear();
+            missingFontReportTimer = -1;
+        }
+
         public override void Unload()
         {
+            List<Texture2D> texturesToDispose = [];
             foreach (SystemDynamicTextFont font in ResolvedFonts.Values)
-                font.Dispose();
+                texturesToDispose.AddRange(font.DisposeAndCollectTextures());
 
             ResolvedFonts.Clear();
             FailedKeys.Clear();
+            PendingMissingFontReports.Clear();
+            missingFontReportTimer = -1;
             if (installedFonts is IDisposable disposable)
                 disposable.Dispose();
             installedFonts = null;
+
+            QueueTextureDisposal(texturesToDispose);
+        }
+
+        private static bool CanResolveFontSpec(DynamicTextFontSpec spec)
+        {
+            if (!OperatingSystem.IsWindows())
+                return false;
+
+            foreach (DynamicTextFontCandidate candidate in spec.Candidates)
+            {
+                if (TryResolveSystemFont(candidate, spec.Size, out _))
+                    return true;
+            }
+
+            return false;
+        }
+
+        private static string DescribeCandidates(DynamicTextFontSpec spec)
+        {
+            return string.Join(" / ", spec.Candidates.Select(DescribeCandidate));
+        }
+
+        private static string DescribeCandidate(DynamicTextFontCandidate candidate)
+        {
+            if (candidate.Source == DynamicTextFontSource.FilePath && !string.IsNullOrWhiteSpace(candidate.FamilyName))
+                return $"{candidate.Value} ({candidate.FamilyName})";
+
+            return candidate.Value;
+        }
+
+        private static void QueueTextureDisposal(List<Texture2D> textures)
+        {
+            if (textures.Count <= 0)
+                return;
+
+            Main.QueueMainThreadAction(() =>
+            {
+                foreach (Texture2D texture in textures)
+                {
+                    if (texture is not null && !texture.IsDisposed)
+                        texture.Dispose();
+                }
+            });
         }
 
         private static bool TryResolveSystemFont(DynamicTextFontCandidate candidate, float size, out SystemDynamicTextFont systemFont)

@@ -153,7 +153,7 @@ namespace TestMod.Common.DynamicText
                 style = DynamicTextStyleRegistry.Get(request.StyleKey);
                 Text = request.Text;
                 position = request.WorldPosition;
-                velocity = request.Velocity ?? style.Velocity;
+                velocity = request.Velocity ?? style.GetInitialVelocity();
                 overrideColor = request.OverrideColor;
                 crit = request.Crit;
                 lifetime = request.Lifetime ?? style.Lifetime;

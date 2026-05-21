@@ -1,5 +1,7 @@
+using System;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
+using Terraria;
 using Terraria.ModLoader;
 using TestMod.Common.DynamicText.Fonts;
 using TestMod.Items.DamageTypes;
@@ -20,10 +22,14 @@ namespace TestMod.Common.DynamicText
         public const string Antares = "Combat.Antares";
         public const string BloodFeedBerserk = "Combat.BloodFeedBerserk";
         public const string Heartsteel = "Combat.Heartsteel";
+        public const string EnergyShieldDamage = "EnergyShield.Damage";
+        public const string EnergyShieldBreak = "EnergyShield.Break";
         public const string RarityAntares = "Rarity.Antares";
         public const string RarityEventHorizon = "Rarity.EventHorizon";
 
         private static readonly Dictionary<string, DynamicTextStyle> Styles = new();
+
+        public static IEnumerable<DynamicTextStyle> RegisteredStyles => Styles.Values;
 
         static DynamicTextStyleRegistry()
         {
@@ -134,26 +140,29 @@ namespace TestMod.Common.DynamicText
             Register(new DynamicTextStyle(DamageTrue)
             {
                 FontSpec = DynamicTextFontSpec.Create(
-                    30f,
-                    DynamicTextFontCandidate.ByName("宋体"),
-                    DynamicTextFontCandidate.ByName("SimSun"),
-                    DynamicTextFontCandidate.ByPath(@"C:\Windows\Fonts\simsun.ttc", "SimSun")),
-                PrimaryColor = Color.White,
-                SecondaryColor = new Color(210, 245, 255),
-                Velocity = new Vector2(0f, -2.35f),
-                Lifetime = 64,
-                Gravity = 0.014f,
-                Drag = 0.972f,
-                BaseScale = 1.04f,
-                CritScaleBonus = 0.22f,
-                ShadowColor = new Color(24, 28, 34),
-                Layers =
+                    27f, // 字体大小
+                    //DynamicTextFontCandidate.ByName("宋体"),
+                    DynamicTextFontCandidate.ByName("Harrington") // 字体名称，指定用于显示的字体
+                    //DynamicTextFontCandidate.ByPath(@"C:\Windows\Fonts\bahnschrift.ttc", "bahnschrift") // 字体路径，指定用于显示的字体文件
+                    ),
+                PrimaryColor = Color.White, // 主要颜色，文本的主色调
+                SecondaryColor = new Color(210, 245, 255), // 次要颜色，用于渐变或高光效果
+                Velocity = new Vector2(0f, -2.35f), // 初始速度，文本移动方向与速度
+                RandomVelocityMin = new Vector2(-2.3f, -6.5f),
+                RandomVelocityMax = new Vector2(2.3f, 0f),
+                Lifetime = 64, // 存活时间，文本显示的帧数
+                Gravity = 0.014f, // 重力影响，控制文本垂直加速度
+                Drag = 0.972f, // 阻力系数，控制速度衰减
+                BaseScale = 1.0f, // 基础缩放，文本默认大小比例
+                CritScaleBonus = 0.22f, // 暴击时额外缩放倍率加成
+                ShadowColor = new Color(0, 0, 0), // 阴影颜色，用于文本投影
+                Layers = // 文本效果层列表，按顺序渲染附加特效
                 [
-                    new TextGlowLayer(10, 3.1f, 0.38f, 1.6f, 0.62f),
-                    new TextManaWispLayer(new Color(235, 255, 255), 6, 13f, 0.52f, 1.1f, 0.24f),
-                    new TextSweepLayer(Color.White, 185f, 34f, 1.05f, 0.84f),
-                    new TextSparkleLayer(6, 4.6f, 0.5f),
-                    new TextOutlineLayer(1.65f, 0.78f),
+                    new TextGlowLayer(6, 2.8f, 0.38f, 1.6f, 0.62f), // 发光层: 强度, 半径, 透明度, 速度, 亮度
+                    new TextManaWispLayer(new Color(235, 255, 255), 6, 13f, 0.52f, 1.1f, 0.24f), // 法力光尘层: 颜色, 数量, 半径, 速度, 缩放, 透明度
+                    new TextSweepLayer(Color.White, 185f, 34f, 1.05f, 0.84f), // 扫光层: 颜色, 角度, 速度, 缩放, 透明度
+                    new TextSparkleLayer(6, 4.6f, 0.5f), // 火花层: 数量, 半径, 透明度
+                    new TextOutlineLayer(1.65f, 0.78f), // 描边层: 描边宽度, 透明度
                 ]
             });
 
@@ -163,6 +172,8 @@ namespace TestMod.Common.DynamicText
                 SecondaryColor = new Color(255, 104, 236),
                 ShadowColor = Color.Black,
                 Velocity = new Vector2(0f, -2.35f),
+                RandomVelocityMin = new Vector2(-2f, -2.88f),
+                RandomVelocityMax = new Vector2(2f, 0f),
                 Lifetime = 66,
                 Gravity = 0.02f,
                 Drag = 0.975f,
@@ -184,7 +195,7 @@ namespace TestMod.Common.DynamicText
                 PrimaryColor = new Color(150, 255, 188),
                 SecondaryColor = new Color(66, 255, 198),
                 ShadowColor = Color.Black,
-                Velocity = new Vector2(0f, -2.15f),
+                Velocity = new Vector2(0.55f, -1.65f),
                 Lifetime = 62,
                 Gravity = 0.018f,
                 Drag = 0.972f,
@@ -222,10 +233,12 @@ namespace TestMod.Common.DynamicText
                 PrimaryColor = new Color(255, 214, 62),
                 SecondaryColor = new Color(255, 72, 172),
                 Velocity = new Vector2(0f, 1.45f),
+                RandomVelocityMin = new Vector2(-2f, 0f),
+                RandomVelocityMax = new Vector2(2f, 3.88f),
                 Lifetime = 44,
                 Gravity = -0.012f,
                 Drag = 0.965f,
-                BaseScale = 0.54f,
+                BaseScale = 0.64f,
                 EndScale = 0.72f,
                 CritScaleBonus = 0.08f,
                 Layers =
@@ -289,6 +302,50 @@ namespace TestMod.Common.DynamicText
                     new TextSweepLayer(new Color(255, 215, 110), 150f, 38f, 0.9f, 0.82f),
                     new TextSparkleLayer(7, 6.5f, 0.75f),
                     new TextOutlineLayer(1.85f, 0.95f)
+                ]
+            });
+
+            Register(new DynamicTextStyle(EnergyShieldDamage)
+            {
+                FontSpec = DynamicTextFontSpec.Create(
+                    24f,
+                    DynamicTextFontCandidate.ByName("Agency FB")
+                ),
+                PrimaryColor = new Color(64, 224, 255),
+                SecondaryColor = new Color(64, 224, 255),
+                Velocity = new Vector2(0f, -1.55f),
+                RandomVelocityMin = new Vector2(-1.5f, -0.5f),
+                RandomVelocityMax = new Vector2(1.5f, 0.5f),
+                Lifetime = 54,
+                Gravity = 0.01f,
+                Drag = 0.975f,
+                BaseScale = 0.9f,
+                EndScale = 0.78f,
+                CritScaleBonus = 0f,
+                Layers =
+                [
+                    new TextPlainLayer()
+                ]
+            });
+
+            Register(new DynamicTextStyle(EnergyShieldBreak)
+            {
+                FontSpec = DynamicTextFontSpec.Create(
+                    26f,
+                    DynamicTextFontCandidate.ByName("黑体")
+                ),
+                PrimaryColor = new Color(64, 224, 255),
+                SecondaryColor = new Color(64, 224, 255),
+                Velocity = new Vector2(0f, -1.25f),
+                Lifetime = 72,
+                Gravity = 0.006f,
+                Drag = 0.98f,
+                BaseScale = 1.0f,
+                EndScale = 0.86f,
+                CritScaleBonus = 0f,
+                Layers =
+                [
+                    new TextPlainLayer()
                 ]
             });
 
