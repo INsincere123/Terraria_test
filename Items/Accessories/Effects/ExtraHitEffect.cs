@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework;
 using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
+using TestMod.Common.DynamicText;
 
 namespace TestMod.Items.Accessories.Effects
 {
@@ -110,15 +111,22 @@ namespace TestMod.Items.Accessories.Effects
 
         // ── 战斗数字颜色 ──────────────────────────────────────────
         /// <summary>
-        /// 自定义战斗数字颜色。null = 使用游戏默认颜色（敌对红色）。
-        /// 设置后会隐藏默认文字，改为显示指定颜色的数字。
-        /// 注意：多人模式下其他客户端仅显示默认颜色（仅本地着色）。
+        /// 自定义战斗数字颜色。null = 使用额外伤害默认紫色。
+        /// 始终隐藏原版文字，改为显示动态浮字。
+        /// 注意：多人模式下自定义浮字仍以本地显示为主。
         /// </summary>
         public Color? CombatTextColor;
+
+        /// <summary>
+        /// 自定义动态战斗文字样式。留空时使用通用额外伤害样式。
+        /// </summary>
+        public string CombatTextStyleKey;
     }
 
     public static class ExtraHitEffect
     {
+        public static readonly Color DefaultCombatTextColor = new(180, 50, 255);
+
         // ── 公开 API ──────────────────────────────────────────────────────────
 
         /// <summary>
@@ -152,18 +160,7 @@ namespace TestMod.Items.Accessories.Effects
             bool crit         = cfg.UseCrit && player.GetCritChance(dmgClass) > Main.rand.NextFloat() * 100f;
             int  direction    = target.Center.X > player.Center.X ? 1 : -1;
 
-            // 无自定义颜色：走 SimpleStrikeNPC，自动处理战斗文字与网络包
-            if (!cfg.CombatTextColor.HasValue)
-            {
-                return target.SimpleStrikeNPC(
-                    scaledDamage, direction,
-                    crit:                crit,
-                    knockBack:           cfg.Knockback,
-                    damageType:          dmgClass,
-                    noPlayerInteraction: cfg.NoPlayerInteraction);
-            }
-
-            // 有自定义颜色：手动控制战斗文字
+            // 统一隐藏原版数字，改走动态浮字。颜色仍可由配置覆盖。
             NPC.HitInfo hitInfo        = target.CalculateHitInfo(scaledDamage, direction, crit, cfg.Knockback, dmgClass);
             hitInfo.HideCombatText     = true;
             int result = target.StrikeNPC(hitInfo, fromNet: false, cfg.NoPlayerInteraction);
@@ -173,7 +170,12 @@ namespace TestMod.Items.Accessories.Effects
 
             // 仅在本地客户端显示自定义颜色的战斗数字
             if (Main.netMode != NetmodeID.Server)
-                CombatText.NewText(target.Hitbox, cfg.CombatTextColor.Value, hitInfo.Damage, hitInfo.Crit);
+                DynamicWorldTextSystem.SpawnCombatText(
+                    target.Hitbox,
+                    hitInfo.Damage,
+                    hitInfo.Crit,
+                    cfg.CombatTextColor ?? DefaultCombatTextColor,
+                    cfg.CombatTextStyleKey ?? DynamicTextStyleRegistry.ExtraHit);
 
             return result;
         }

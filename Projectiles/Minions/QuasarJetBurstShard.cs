@@ -57,7 +57,7 @@ namespace TestMod.Projectiles.Minions
             Player owner = Main.player[Projectile.owner];
             var summonCritPlayer = owner.GetModPlayer<SummonCritPlayer>();
             modifiers.ScalingArmorPenetration += 0.9f;
-            modifiers.FinalDamage *= 1.11f;
+            //modifiers.FinalDamage *= 1.11f;
             if (!summonCritPlayer.Enabled)
                 SummonCritPlayer.TryApplySummonCrit(owner, Projectile, ref modifiers, requireEnabled: false);
         }

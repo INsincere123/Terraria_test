@@ -43,7 +43,9 @@ namespace TestMod.Common.Utilities
                 return false;
 
             if (registerLens)
-                GravitationalLensSystem.RegisterBlackHole(worldCenter, radius, opacity, accretionDiskColor, visualStyle);
+            {
+                ShaderRenderTargetSystem.RegisterBlackHoleLens(new BlackHoleLensRequest(worldCenter, radius, opacity, accretionDiskColor, visualStyle));
+            }
 
             if (registerLens)
                 return true;

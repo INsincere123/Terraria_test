@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework;
 using Terraria;
 using Terraria.ModLoader;
 using TestMod.Buffs;
+using TestMod.Common.DynamicText;
 
 namespace TestMod.Common.Players
 {
@@ -160,6 +161,13 @@ namespace TestMod.Common.Players
         {
             // AddBuff 以真实帧数添加，tML 自动倒计时并显示
             Player.AddBuff(ModContent.BuffType<CrimsonBerserkBuff>(), BerserkDuration);
+            DynamicWorldTextSystem.Spawn(new DynamicWorldTextRequest(
+                "BLOOD FEED",
+                Player.Top - Vector2.UnitY * 18f,
+                DynamicTextStyleRegistry.BloodFeedBerserk,
+                crit: true,
+                scale: 0.72f,
+                seed: Player.whoAmI * 409 + (int)Main.GameUpdateCount));
         }
 
         // 虚弱衰减：通过读取 buffTime 获取剩余时长，不再自维护计时器

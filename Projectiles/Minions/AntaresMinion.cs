@@ -627,6 +627,8 @@ namespace TestMod.Projectiles.Minions
             float hasSpikeMask = AntaresVisualAssetSystem.HasSpikeMask ? 1f : 0f;
             float hasRadialRamp = AntaresVisualAssetSystem.HasRadialRamp ? 1f : 0f;
 
+            ShaderRenderTargetSystem.RegisterAntaresStarFlare(worldPos, sideLength * 0.5f, 0.9f + tier * 0.12f, tier);
+
             return DrawUtils.TryDrawCenteredShaderQuad(
                 "TestMod.AntaresStarShader",
                 Terraria.GameContent.TextureAssets.MagicPixel.Value,

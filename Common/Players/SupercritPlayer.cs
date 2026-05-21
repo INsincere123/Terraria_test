@@ -1,6 +1,9 @@
+using System;
+using Microsoft.Xna.Framework;
 using Terraria;
 using Terraria.ModLoader;
 using TestMod.Buffs;
+using TestMod.Common.DynamicText;
 
 namespace TestMod.Common.Players
 {
@@ -48,6 +51,30 @@ namespace TestMod.Common.Players
             // 因此这里需要把"百分比"换算成"小数倍率"：bonus% / 100
             float bonusCritDamage = critOver100 * SupercritBuff.CritOverflowToCritDamageRatio / 100f;
             modifiers.CritDamage += bonusCritDamage;
+        }
+
+        public override void OnHitByProjectile(NPC npc, Projectile projectile, NPC.HitInfo hit, int damageDone)
+        {
+            if (!hit.Crit || projectile.owner < 0 || projectile.owner >= Main.maxPlayers)
+                return;
+
+            Player player = Main.player[projectile.owner];
+            if (!player.active || player.dead || !player.GetModPlayer<SupercritPlayer>().supercritEnabled)
+                return;
+
+            float critOver100 = player.GetTotalCritChance(projectile.DamageType) - 100f;
+            if (critOver100 <= 0f)
+                return;
+
+            int bonusPercent = (int)MathF.Round(critOver100 * SupercritBuff.CritOverflowToCritDamageRatio);
+            DynamicWorldTextSystem.Spawn(new DynamicWorldTextRequest(
+                $"+{bonusPercent}%暴伤",
+                npc.Center + Vector2.UnitY * 8f,
+                DynamicTextStyleRegistry.Supercrit,
+                new Color(255, 214, 62),
+                crit: true,
+                scale: 0.78f,
+                seed: projectile.identity * 31 + npc.whoAmI * 197 + (int)Main.GameUpdateCount));
         }
     }
 }

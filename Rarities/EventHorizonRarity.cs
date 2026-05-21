@@ -8,6 +8,7 @@ using ReLogic.Graphics;
 using Terraria;
 using Terraria.ModLoader;
 using Terraria.UI.Chat;
+using TestMod.Common.DynamicText;
 using TestMod.Common.Systems;
 
 namespace TestMod.Rarities
@@ -122,9 +123,7 @@ namespace TestMod.Rarities
                 Vector2 localPosition = new Vector2(line.X - bounds.X + RenderPadding, line.Y - bounds.Y + RenderPadding);
                 if (line.Mod == "Terraria" && line.Name == "ItemName")
                 {
-                    DrawNameGlow(sb, line.Font, line.Text, localPosition, line.Rotation, line.Origin, line.BaseScale, time);
-                    DrawAccretionEdge(sb, line.Font, line.Text, localPosition, line.Rotation, line.Origin, line.BaseScale, time);
-                    DrawDarkCore(sb, line.Font, line.Text, localPosition, line.Rotation, line.Origin, line.BaseScale, time);
+                    DrawRegistryNameEffects(item, sb, line.Font, line.Text, localPosition, line.Rotation, line.Origin, line.BaseScale, time);
                     DrawNameSparkles(sb, line.Font, line.Text, localPosition, line.BaseScale, time);
                     continue;
                 }
@@ -221,6 +220,27 @@ namespace TestMod.Rarities
         private static void BeginTooltipTargetBatch(SpriteBatch sb)
         {
             sb.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.LinearClamp, DepthStencilState.None, RasterizerState.CullNone);
+        }
+
+        private static void DrawRegistryNameEffects(Item item, SpriteBatch sb, DynamicSpriteFont font, string text, Vector2 position, float rotation, Vector2 origin, Vector2 baseScale, float time)
+        {
+            Vector2 textSize = font.MeasureString(text) * baseScale;
+            Vector2 glowCenter = position + new Vector2(textSize.X * 0.5f, textSize.Y * 0.42f);
+            float pulse = 0.78f + 0.22f * MathF.Sin(time * 2.4f);
+
+            DrawNameTexturedAura(sb, glowCenter, textSize, pulse, time);
+            DrawNameGlowPrimitive(sb, glowCenter, textSize, pulse, time);
+
+            DynamicTextTooltipRenderer.DrawText(
+                sb,
+                font,
+                text,
+                position,
+                rotation,
+                origin,
+                baseScale,
+                DynamicTextStyleRegistry.Get(DynamicTextStyleRegistry.RarityEventHorizon),
+                item.type * 991 + text.GetHashCode());
         }
 
         private static Rectangle CalculateTooltipBounds(ReadOnlyCollection<DrawableTooltipLine> lines)

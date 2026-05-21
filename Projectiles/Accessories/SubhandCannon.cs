@@ -125,7 +125,7 @@ namespace TestMod.Projectiles.Accessories
 
             Vector2 velocity = (target.Center - Projectile.Center).SafeNormalize(Vector2.UnitY) * BoltSpeed;
 
-            Projectile.NewProjectile(
+            int projectileIndex = Projectile.NewProjectile(
                 Projectile.GetSource_FromThis(),
                 Projectile.Center,
                 velocity,
@@ -134,6 +134,9 @@ namespace TestMod.Projectiles.Accessories
                 2f,
                 Projectile.owner
             );
+
+            if (projectileIndex >= 0 && projectileIndex < Main.maxProjectiles)
+                Main.projectile[projectileIndex].GetGlobalProjectile<global::TestMod.Common.GlobalProjectiles.GlobalProjectile>().subhandDynamicText = true;
         }
 
         // ======================================================

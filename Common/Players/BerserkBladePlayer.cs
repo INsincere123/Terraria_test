@@ -1,6 +1,8 @@
+using Microsoft.Xna.Framework;
 using Terraria;
 using Terraria.ModLoader;
 using TestMod.Buffs;
+using TestMod.Common.DynamicText;
 using TestMod.Common.Systems;
 using TestMod.Items.Accessories.Effects;
 using TestMod.Items.DamageTypes;
@@ -30,6 +32,8 @@ namespace TestMod.Common.Players
             UseCrit             = false,
             Knockback           = 0f,
             NoPlayerInteraction = false, // 同步网络包；_extraHitActive 防递归
+            CombatTextColor     = new Color(255, 24, 34),
+            CombatTextStyleKey  = DynamicTextStyleRegistry.DamageTrue,
         };
 
         // ── 帧状态 ──

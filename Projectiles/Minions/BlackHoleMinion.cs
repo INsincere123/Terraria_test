@@ -4,6 +4,7 @@ using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
 using TestMod.Buffs;
+using TestMod.Common.DynamicText;
 using TestMod.Common.Players;
 using TestMod.Common.Systems;
 
@@ -50,7 +51,7 @@ namespace TestMod.Projectiles.Minions
 
         // ==================== 黑洞视觉参数 ====================
         // 传给现有引力透镜系统的半径，同时影响黑洞视觉大小和透镜范围。
-        private const float BlackHoleVisualRadius = 27f;
+        private const float BlackHoleVisualRadius = 32f;
 
         // 吸积盘颜色。这里只影响现有黑洞 shader 的亮环颜色。
         private static readonly Color AccretionDiskColor = new(95, 170, 255);
@@ -70,7 +71,7 @@ namespace TestMod.Projectiles.Minions
 
         // ==================== 类星体喷流参数 ====================
         // 临时测试开关：关闭后黑洞只保留吸积盘扣血和敌弹吸收，不再发射喷流/碎片弹幕。
-        private static readonly bool EnableQuasarProjectiles = false;
+        private static readonly bool EnableQuasarProjectiles = true;
 
         // 黑洞索敌范围。没有目标时不会发射。
         private const float TargetSearchRange = 1800f;
@@ -106,7 +107,7 @@ namespace TestMod.Projectiles.Minions
 
         // 爆发时附带的射弹数量和伤害继承比例。
         private const int QuasarBurstShardCount = 4;
-        private const float QuasarBurstShardDamageFactor = 88.6f;
+        private const float QuasarBurstShardDamageFactor = 6.66f;
         private const float QuasarBurstShardSpeed = 150f;
         private const float QuasarBurstShardSpread = 0.18f;
         private const int QuasarBurstShardFireWindow = 30;
@@ -444,7 +445,7 @@ namespace TestMod.Projectiles.Minions
                 return;
             }
 
-            CombatText.NewText(hitbox, textColor, damage.ToString(), false, true);
+            DynamicWorldTextSystem.SpawnCombatText(hitbox, damage, true, textColor, DynamicTextStyleRegistry.BlackHoleAbsorb);
         }
 
         private void TryShootQuasarJet(NPC target, int index)

@@ -10,5 +10,10 @@ namespace TestMod.Common.GlobalItems
             ApplyTrueDamageHitModifiers(item, ref modifiers);
             ApplyBloodFeedHitModifiers(player, ref modifiers);
         }
+
+        public override void OnHitNPC(Item item, Player player, NPC target, NPC.HitInfo hit, int damageDone)
+        {
+            DrawTrueDamageCombatText(item, player, target, hit, damageDone);
+        }
     }
 }

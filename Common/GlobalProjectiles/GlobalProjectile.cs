@@ -5,6 +5,7 @@ using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
 using TestMod.Buffs;
+using TestMod.Common.DynamicText;
 using TestMod.Common.Players;
 using TestMod.Items.Accessories.Effects;
 using TestMod.Items.DamageTypes;
@@ -24,6 +25,9 @@ namespace TestMod.Common.GlobalProjectiles
 
         // 万花筒连击衰减系数
         public float currentWhipDecay = 1f;
+
+        // Subhand 自己发出的原版 MagnetSphereBolt 用这个标记接管伤害数字，避免影响原版磁球武器。
+        public bool subhandDynamicText;
 
         // ── 星尘龙追踪冷却 ──
         private int _dragonTrackingCooldown = 0;
@@ -200,7 +204,13 @@ namespace TestMod.Common.GlobalProjectiles
 
             // 真实伤害：无视防御（不依赖 godMode）
             if (projectile.DamageType == TrueDamageClass.Instance)
+            {
                 modifiers.ScalingArmorPenetration += 1f;
+                modifiers.HideCombatText();
+            }
+
+            if (subhandDynamicText)
+                modifiers.HideCombatText();
 
             // 暴走期间：弹幕无视防御
             if (player.active && player.GetModPlayer<BloodFeedPlayer>().IsBerserk)
@@ -248,6 +258,25 @@ namespace TestMod.Common.GlobalProjectiles
 
             Player player = Main.player[projectile.owner];
             if (!player.active) return;
+
+            if (projectile.DamageType == TrueDamageClass.Instance && projectile.owner == Main.myPlayer)
+            {
+                DynamicWorldTextSystem.SpawnCombatText(
+                    target.Hitbox,
+                    damageDone,
+                    hit.Crit,
+                    DynamicTextStyleRegistry.Get(DynamicTextStyleRegistry.DamageTrue).PrimaryColor,
+                    DynamicTextStyleRegistry.DamageTrue);
+            }
+            else if (subhandDynamicText && projectile.owner == Main.myPlayer)
+            {
+                DynamicWorldTextSystem.SpawnCombatText(
+                    target.Hitbox,
+                    damageDone,
+                    hit.Crit,
+                    DynamicTextStyleRegistry.Get(DynamicTextStyleRegistry.Subhand).PrimaryColor,
+                    DynamicTextStyleRegistry.Subhand);
+            }
 
             // 通过 GlobalProjectile 路径分发副手等追加攻击效果
             // 不走 ModPlayer.OnHitNPCWithProj 是因为自定义 DamageClass 对该钩子存在兼容性问题

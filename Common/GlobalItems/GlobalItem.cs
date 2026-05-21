@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
+using TestMod.Common.DynamicText;
 using TestMod.Common.Players;
 using TestMod.Rarities;
 
@@ -55,7 +56,7 @@ namespace TestMod.Common.GlobalItems
             }
 
             if (line.Name == "Damage")
-                return !DamageLineRenderer.TryDraw(item, line);
+                return !DynamicTextTooltipRenderer.TryDrawDamageLine(item, line);
 
             return true;
         }
