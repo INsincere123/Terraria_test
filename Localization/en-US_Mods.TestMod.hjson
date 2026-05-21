@@ -516,7 +516,8 @@ Projectiles: {
 	BloodFeedKnifeProj.DisplayName: 血饲匕首
 	TestProjectile.DisplayName: Test Projectile
 	BlackHoleMinion.DisplayName: Black Hole Minion
-	QuasarJetProjectile.DisplayName: 高能喷流
+	QuasarJetProjectile.DisplayName: 类星体喷流
+	QuasarJetBurstShard.DisplayName: 类星体喷发
 }
 
 Prefixes: {

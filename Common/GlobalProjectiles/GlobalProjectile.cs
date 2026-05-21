@@ -9,6 +9,7 @@ using TestMod.Common.Players;
 using TestMod.Items.Accessories.Effects;
 using TestMod.Items.DamageTypes;
 using TestMod.Projectiles.Melee;
+using TestMod.Projectiles.Minions;
 using TestMod.Projectiles.Ranged;
 
 namespace TestMod.Common.GlobalProjectiles
@@ -159,6 +160,10 @@ namespace TestMod.Common.GlobalProjectiles
 
             // 🔫 ③ 召唤物射弹 (MinionShot)：通用高阶追踪
             //    覆盖星尘细胞子弹/大黄蜂尖刺/UFO激光/双子激光/迷你鲨鱼等
+            else if (projectile.type == ModContent.ProjectileType<QuasarJetBurstShard>())
+            {
+                ApplyHighTierTracking(projectile, 24f, 140f, 0.4f, 0.2f);
+            }
             else if (ProjectileID.Sets.MinionShot[projectile.type])     // 官方集合，包含所有标记为 MinionShot 的弹射物，要排除的话必须排除射弹，不能排除召唤物
             {
                 ApplyHighTierTracking(projectile, 14f, 60f, 0.08f, 0.18f);

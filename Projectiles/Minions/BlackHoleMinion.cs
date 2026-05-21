@@ -57,13 +57,13 @@ namespace TestMod.Projectiles.Minions
 
         // ==================== 敌方弹幕吸收参数 ====================
         // 敌方弹幕进入这个半径后会被轻微拉向黑洞，但还不会立刻消失。
-        private const float ProjectilePullRadius = 360f;
+        private const float ProjectilePullRadius = 400f;
 
         // 敌方弹幕进入这个半径后会被黑洞直接吞掉。可以比视觉黑洞大几倍，表现强引力。
-        private const float ProjectileAbsorbRadius = 120f;
+        private const float ProjectileAbsorbRadius = 130f;
 
         // 拉拽敌弹的力度。越大敌弹转向越明显，太大会显得突兀。
-        private const float ProjectilePullStrength = 1.6f;
+        private const float ProjectilePullStrength = 2f;
 
         // 每个黑洞每帧最多处理多少个敌弹，避免密集弹幕时性能波动。
         private const int MaxProjectilePullsPerFrame = 20;
@@ -72,26 +72,38 @@ namespace TestMod.Projectiles.Minions
         // 黑洞索敌范围。没有目标时不会发射。
         private const float TargetSearchRange = 1800f;
 
-        // 每个黑洞的基础开火间隔，单位是帧。
-        private const int QuasarFireRate = 60;
+        // 喷流蓄力时间。蓄力期间只显示吸积盘聚能，不立刻造成伤害。
+        private const int QuasarChargeTime = 60;
+
+        // 喷流持续时间。真正的命中范围由 QuasarJetProjectile 的长线段碰撞控制。
+        private const int QuasarBeamDuration = 120;
+
+        // 每次喷流结束后的冷却时间。
+        private const int QuasarCooldown = 210;
 
         // 多个黑洞之间的开火错峰帧数，避免所有黑洞同一帧齐射。
-        private const int QuasarFireOffsetPerIndex = 8;
+        private const int QuasarFireOffsetPerIndex = 30;
 
         // 喷流从吸积盘边缘射出。这个值控制发射点离黑洞中心多远。
         private const float QuasarEmissionRadius = 48f;
 
-        // 发射口沿吸积盘高速旋转，制造狂暴活动感。
+        // 爆发时附带的射弹数量和伤害继承比例。
+        private const int QuasarBurstShardCount = 4;
+        private const float QuasarBurstShardDamageFactor = 88.6f;
+        private const float QuasarBurstShardSpeed = 150f;
+        private const float QuasarBurstShardSpread = 0.18f;
+        private const int QuasarBurstShardFireWindow = 30;
+        private static int QuasarBurstShardMaxFireInterval => Math.Max(1, QuasarBurstShardFireWindow / Math.Max(1, QuasarBurstShardCount));
+
+        // 蓄力点沿吸积盘高速旋转，制造狂暴活动感。
         private const float QuasarDiskSpinSpeed = 0.22f;
 
-        // 喷流主要沿吸积盘切线甩出
-        private const float QuasarTargetBias = 0.18f;
-        private const float QuasarSpread = 0.16f;
-
-        // 类星体喷流射弹的初速度。
-        private const float QuasarShotSpeed = 120f;
-
         private Vector2 orbitCenter;
+        private readonly int[] pendingBurstShardDelays = new int[QuasarBurstShardCount];
+        private readonly Vector2[] pendingBurstShardRadials = new Vector2[QuasarBurstShardCount];
+        private readonly Vector2[] pendingBurstShardDirections = new Vector2[QuasarBurstShardCount];
+        private readonly float[] pendingBurstShardRadiusFactors = new float[QuasarBurstShardCount];
+        private int pendingBurstShardCount;
 
         private Player Owner => Main.player[Projectile.owner];
         private BlackHoleMinionPlayer ModdedOwner => Owner.GetModPlayer<BlackHoleMinionPlayer>();
@@ -137,6 +149,7 @@ namespace TestMod.Projectiles.Minions
             MoveToOrbit(orbitCenter + GetOrbitOffset(index, Math.Max(total, 1)));
             AbsorbHostileProjectiles();
             TryShootQuasarJet(target, index);
+            ProcessPendingQuasarBurstShards();
 
             if (!Main.dedServ)
                 GravitationalLensSystem.RegisterBlackHole(Projectile.Center, BlackHoleVisualRadius, 1f, AccretionDiskColor, GetVisualStyle());
@@ -334,36 +347,151 @@ namespace TestMod.Projectiles.Minions
 
         private void TryShootQuasarJet(NPC target, int index)
         {
-            if (target is null || Main.myPlayer != Projectile.owner)
+            if (Projectile.localAI[0] > 0f)
+                Projectile.localAI[0]--;
+
+            if (target is null)
+            {
+                Projectile.localAI[1] = 0f;
+                return;
+            }
+
+            if (Projectile.localAI[0] > 0f)
+            {
+                Projectile.localAI[1] = 0f;
+                return;
+            }
+
+            Vector2 direction = (target.Center - Projectile.Center).SafeNormalize(Vector2.UnitX);
+            Projectile.localAI[1]++;
+
+            int chargeTime = QuasarChargeTime + index * QuasarFireOffsetPerIndex;
+            float chargeProgress = MathHelper.Clamp(Projectile.localAI[1] / chargeTime, 0f, 1f);
+            SpawnQuasarChargeEffects(direction, chargeProgress, index);
+
+            if (Projectile.localAI[1] < chargeTime)
                 return;
 
-            int timer = (int)Projectile.localAI[0]++;
-            if ((timer + index * QuasarFireOffsetPerIndex) % QuasarFireRate != 0)
+            Projectile.localAI[1] = 0f;
+            Projectile.localAI[0] = QuasarCooldown + index * QuasarFireOffsetPerIndex;
+
+            if (Main.myPlayer != Projectile.owner)
+                return;
+
+            ShootQuasarBeam(direction, 1f);
+            ShootQuasarBeam(-direction, -1f);
+            ScheduleQuasarBurstShards(direction);
+        }
+
+        private void ShootQuasarBeam(Vector2 direction, float parentDirectionSign)
+        {
+            int beam = Projectile.NewProjectile(
+                Projectile.GetSource_FromThis(),
+                Projectile.Center + direction * QuasarEmissionRadius,
+                Vector2.Zero,
+                ModContent.ProjectileType<QuasarJetProjectile>(),
+                Projectile.damage,
+                Projectile.knockBack,
+                Projectile.owner,
+                direction.ToRotation(),
+                QuasarBeamDuration,
+                (Projectile.whoAmI + 1) * parentDirectionSign);
+
+            if (beam >= 0 && beam < Main.maxProjectiles)
+                Main.projectile[beam].originalDamage = Projectile.originalDamage > 0 ? Projectile.originalDamage : Projectile.damage;
+        }
+
+        private void ScheduleQuasarBurstShards(Vector2 fallbackDirection)
+        {
+            pendingBurstShardCount = QuasarBurstShardCount;
+
+            int scheduledDelay = Main.rand.Next(QuasarBurstShardMaxFireInterval + 1);
+
+            for (int i = 0; i < QuasarBurstShardCount; i++)
+            {
+                float diskAngle = Main.rand.NextFloat(MathHelper.TwoPi);
+                Vector2 diskRadial = diskAngle.ToRotationVector2();
+
+                pendingBurstShardDelays[i] = scheduledDelay;
+                pendingBurstShardRadials[i] = diskRadial;
+                pendingBurstShardRadiusFactors[i] = Main.rand.NextFloat(0.86f, 1.12f);
+                pendingBurstShardDirections[i] = diskRadial
+                    .RotatedBy(Main.rand.NextBool() ? MathHelper.PiOver2 : -MathHelper.PiOver2)
+                    .RotatedByRandom(QuasarBurstShardSpread)
+                    .SafeNormalize(fallbackDirection);
+
+                scheduledDelay += Main.rand.Next(QuasarBurstShardMaxFireInterval + 1);
+            }
+        }
+
+        private void ProcessPendingQuasarBurstShards()
+        {
+            if (pendingBurstShardCount <= 0 || Main.myPlayer != Projectile.owner)
+                return;
+
+            for (int i = 0; i < QuasarBurstShardCount; i++)
+            {
+                if (pendingBurstShardDelays[i] < 0)
+                    continue;
+
+                if (pendingBurstShardDelays[i] > 0)
+                {
+                    pendingBurstShardDelays[i]--;
+                    continue;
+                }
+
+                Vector2 spawnPosition = Projectile.Center + pendingBurstShardRadials[i] * QuasarEmissionRadius * pendingBurstShardRadiusFactors[i];
+                ShootQuasarBurstShard(spawnPosition, pendingBurstShardDirections[i]);
+                pendingBurstShardDelays[i] = -1;
+                pendingBurstShardCount--;
+            }
+        }
+
+        private void ShootQuasarBurstShard(Vector2 spawnPosition, Vector2 shardDirection)
+        {
+            int shardDamage = Math.Max(1, (int)MathF.Round(Projectile.damage * QuasarBurstShardDamageFactor));
+            int shardOriginalDamage = Math.Max(1, (int)MathF.Round((Projectile.originalDamage > 0 ? Projectile.originalDamage : Projectile.damage) * QuasarBurstShardDamageFactor));
+
+            int shard = Projectile.NewProjectile(
+                Projectile.GetSource_FromThis(),
+                spawnPosition,
+                shardDirection * QuasarBurstShardSpeed,
+                ModContent.ProjectileType<QuasarJetBurstShard>(),
+                shardDamage,
+                Projectile.knockBack,
+                Projectile.owner);
+
+            if (shard >= 0 && shard < Main.maxProjectiles)
+                Main.projectile[shard].originalDamage = shardOriginalDamage;
+        }
+
+        private void SpawnQuasarChargeEffects(Vector2 direction, float chargeProgress, int index)
+        {
+            if (Main.dedServ)
                 return;
 
             float diskAngle = Main.GameUpdateCount * QuasarDiskSpinSpeed
                 + Projectile.whoAmI * 0.73f
                 + index * MathHelper.PiOver2;
-            Vector2 diskRadial = diskAngle.ToRotationVector2();
-            Vector2 tangent = diskRadial.RotatedBy(MathHelper.PiOver2);
-            Vector2 toTarget = (target.Center - Projectile.Center).SafeNormalize(tangent);
+            Vector2 rotatingPoint = diskAngle.ToRotationVector2();
+            Vector2 emissionPoint = Projectile.Center + direction * QuasarEmissionRadius;
+            Vector2 ringPoint = Projectile.Center + rotatingPoint * QuasarEmissionRadius * MathHelper.Lerp(0.72f, 1.05f, chargeProgress);
+            Vector2 pullDirection = (emissionPoint - ringPoint).SafeNormalize(direction);
+            float dustScale = MathHelper.Lerp(0.75f, 1.75f, chargeProgress);
 
-            if (Vector2.Dot(tangent, toTarget) < 0f)
-                tangent = -tangent;
+            if (Main.rand.NextFloat() < MathHelper.Lerp(0.35f, 0.9f, chargeProgress))
+            {
+                Dust dust = Dust.NewDustPerfect(
+                    ringPoint,
+                    DustID.Electric,
+                    pullDirection * Main.rand.NextFloat(1.2f, 3.6f),
+                    70,
+                    Color.Lerp(AccretionDiskColor, Color.White, chargeProgress * 0.55f),
+                    dustScale);
+                dust.noGravity = true;
+            }
 
-            Vector2 direction = Vector2.Lerp(tangent, toTarget, QuasarTargetBias)
-                .RotatedBy(Main.rand.NextFloat(-QuasarSpread, QuasarSpread))
-                .SafeNormalize(tangent);
-            Vector2 spawnPosition = Projectile.Center + diskRadial * QuasarEmissionRadius;
-
-            Projectile.NewProjectile(
-                Projectile.GetSource_FromThis(),
-                spawnPosition,
-                direction * QuasarShotSpeed,
-                ModContent.ProjectileType<QuasarJetProjectile>(),
-                Projectile.damage,
-                Projectile.knockBack,
-                Projectile.owner);
+            Lighting.AddLight(emissionPoint, 0.12f + chargeProgress * 0.3f, 0.26f + chargeProgress * 0.45f, 0.58f + chargeProgress * 0.8f);
         }
 
         public override bool? CanDamage() => false;
