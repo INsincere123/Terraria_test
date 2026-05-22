@@ -195,7 +195,7 @@ Items: {
 
 	FocusOrb: {
 		DisplayName: 专注宝珠
-		Tooltip: "[c/6495ED:+8%] 全属性伤害  [c/6495ED:+6%] 暴击率  [c/6495ED:+5] 护甲穿透"
+		Tooltip: "[c/6495ED:+8%] 全属性伤害  [c/6495ED:+6%] 暴击率  [c/6495ED:+4] 护甲穿透"
 	}
 
 	BerserkBlade: {

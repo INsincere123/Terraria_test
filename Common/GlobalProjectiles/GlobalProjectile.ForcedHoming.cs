@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using Terraria;
 using Terraria.DataStructures;
+using Terraria.ID;
 using Terraria.ModLoader;
 using TestMod.Common.Utilities;
 using TestMod.Items.Accessories.Effects;
@@ -22,6 +23,10 @@ namespace TestMod.Common.GlobalProjectiles
             // 只对玩家直接使用物品生成的弹幕打标记，排除召唤物/衍生弹幕
             if (source is not EntitySource_ItemUse) return;
             if (projectile.owner < 0 || projectile.owner >= Main.maxPlayers) return;
+            
+            if (projectile.aiStyle == ProjAIStyleID.Hook) return;   // 大多数原版钩爪使用 aiStyle == 7，因此先检查样式以覆盖所有钩爪实例
+            if (ProjectileID.Sets.IsAWhip[projectile.type]) return;     // 排除鞭子弹幕（避免影响鞭子连锁/特殊行为）
+            
 
             Player player = Main.player[projectile.owner];
             if (!player.active) return;

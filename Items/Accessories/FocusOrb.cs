@@ -12,7 +12,7 @@ namespace TestMod.Items.Accessories
         // ── 被动属性调节区 ────────────────────────────────────────────
         private const float DamageBonus       = 0.08f; // +8% 全职业伤害
         private const int   CritBonus         = 6;     // +6% 暴击率
-        private const int   ArmorPeneBonus    = 5;     // +5 护甲穿透
+        private const int   ArmorPeneBonus    = 4;     // +4 护甲穿透
         // ─────────────────────────────────────────────────────────────
 
         public override void SetDefaults()
@@ -44,9 +44,9 @@ namespace TestMod.Items.Accessories
                 : "未绑定";
 
             var line = new TooltipLine(Mod, "FocusOrbAbility",
-                $"按 [{keyStr}] 激活：接下来 6 次命中必定暴击且弹幕自带追踪\n" +
-                $"  本该暴击时额外造成 [c/FF4500:120% 触发伤害] 的真实伤害\n" +
-                $"  [c/AAAAAA:冷却 30 秒]");
+                $"按 [{keyStr}] 激活：接下来 7 次命中必定暴击且弹幕自带追踪\n" +
+                $"  本该暴击时，额外造成[c/FF4500:200% ]的真实伤害\n" +
+                $"  [c/AAAAAA:冷却30秒]");
 
             int idx = tooltips.FindIndex(t => t.Name == "Tooltip0");
             if (idx >= 0) tooltips.Insert(idx + 1, line);

@@ -19,7 +19,6 @@ namespace TestMod.Common.DynamicText
         public const string BlackHoleAbsorb = "Combat.BlackHoleAbsorb";
         public const string Subhand = "Combat.Subhand";
         public const string Supercrit = "Combat.Supercrit";
-        public const string Antares = "Combat.Antares";
         public const string BloodFeedBerserk = "Combat.BloodFeedBerserk";
         public const string Heartsteel = "Combat.Heartsteel";
         public const string EnergyShieldDamage = "EnergyShield.Damage";
@@ -247,23 +246,6 @@ namespace TestMod.Common.DynamicText
                     new TextSparkleLayer(3, 4.2f, 0.5f),
                     new TextSweepLayer(Color.White, 180f, 18f, 0.6f, 0.72f),
                     new TextShadowLayer(1.18f)
-                ]
-            });
-
-            Register(new DynamicTextStyle(Antares)
-            {
-                PrimaryColor = new Color(88, 160, 255),
-                SecondaryColor = new Color(255, 112, 48),
-                Velocity = new Vector2(0f, -1.7f),
-                Lifetime = 86,
-                Gravity = 0.008f,
-                BaseScale = 1.05f,
-                Layers =
-                [
-                    new TextGlowLayer(9, 3f, 0.38f, 1.5f),
-                    new TextSparkleLayer(10, 6.5f, 0.72f),
-                    new TextEchoLayer(2, new Vector2(0f, -13f), 1.4f, 0.24f),
-                    new TextShadowLayer(1.28f)
                 ]
             });
 
