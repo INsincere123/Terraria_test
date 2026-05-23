@@ -21,19 +21,19 @@ namespace TestMod.Projectiles.Minions
         // 碰撞检测宽度（像素），用于 AABB vs 线段 的碰撞判定
         private const float CollisionWidth = 55f;
         // 光束最外层宽度（像素），用于绘制外围的发光层
-        private const float OuterBeamWidth = 60f;
+        private const float OuterBeamWidth = 44f;
         // 光束中层宽度（像素），用于绘制中间亮带
-        private const float MiddleBeamWidth = 34f;
+        private const float MiddleBeamWidth = 24f;
         // 光束核心宽度（像素），用于绘制最亮的内核
-        private const float CoreBeamWidth = 9f;
+        private const float CoreBeamWidth = 7f;
         // 用于纹理绘制的光束宽度（像素），当使用纹理贴图替代基础像素绘制时使用
-        private const float TextureBeamWidth = 40f;
+        private const float TextureBeamWidth = 52f;
         // 发射点相对于父实体中心的偏移半径（像素），决定光束从父实体哪儿发出
         private const float ParentEmissionRadius = 48f;
         // 索敌范围（像素），在此半径内寻找目标用于跟踪
         private const float TargetSearchRange = 1800f;
         // 方向跟踪强度（0-1），控制光束朝目标转向时的平滑跟随速率
-        private const float DirectionTrackingStrength = 0.22f;
+        private const float DirectionTrackingStrength = 0.16f;
         // 淡入时间（帧），影响可视透明度从 0 到 1 的过渡
         private const float FadeInTime = 5f;
         // 淡出时间（帧），影响生命周期结束时透明度从 1 到 0 的过渡
@@ -205,7 +205,7 @@ namespace TestMod.Projectiles.Minions
             Vector2 end = start + direction * BeamLength;
             float opacity = VisualOpacity;
 
-            DrawBeamPrimitives(start, end, opacity);
+            DrawBeamPrimitives(start, end, opacity, QuasarJetVisualAssetSystem.HasFineBeamMaterial);
             DrawTexturedBeam(start, end, direction, opacity);
 
             Main.spriteBatch.Begin(
@@ -218,16 +218,19 @@ namespace TestMod.Projectiles.Minions
                 Main.GameViewMatrix.TransformationMatrix);
         }
 
-        private static void DrawBeamPrimitives(Vector2 start, Vector2 end, float opacity)
+        private static void DrawBeamPrimitives(Vector2 start, Vector2 end, float opacity, bool hasFineMaterial)
         {
             Vector2[] points = [start, end];
             DrawUtils.PrepareForAdditivePrimitives(Main.spriteBatch);
+            float outerOpacity = hasFineMaterial ? 0.1f : 0.26f;
+            float middleOpacity = hasFineMaterial ? 0.24f : 0.68f;
+            float coreOpacity = hasFineMaterial ? 0.48f : 1.15f;
 
             PrimitiveRenderer.RenderTrail(
                 points,
                 new PrimitiveSettings(
                     completion => BeamWidth(completion, OuterBeamWidth),
-                    completion => BeamColor(completion, JetColor, 0.26f * opacity),
+                    completion => BeamColor(completion, JetColor, outerOpacity * opacity),
                     Smoothen: false),
                 PrimitivePointsPerSegment);
 
@@ -235,7 +238,7 @@ namespace TestMod.Projectiles.Minions
                 points,
                 new PrimitiveSettings(
                     completion => BeamWidth(completion, MiddleBeamWidth),
-                    completion => BeamColor(completion, JetColor, 0.68f * opacity),
+                    completion => BeamColor(completion, JetColor, middleOpacity * opacity),
                     Smoothen: false),
                 PrimitivePointsPerSegment);
 
@@ -243,7 +246,7 @@ namespace TestMod.Projectiles.Minions
                 points,
                 new PrimitiveSettings(
                     completion => BeamWidth(completion, CoreBeamWidth),
-                    completion => BeamColor(completion, HotCoreColor, 1.15f * opacity),
+                    completion => BeamColor(completion, HotCoreColor, coreOpacity * opacity),
                     Smoothen: false),
                 PrimitivePointsPerSegment);
         }
@@ -313,11 +316,11 @@ namespace TestMod.Projectiles.Minions
                     center,
                     rotation,
                     length,
-                    TextureBeamWidth,
+                    TextureBeamWidth * 1.02f,
                     JetColor,
-                    0.78f * opacity,
-                    1.35f,
-                    time * 620f);
+                    0.66f * opacity,
+                    0.9f,
+                    time * 430f);
             }
             else
             {
@@ -331,11 +334,11 @@ namespace TestMod.Projectiles.Minions
                     center,
                     rotation,
                     length,
-                    TextureBeamWidth * 1.16f,
+                    TextureBeamWidth * 1.1f,
                     Color.White,
-                    0.52f * opacity,
-                    1.9f,
-                    time * -980f,
+                    0.34f * opacity,
+                    1.15f,
+                    time * -640f,
                     time * 70f);
             }
 
@@ -346,11 +349,11 @@ namespace TestMod.Projectiles.Minions
                     center,
                     rotation,
                     length,
-                    CoreBeamWidth * 2.35f,
+                    CoreBeamWidth * 3.2f,
                     HotCoreColor,
-                    1f * opacity,
-                    1.05f,
-                    time * 820f);
+                    0.86f * opacity,
+                    0.62f,
+                    time * 520f);
             }
             else
             {
@@ -388,8 +391,8 @@ namespace TestMod.Projectiles.Minions
             Texture2D glowTexture = QuasarJetVisualAssetSystem.GlowTexture;
             Rectangle frame = glowTexture.Frame();
             Vector2 origin = new(frame.Width * 0.28f, frame.Height * 0.5f);
-            Main.spriteBatch.Draw(glowTexture, position, frame, JetColor * (0.78f * opacity), rotation, origin, new Vector2(1.85f, 1.15f), SpriteEffects.None, 0f);
-            Main.spriteBatch.Draw(glowTexture, position, frame, HotCoreColor * (0.52f * opacity), rotation, origin, new Vector2(1.05f, 0.42f), SpriteEffects.None, 0f);
+            Main.spriteBatch.Draw(glowTexture, position, frame, JetColor * (0.46f * opacity), rotation, origin, new Vector2(0.72f, 0.44f), SpriteEffects.None, 0f);
+            Main.spriteBatch.Draw(glowTexture, position, frame, HotCoreColor * (0.34f * opacity), rotation, origin, new Vector2(0.38f, 0.18f), SpriteEffects.None, 0f);
         }
 
         private static void DrawTerminalGlow(Vector2 position, float rotation, float opacity)
@@ -400,7 +403,7 @@ namespace TestMod.Projectiles.Minions
             Texture2D glowTexture = QuasarJetVisualAssetSystem.GlowTexture;
             Rectangle frame = glowTexture.Frame();
             Vector2 origin = new(frame.Width * 0.72f, frame.Height * 0.5f);
-            Main.spriteBatch.Draw(glowTexture, position, frame, JetColor * (0.32f * opacity), rotation, origin, new Vector2(1.2f, 0.72f), SpriteEffects.None, 0f);
+            Main.spriteBatch.Draw(glowTexture, position, frame, JetColor * (0.18f * opacity), rotation, origin, new Vector2(0.42f, 0.28f), SpriteEffects.None, 0f);
         }
 
         private void SpawnJetDust(Vector2 direction, float opacity)

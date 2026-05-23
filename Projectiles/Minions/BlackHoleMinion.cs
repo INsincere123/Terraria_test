@@ -1,6 +1,8 @@
 using System;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using Terraria;
+using Terraria.GameContent;
 using Terraria.ID;
 using Terraria.ModLoader;
 using TestMod.Buffs;
@@ -54,7 +56,9 @@ namespace TestMod.Projectiles.Minions
         private const float BlackHoleVisualRadius = 32f;
 
         // 吸积盘颜色。这里只影响现有黑洞 shader 的亮环颜色。
-        private static readonly Color AccretionDiskColor = new(95, 170, 255);
+        private static readonly Color AccretionDiskColor = new(255, 132, 48);
+        private const float ForegroundDiskTextureScale = 0.92f;
+        private const float ForegroundDiskOpacity = 0.72f;
 
         // ==================== 敌方弹幕吸收参数 ====================
         // 敌方弹幕进入这个半径后会被轻微拉向黑洞，但还不会立刻消失。
@@ -73,8 +77,15 @@ namespace TestMod.Projectiles.Minions
         // 临时测试开关：关闭后黑洞只保留吸积盘扣血和敌弹吸收，不再发射喷流/碎片弹幕。
         private static readonly bool EnableQuasarProjectiles = true;
 
-        // 黑洞索敌范围。没有目标时不会发射。
+        // 黑洞索敌范围。射弹无目标时也会随机发射；喷流仍只在有目标时蓄力发射。
         private const float TargetSearchRange = 1800f;
+
+        // 单发射弹不规则发射间隔。60 帧约等于 1 秒。
+        private const int QuasarIdleFireIntervalMin = 5 * 60;
+        private const int QuasarIdleFireIntervalMax = 10 * 60;
+        private const int QuasarLockedFireIntervalMin = 1 * 60;
+        private const int QuasarLockedFireIntervalMax = 5 * 60;
+        private const int QuasarProjectileFireOffsetPerIndex = 18;
 
         // 喷流蓄力时间。蓄力期间只显示吸积盘聚能，不立刻造成伤害。
         private const int QuasarChargeTime = 60;
@@ -99,29 +110,23 @@ namespace TestMod.Projectiles.Minions
         private const int AccretionDiskDrainInterval = 2;
 
         // 每秒按 NPC 最大生命值扣除的比例。越靠近圆心越接近中心比例，越靠近边缘越接近边缘比例。
-        private const float AccretionDiskEdgeDrainLifeMaxPercentPerSecond = 0.07f;
-        private const float AccretionDiskCenterDrainLifeMaxPercentPerSecond = 0.21f;
+        private const float AccretionDiskEdgeDrainLifeMaxPercentPerSecond = 0.06f;
+        private const float AccretionDiskCenterDrainLifeMaxPercentPerSecond = 0.17f;
 
         // 每次结算至少扣多少血，避免低血量小怪被百分比向下取整到 0。
-        private const int AccretionDiskMinDrainDamage = 1;
+        private const int AccretionDiskMinDrainDamage = 100;
 
-        // 爆发时附带的射弹数量和伤害继承比例。
-        private const int QuasarBurstShardCount = 4;
-        private const float QuasarBurstShardDamageFactor = 6.66f;
-        private const float QuasarBurstShardSpeed = 150f;
-        private const float QuasarBurstShardSpread = 0.18f;
-        private const int QuasarBurstShardFireWindow = 30;
-        private static int QuasarBurstShardMaxFireInterval => Math.Max(1, QuasarBurstShardFireWindow / Math.Max(1, QuasarBurstShardCount));
+        // 单发碎片射弹参数。
+        private const float QuasarBurstShardDamageFactor = 13f;
+        private const float QuasarBurstShardSpeed = 86f;
+        private const float QuasarBurstShardSpread = 0.32f;
 
         // 蓄力点沿吸积盘高速旋转，制造狂暴活动感。
         private const float QuasarDiskSpinSpeed = 0.22f;
 
         private Vector2 orbitCenter;
-        private readonly int[] pendingBurstShardDelays = new int[QuasarBurstShardCount];
-        private readonly Vector2[] pendingBurstShardRadials = new Vector2[QuasarBurstShardCount];
-        private readonly Vector2[] pendingBurstShardDirections = new Vector2[QuasarBurstShardCount];
-        private readonly float[] pendingBurstShardRadiusFactors = new float[QuasarBurstShardCount];
-        private int pendingBurstShardCount;
+        private int quasarProjectileTimer;
+        private bool quasarProjectileTimerInitialized;
 
         private Player Owner => Main.player[Projectile.owner];
         private BlackHoleMinionPlayer ModdedOwner => Owner.GetModPlayer<BlackHoleMinionPlayer>();
@@ -170,14 +175,15 @@ namespace TestMod.Projectiles.Minions
 
             if (EnableQuasarProjectiles)
             {
+                TryShootQuasarProjectile(target, index);
                 TryShootQuasarJet(target, index);
-                ProcessPendingQuasarBurstShards();
             }
             else
             {
                 Projectile.localAI[0] = 0f;
                 Projectile.localAI[1] = 0f;
-                pendingBurstShardCount = 0;
+                quasarProjectileTimer = 0;
+                quasarProjectileTimerInitialized = false;
             }
 
             if (!Main.dedServ)
@@ -448,6 +454,51 @@ namespace TestMod.Projectiles.Minions
             DynamicWorldTextSystem.SpawnCombatText(hitbox, damage, true, textColor, DynamicTextStyleRegistry.BlackHoleAbsorb);
         }
 
+        private void TryShootQuasarProjectile(NPC target, int index)
+        {
+            bool hasTarget = target is not null;
+            if (!quasarProjectileTimerInitialized)
+            {
+                quasarProjectileTimerInitialized = true;
+                ResetQuasarFireTimer(hasTarget, index);
+            }
+
+            if (hasTarget && quasarProjectileTimer > QuasarLockedFireIntervalMax + index * QuasarProjectileFireOffsetPerIndex)
+                quasarProjectileTimer = Main.rand.Next(QuasarLockedFireIntervalMin, QuasarLockedFireIntervalMax + 1) + index * QuasarProjectileFireOffsetPerIndex;
+
+            if (quasarProjectileTimer > 0)
+            {
+                quasarProjectileTimer--;
+                return;
+            }
+
+            Vector2 direction = PickQuasarProjectileDirection(target);
+            Vector2 spawnPosition = Projectile.Center + direction * QuasarEmissionRadius;
+            SpawnQuasarChargeEffects(direction, 1f, index);
+            ResetQuasarFireTimer(hasTarget, index);
+
+            if (Main.myPlayer != Projectile.owner)
+                return;
+
+            ShootQuasarBurstShard(spawnPosition, direction, target?.whoAmI ?? -1);
+        }
+
+        private void ResetQuasarFireTimer(bool hasTarget, int index)
+        {
+            int min = hasTarget ? QuasarLockedFireIntervalMin : QuasarIdleFireIntervalMin;
+            int max = hasTarget ? QuasarLockedFireIntervalMax : QuasarIdleFireIntervalMax;
+            quasarProjectileTimer = Main.rand.Next(min, max + 1) + index * QuasarProjectileFireOffsetPerIndex;
+        }
+
+        private Vector2 PickQuasarProjectileDirection(NPC target)
+        {
+            Vector2 direction = target is not null
+                ? (target.Center - Projectile.Center).SafeNormalize(Vector2.UnitX)
+                : Main.rand.NextFloat(MathHelper.TwoPi).ToRotationVector2();
+
+            return direction.RotatedByRandom(QuasarBurstShardSpread).SafeNormalize(Vector2.UnitX);
+        }
+
         private void TryShootQuasarJet(NPC target, int index)
         {
             if (Projectile.localAI[0] > 0f)
@@ -483,7 +534,6 @@ namespace TestMod.Projectiles.Minions
 
             ShootQuasarBeam(direction, 1f);
             ShootQuasarBeam(-direction, -1f);
-            ScheduleQuasarBurstShards(direction);
         }
 
         private void ShootQuasarBeam(Vector2 direction, float parentDirectionSign)
@@ -504,53 +554,7 @@ namespace TestMod.Projectiles.Minions
                 Main.projectile[beam].originalDamage = Projectile.originalDamage > 0 ? Projectile.originalDamage : Projectile.damage;
         }
 
-        private void ScheduleQuasarBurstShards(Vector2 fallbackDirection)
-        {
-            pendingBurstShardCount = QuasarBurstShardCount;
-
-            int scheduledDelay = Main.rand.Next(QuasarBurstShardMaxFireInterval + 1);
-
-            for (int i = 0; i < QuasarBurstShardCount; i++)
-            {
-                float diskAngle = Main.rand.NextFloat(MathHelper.TwoPi);
-                Vector2 diskRadial = diskAngle.ToRotationVector2();
-
-                pendingBurstShardDelays[i] = scheduledDelay;
-                pendingBurstShardRadials[i] = diskRadial;
-                pendingBurstShardRadiusFactors[i] = Main.rand.NextFloat(0.86f, 1.12f);
-                pendingBurstShardDirections[i] = diskRadial
-                    .RotatedBy(Main.rand.NextBool() ? MathHelper.PiOver2 : -MathHelper.PiOver2)
-                    .RotatedByRandom(QuasarBurstShardSpread)
-                    .SafeNormalize(fallbackDirection);
-
-                scheduledDelay += Main.rand.Next(QuasarBurstShardMaxFireInterval + 1);
-            }
-        }
-
-        private void ProcessPendingQuasarBurstShards()
-        {
-            if (pendingBurstShardCount <= 0 || Main.myPlayer != Projectile.owner)
-                return;
-
-            for (int i = 0; i < QuasarBurstShardCount; i++)
-            {
-                if (pendingBurstShardDelays[i] < 0)
-                    continue;
-
-                if (pendingBurstShardDelays[i] > 0)
-                {
-                    pendingBurstShardDelays[i]--;
-                    continue;
-                }
-
-                Vector2 spawnPosition = Projectile.Center + pendingBurstShardRadials[i] * QuasarEmissionRadius * pendingBurstShardRadiusFactors[i];
-                ShootQuasarBurstShard(spawnPosition, pendingBurstShardDirections[i]);
-                pendingBurstShardDelays[i] = -1;
-                pendingBurstShardCount--;
-            }
-        }
-
-        private void ShootQuasarBurstShard(Vector2 spawnPosition, Vector2 shardDirection)
+        private void ShootQuasarBurstShard(Vector2 spawnPosition, Vector2 shardDirection, int targetIndex)
         {
             int shardDamage = Math.Max(1, (int)MathF.Round(Projectile.damage * QuasarBurstShardDamageFactor));
             int shardOriginalDamage = Math.Max(1, (int)MathF.Round((Projectile.originalDamage > 0 ? Projectile.originalDamage : Projectile.damage) * QuasarBurstShardDamageFactor));
@@ -562,7 +566,8 @@ namespace TestMod.Projectiles.Minions
                 ModContent.ProjectileType<QuasarJetBurstShard>(),
                 shardDamage,
                 Projectile.knockBack,
-                Projectile.owner);
+                Projectile.owner,
+                targetIndex + 1);
 
             if (shard >= 0 && shard < Main.maxProjectiles)
                 Main.projectile[shard].originalDamage = shardOriginalDamage;
@@ -601,7 +606,30 @@ namespace TestMod.Projectiles.Minions
 
         public override bool MinionContactDamage() => false;
 
-        public override bool PreDraw(ref Color lightColor) => false;
+        public override bool PreDraw(ref Color lightColor)
+        {
+            Texture2D texture = TextureAssets.Projectile[Type].Value;
+            Rectangle frame = texture.Frame();
+            Vector2 origin = frame.Size() * 0.5f;
+            float visualDiameter = BlackHoleVisualRadius * GravitationalLensSystem.AccretionOuterRadiusFactor * 2f;
+            float scale = visualDiameter / Math.Max(frame.Width, 1) * ForegroundDiskTextureScale;
+
+            Main.EntitySpriteDraw(
+                texture,
+                Projectile.Center - Main.screenPosition,
+                frame,
+                Color.White * ForegroundDiskOpacity,
+                GetForegroundDiskRotation(),
+                origin,
+                scale,
+                SpriteEffects.None,
+                0);
+
+            return false;
+        }
+
+        private static float GetForegroundDiskRotation()
+            => GravitationalLensSystem.GetAccretionDiskTiltRadians(Main.GlobalTimeWrappedHourly);
 
         private static BlackHoleVisualStyle GetVisualStyle()
             // 默认仍使用 BlackHoleCore；放入 BlackHoleDisk/BlackHoleDiskFlow 后自动启用精细吸积盘。

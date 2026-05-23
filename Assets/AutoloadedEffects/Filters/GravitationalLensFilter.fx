@@ -12,6 +12,17 @@ float accretionOuterRadiusFactor;
 float accretionInnerStartFactor;
 float accretionInnerFullFactor;
 float accretionNoiseStrength;
+float coreTextureRadiusScale;
+float proceduralCoreInnerRadiusFactor;
+float proceduralCoreOuterRadiusFactor;
+float proceduralCoreOpacity;
+float diskBaseTiltRadians;
+float diskMaxTiltRadians;
+float diskTiltSpeed;
+float diskFlowStrength;
+float diskFlowSpeed;
+float diskFlowScale;
+float diskFlowHighlight;
 float hotRingRadiusFactor;
 float hotRingWidthFactor;
 float sourceRadii[5];
@@ -85,14 +96,25 @@ float4 PixelShaderFunction(float4 sampleColor : COLOR0, float2 coords : TEXCOORD
 
             if (sourceDiskModes[j] > 0.5)
             {
-                float2 flowCoords = float2(angle * 2.0 - time * 0.16, radialDistance / max(sourceRadius, 0.0001) * 1.7 + time * 0.07);
-                float2 flow = tex2D(diskFlowTexture, flowCoords).rg * 2.0 - 1.0;
-                float2 diskCoords = float2(angle * 2.8 + time * 0.32, radialDistance / max(sourceRadius, 0.0001) * 0.88 - time * 0.12);
-                float4 diskSample = tex2D(diskTexture, diskCoords + flow * 0.028);
+                float2 diskLocal = correctedDelta / max(sourceRadius * accretionOuterRadiusFactor, 0.0001);
+                float diskTilt = diskBaseTiltRadians + sin(time * diskTiltSpeed) * diskMaxTiltRadians;
+                float2 tiltedLocal = RotatedBy(diskLocal, -diskTilt);
+                float2 diskUv = tiltedLocal * 0.5 + 0.5;
+                float diskRadius = length(tiltedLocal);
+                float diskAngle = atan2(tiltedLocal.y, tiltedLocal.x) / 6.2831853 + 0.5;
+                float2 tangent = normalize(float2(-tiltedLocal.y, tiltedLocal.x) + float2(0.0001, 0.0001));
+                float2 radial = normalize(tiltedLocal + float2(0.0001, 0.0001));
+                float2 flowUv = float2(diskAngle * diskFlowScale + time * diskFlowSpeed, diskRadius * 2.25 - time * diskFlowSpeed * 0.34);
+                float2 flow = tex2D(diskFlowTexture, flowUv).rg * 2.0 - 1.0;
+                float2 flowOffset = (tangent * (0.74 + noise * 0.18) + radial * flow.y * 0.24 + flow * 0.34) * diskFlowStrength;
+                float4 diskSample = tex2D(diskTexture, diskUv + flowOffset);
+                float4 streamSample = tex2D(diskTexture, diskUv + flowOffset * 2.0 - tangent * diskFlowStrength * 1.25);
                 float luma = dot(diskSample.rgb, float3(0.299, 0.587, 0.114));
-                float materialMask = saturate((luma * 1.35 + diskSample.a * 0.55) * outerMask * innerMask);
-                float3 materialColor = lerp(sourceAccretionColors[j] * max(luma, 0.18), diskSample.rgb, 0.42);
-                color.rgb += (materialColor * materialMask * (0.9 + noise * 0.28) + hotColor * hotRing * 0.62) * accretionOpacity;
+                float streamLuma = dot(streamSample.rgb, float3(0.299, 0.587, 0.114));
+                float materialMask = saturate((diskSample.a * 1.08 + luma * 0.34 + streamLuma * 0.2) * outerMask * innerMask);
+                float3 materialColor = lerp(lerp(diskSample.rgb, streamSample.rgb, 0.36), sourceAccretionColors[j] * max(luma, 0.2), 0.12);
+                float streamHighlight = saturate(streamLuma - luma * 0.72) * diskFlowHighlight;
+                color.rgb += (materialColor * materialMask * (0.7 + noise * 0.2) + hotColor * (hotRing * 0.34 + streamHighlight * materialMask)) * accretionOpacity;
             }
             else
             {
@@ -104,12 +126,17 @@ float4 PixelShaderFunction(float4 sampleColor : COLOR0, float2 coords : TEXCOORD
         if (occlusionRadius <= 0.0 || occlusionOpacity <= 0.0)
             continue;
 
-        float2 occlusionCoords = correctedDelta / occlusionRadius * 0.5 + 0.5;
+        float textureRadius = max(occlusionRadius * coreTextureRadiusScale, 0.0001);
+        float2 occlusionCoords = correctedDelta / textureRadius * 0.5 + 0.5;
         if (occlusionCoords.x < 0.0 || occlusionCoords.x > 1.0 || occlusionCoords.y < 0.0 || occlusionCoords.y > 1.0)
             continue;
 
         float4 occlusion = tex2D(occlusionTexture, occlusionCoords);
-        color.rgb = lerp(color.rgb, occlusion.rgb, occlusion.a * occlusionOpacity);
+        float coreDistance = length(correctedDelta) / max(occlusionRadius, 0.0001);
+        float proceduralCore = 1.0 - smoothstep(proceduralCoreInnerRadiusFactor, proceduralCoreOuterRadiusFactor, coreDistance);
+        float occlusionBlend = saturate(max(occlusion.a, proceduralCore * proceduralCoreOpacity) * occlusionOpacity);
+        float3 occlusionColor = lerp(float3(0.0, 0.0, 0.015), occlusion.rgb, saturate(occlusion.a * 1.35));
+        color.rgb = lerp(color.rgb, occlusionColor, occlusionBlend);
     }
 
     return color;

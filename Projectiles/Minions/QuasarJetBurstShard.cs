@@ -1,4 +1,3 @@
-using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Terraria;
@@ -13,13 +12,19 @@ namespace TestMod.Projectiles.Minions
     public class QuasarJetBurstShard : ModProjectile
     {
         private const int TrailCacheLength = 30;
-        private const float OuterTrailWidth = 17f;  //外层尾迹宽度
-        private const float InnerTrailWidth = 5f;   //内层核心宽度 
-        private const float TrailSegmentOverlap = 6f;   //尾迹段之间的重叠距离，避免出现明显断层
-        private const float MaxTrailLength = 180f;   //尾迹最大长度
-        private const float HeadScale = 0.42f;      //弹头缩放
-        private const float GlowScale = 0.38f;      //光晕缩放
-        private const float GlowOpacity = 0.18f;    //光晕不透明度
+        private const float OuterTrailWidth = 22f;  //外层尾迹宽度
+        private const float InnerTrailWidth = 10f;   //内层核心宽度 
+        private const float TrailSegmentOverlap = 12f;   //尾迹段之间的重叠距离，避免出现明显断层
+        private const float MaxTrailLength = 220f;   //尾迹最大长度
+        private const float HeadScale = 0.4f;      //弹头缩放
+        private const float GlowScale = 0.5f;      //光晕缩放
+        private const float GlowOpacity = 0.14f;    //光晕不透明度
+        private const float ConnectorOuterOpacity = 0.24f;
+        private const float ConnectorCoreOpacity = 0.58f;
+        private const float HomingRange = 1200f;
+        private const float HomingTurnStrength = 0.085f;
+        private const int HomingDelay = 6;
+        private const int PlasmaFlameCount = 2;
         private static readonly Color JetColor = new(55, 160, 255);
         private static readonly Color HotCoreColor = new(235, 250, 255);
 
@@ -48,8 +53,80 @@ namespace TestMod.Projectiles.Minions
 
         public override void AI()
         {
+            TryCurveTowardTarget();
             Projectile.rotation = Projectile.velocity.ToRotation();
-            Lighting.AddLight(Projectile.Center, 0.25f, 0.45f, 0.95f);
+            Lighting.AddLight(Projectile.Center, 0.34f, 0.62f, 1.25f);
+
+            for (int i = 0; i < PlasmaFlameCount; i++)
+                SpawnPlasmaFlame();
+        }
+
+        private void TryCurveTowardTarget()
+        {
+            if (Projectile.timeLeft > 120 - HomingDelay)
+                return;
+
+            NPC target = GetHomingTarget();
+            if (target is null)
+                return;
+
+            float speed = Projectile.velocity.Length();
+            if (speed <= 0.01f)
+                return;
+
+            Vector2 desiredVelocity = (target.Center - Projectile.Center).SafeNormalize(Projectile.velocity) * speed;
+            Projectile.velocity = Vector2.Lerp(Projectile.velocity, desiredVelocity, HomingTurnStrength).SafeNormalize(desiredVelocity) * speed;
+        }
+
+        private NPC GetHomingTarget()
+        {
+            int encodedTarget = (int)Projectile.ai[0] - 1;
+            if (encodedTarget >= 0 && encodedTarget < Main.maxNPCs)
+            {
+                NPC lockedTarget = Main.npc[encodedTarget];
+                if (lockedTarget.CanBeChasedBy(Projectile) && Projectile.Distance(lockedTarget.Center) <= HomingRange * 1.35f)
+                    return lockedTarget;
+            }
+
+            NPC bestTarget = null;
+            float bestDistanceSq = HomingRange * HomingRange;
+            for (int i = 0; i < Main.maxNPCs; i++)
+            {
+                NPC npc = Main.npc[i];
+                if (!npc.CanBeChasedBy(Projectile))
+                    continue;
+
+                float distanceSq = Vector2.DistanceSquared(npc.Center, Projectile.Center);
+                if (distanceSq >= bestDistanceSq)
+                    continue;
+
+                bestDistanceSq = distanceSq;
+                bestTarget = npc;
+            }
+
+            return bestTarget;
+        }
+
+        private void SpawnPlasmaFlame()
+        {
+            Vector2 direction = Projectile.velocity.SafeNormalize(Vector2.UnitX);
+            Vector2 normal = direction.RotatedBy(MathHelper.PiOver2);
+            Vector2 position = Projectile.Center
+                - direction * Main.rand.NextFloat(8f, 28f)
+                + normal * Main.rand.NextFloat(-8f, 8f);
+            Vector2 velocity = -direction * Main.rand.NextFloat(1.6f, 4.6f)
+                + normal * Main.rand.NextFloat(-2.1f, 2.1f);
+
+            int dustType = Main.rand.NextBool(3) ? DustID.Electric : DustID.BlueTorch;
+            Dust dust = Dust.NewDustPerfect(
+                position,
+                dustType,
+                velocity,
+                35,
+                Color.Lerp(JetColor, HotCoreColor, Main.rand.NextFloat(0.25f, 0.8f)),
+                Main.rand.NextFloat(1.1f, 1.9f));
+            dust.noGravity = true;
+            dust.velocity *= Main.rand.NextFloat(0.82f, 1.16f);
         }
 
         public override void ModifyHitNPC(NPC target, ref NPC.HitModifiers modifiers)
@@ -77,38 +154,56 @@ namespace TestMod.Projectiles.Minions
         private void DrawTexturedTrail()
         {
             Texture2D trailTexture = QuasarJetVisualAssetSystem.TrailTexture;
-            Vector2 direction = Projectile.velocity.SafeNormalize(Vector2.UnitX);
-            float rotation = direction.ToRotation();
-            float trailLength = GetStraightTrailLength(direction);
+            Vector2 newerCenter = Projectile.Center;
+            float accumulatedLength = 0f;
 
-            if (trailLength <= 2f)
-                return;
-
-            Vector2 drawPosition = Projectile.Center - direction * (trailLength * 0.5f + TrailSegmentOverlap) - Main.screenPosition;
-            float drawLength = trailLength + TrailSegmentOverlap * 2f;
-
-            DrawTrailLayer(trailTexture, drawPosition, rotation, drawLength, OuterTrailWidth, JetColor * 0.22f);
-            DrawTrailLayer(trailTexture, drawPosition, rotation, drawLength, InnerTrailWidth, HotCoreColor * 0.58f);
-        }
-
-        private float GetStraightTrailLength(Vector2 direction)
-        {
-            float length = Projectile.velocity.Length() * Math.Max(Projectile.oldPos.Length, 1);
-
-            for (int i = Projectile.oldPos.Length - 1; i >= 0; i--)
+            for (int i = 0; i < Projectile.oldPos.Length; i++)
             {
                 if (Projectile.oldPos[i] == Vector2.Zero)
+                    break;
+
+                Vector2 olderCenter = Projectile.oldPos[i] + Projectile.Size * 0.5f;
+                float segmentLength = Vector2.Distance(newerCenter, olderCenter);
+                if (segmentLength <= 1f)
                     continue;
 
-                Vector2 oldCenter = Projectile.oldPos[i] + Projectile.Size * 0.5f;
-                float projectedDistance = Vector2.Dot(Projectile.Center - oldCenter, direction);
-                if (projectedDistance > 0f)
-                    length = projectedDistance;
+                float remainingLength = MaxTrailLength - accumulatedLength;
+                if (remainingLength <= 0f)
+                    break;
 
-                break;
+                if (segmentLength > remainingLength)
+                    olderCenter = Vector2.Lerp(newerCenter, olderCenter, remainingLength / segmentLength);
+
+                Vector2 segmentDirection = (newerCenter - olderCenter).SafeNormalize(Projectile.velocity.SafeNormalize(Vector2.UnitX));
+                float drawLength = Vector2.Distance(newerCenter, olderCenter) + TrailSegmentOverlap;
+                float fade = 1f - MathHelper.Clamp(accumulatedLength / MaxTrailLength, 0f, 1f);
+                float widthFactor = MathHelper.Lerp(0.38f, 1f, fade);
+                Vector2 drawCenter = (newerCenter + olderCenter) * 0.5f - Main.screenPosition;
+                float rotation = segmentDirection.ToRotation();
+
+                DrawConnectorLayer(drawCenter, rotation, drawLength, OuterTrailWidth * widthFactor * 0.72f, JetColor * (ConnectorOuterOpacity * fade));
+                DrawConnectorLayer(drawCenter, rotation, drawLength, InnerTrailWidth * widthFactor * 0.82f, HotCoreColor * (ConnectorCoreOpacity * fade));
+                DrawTrailLayer(trailTexture, drawCenter, rotation, drawLength, OuterTrailWidth * widthFactor, JetColor * (0.3f * fade));
+                DrawTrailLayer(trailTexture, drawCenter, rotation, drawLength, InnerTrailWidth * widthFactor, HotCoreColor * (0.68f * fade));
+
+                accumulatedLength += segmentLength;
+                newerCenter = olderCenter;
             }
+        }
 
-            return MathHelper.Clamp(length, 20f, MaxTrailLength);     //限制尾迹长度在合理范围内，避免过长或过短导致视觉问题
+        private static void DrawConnectorLayer(Vector2 position, float rotation, float length, float width, Color color)
+        {
+            Texture2D pixel = TextureAssets.MagicPixel.Value;
+            Main.spriteBatch.Draw(
+                pixel,
+                position,
+                new Rectangle(0, 0, 1, 1),
+                color,
+                rotation,
+                new Vector2(0.5f),
+                new Vector2(length, width),
+                SpriteEffects.None,
+                0f);
         }
 
         private static void DrawTrailLayer(Texture2D texture, Vector2 position, float rotation, float length, float width, Color color)
@@ -127,7 +222,7 @@ namespace TestMod.Projectiles.Minions
                 rotation,
                 origin,
                 scale,
-                SpriteEffects.None,
+                SpriteEffects.FlipHorizontally,
                 0f);
         }
 
@@ -142,12 +237,12 @@ namespace TestMod.Projectiles.Minions
                 DrawFallbackGlow(screenPosition, rotation);
 
             if (QuasarJetVisualAssetSystem.HasHeadTexture)
-                DrawCentered(QuasarJetVisualAssetSystem.HeadTexture, screenPosition, rotation, Color.White, HeadScale);
+                DrawCentered(QuasarJetVisualAssetSystem.HeadTexture, screenPosition, rotation, Color.White, HeadScale, SpriteEffects.FlipHorizontally);
             else
                 DrawFallbackHead(screenPosition, rotation);
         }
 
-        private static void DrawCentered(Texture2D texture, Vector2 position, float rotation, Color color, float scale)
+        private static void DrawCentered(Texture2D texture, Vector2 position, float rotation, Color color, float scale, SpriteEffects effects = SpriteEffects.None)
         {
             Rectangle frame = texture.Frame();
             Main.spriteBatch.Draw(
@@ -158,7 +253,7 @@ namespace TestMod.Projectiles.Minions
                 rotation,
                 frame.Size() * 0.5f,
                 scale,
-                SpriteEffects.None,
+                effects,
                 0f);
         }
 

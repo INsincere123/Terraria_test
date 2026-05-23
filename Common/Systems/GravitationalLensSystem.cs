@@ -21,6 +21,17 @@ namespace TestMod.Common.Systems
         // 如果中心黑核太小，或者透镜看起来和核心脱节，就调大这个值。
         public const float CoreRadiusFactor = 1f;
 
+        // CoreTextureRadiusScale：BlackHoleCore 贴图采样半径。
+        // 只影响贴图本身的缩放，不影响程序化黑圆；贴图环和黑圆对不上时优先调这里。
+        public const float CoreTextureRadiusScale = 1.64f;
+
+        // ProceduralCore*：shader 额外画出的黑圆遮罩。
+        // 黑圆比 BlackHoleCore 小：调大 Inner/Outer；黑圆太大：调小 Inner/Outer。
+        // Opacity 越高，贴图透明中心越容易被纯黑遮住。
+        public const float ProceduralCoreInnerRadiusFactor = 0.38f;
+        public const float ProceduralCoreOuterRadiusFactor = 0.92f;
+        public const float ProceduralCoreOpacity = 0.94f;
+
         // AccretionOuterRadiusFactor：吸积盘外缘范围，相对于注册进来的黑洞半径。
         // 数值越大，吸积盘越宽，也越容易把外部画面视觉上连接到中心。
         public const float AccretionOuterRadiusFactor = 3f;
@@ -32,6 +43,18 @@ namespace TestMod.Common.Systems
 
         // AccretionNoiseStrength：流动噪声对吸积盘亮度的贡献。
         public const float AccretionNoiseStrength = 2.55f;
+
+        // 吸积盘贴图只允许在接近水平的范围内缓慢摆动，避免整圈 360 度旋转。
+        // MaxTiltDegrees 应保持小于 30；BaseTiltDegrees 可以给整体一个固定倾角。
+        public const float AccretionDiskBaseTiltDegrees = -8f;
+        public const float AccretionDiskMaxTiltDegrees = 22f;
+        public const float AccretionDiskTiltSpeed = 0.32f;
+
+        // 盘内材质流动参数。整体倾角仍只小幅摆动，下面这些只让盘面纹理沿切向流动。
+        public const float AccretionDiskFlowStrength = 0.034f;
+        public const float AccretionDiskFlowSpeed = 0.72f;
+        public const float AccretionDiskFlowScale = 2.4f;
+        public const float AccretionDiskFlowHighlight = 0.36f;
 
         // HotRingRadiusFactor / HotRingWidthFactor：事件视界亮环的位置和厚度，相对于黑核半径。
         // 亮环越宽，越能遮住黑核边缘附近的透镜断层感。
@@ -146,6 +169,13 @@ namespace TestMod.Common.Systems
             return (unzoomedScreenPosition - screenCenter) * zoom + screenCenter;
         }
 
+        public static float GetAccretionDiskTiltRadians(float time)
+        {
+            float baseTilt = MathHelper.ToRadians(AccretionDiskBaseTiltDegrees);
+            float maxTilt = MathHelper.ToRadians(MathHelper.Clamp(AccretionDiskMaxTiltDegrees, 0f, 29.9f));
+            return baseTilt + MathF.Sin(time * AccretionDiskTiltSpeed) * maxTilt;
+        }
+
         public override void PostUpdateEverything()
         {
             if (Main.dedServ)
@@ -201,13 +231,24 @@ namespace TestMod.Common.Systems
             filter.TrySetParameter("accretionInnerStartFactor", AccretionInnerStartFactor);
             filter.TrySetParameter("accretionInnerFullFactor", AccretionInnerFullFactor);
             filter.TrySetParameter("accretionNoiseStrength", AccretionNoiseStrength);
+            filter.TrySetParameter("coreTextureRadiusScale", CoreTextureRadiusScale);
+            filter.TrySetParameter("proceduralCoreInnerRadiusFactor", ProceduralCoreInnerRadiusFactor);
+            filter.TrySetParameter("proceduralCoreOuterRadiusFactor", ProceduralCoreOuterRadiusFactor);
+            filter.TrySetParameter("proceduralCoreOpacity", ProceduralCoreOpacity);
+            filter.TrySetParameter("diskBaseTiltRadians", MathHelper.ToRadians(AccretionDiskBaseTiltDegrees));
+            filter.TrySetParameter("diskMaxTiltRadians", MathHelper.ToRadians(MathHelper.Clamp(AccretionDiskMaxTiltDegrees, 0f, 29.9f)));
+            filter.TrySetParameter("diskTiltSpeed", AccretionDiskTiltSpeed);
+            filter.TrySetParameter("diskFlowStrength", AccretionDiskFlowStrength);
+            filter.TrySetParameter("diskFlowSpeed", AccretionDiskFlowSpeed);
+            filter.TrySetParameter("diskFlowScale", AccretionDiskFlowScale);
+            filter.TrySetParameter("diskFlowHighlight", AccretionDiskFlowHighlight);
             filter.TrySetParameter("hotRingRadiusFactor", HotRingRadiusFactor);
             filter.TrySetParameter("hotRingWidthFactor", HotRingWidthFactor);
             filter.TrySetParameter("aspectRatioCorrectionFactor", new Vector2(screenSize.X / screenSize.Y, 1f));
             filter.TrySetParameter("zoom", Main.GameViewMatrix.Zoom);
             filter.SetTexture(requestedOcclusionTexture ?? BlackHoleVisualAssetSystem.CoreTexture, 1, SamplerState.LinearClamp);
             filter.SetTexture(AntaresVisualAssetSystem.HaloNoise, 2, SamplerState.LinearWrap);
-            filter.SetTexture(requestedDiskTexture ?? BlackHoleVisualAssetSystem.DiskTexture, 3, SamplerState.LinearWrap);
+            filter.SetTexture(requestedDiskTexture ?? BlackHoleVisualAssetSystem.DiskTexture, 3, SamplerState.LinearClamp);
             filter.SetTexture(requestedDiskFlowTexture ?? BlackHoleVisualAssetSystem.DiskFlowTexture, 4, SamplerState.LinearWrap);
             filter.Activate();
         }
