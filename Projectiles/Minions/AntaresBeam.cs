@@ -13,8 +13,8 @@ namespace TestMod.Projectiles.Minions
     {
         private const string BeamShaderName = "TestMod.AntaresBeamShader";
         private const int RenderedTrailPositions = 12;
-        private const int CurveSamplesPerSegment = 4;
-        private const int PrimitivePointsPerSegment = 8;
+        private const int CurveSamplesPerSegment = 6;
+        private const int PrimitivePointsPerSegment = 9;
 
         private static readonly GuidedProjectileTrailLayer[] TrailLayers =
         [
@@ -41,7 +41,7 @@ namespace TestMod.Projectiles.Minions
             ShaderLayer = new GuidedProjectileTrailLayer(8.5f, 1.05f, 0.76f, BeamColor),
             ShaderFallbackLayer = new GuidedProjectileTrailLayer(9.5f, 1.08f, 0.15f, BeamColor),
             AdditionalLayers = TrailLayers,
-            HeadScale = 0.55f,
+            HeadScale = 1.58f,
             HeadPulseAmplitude = 0.08f,
             HeadPulseFrequency = 16f,
             FallbackHeadDrawer = DrawUtils.DrawGuidedProjectileDiamondFallback

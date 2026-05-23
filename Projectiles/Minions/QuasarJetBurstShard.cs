@@ -11,12 +11,12 @@ namespace TestMod.Projectiles.Minions
 {
     public class QuasarJetBurstShard : ModProjectile
     {
-        private const int TrailCacheLength = 30;
-        private const float OuterTrailWidth = 22f;  //外层尾迹宽度
-        private const float InnerTrailWidth = 10f;   //内层核心宽度 
-        private const float TrailSegmentOverlap = 12f;   //尾迹段之间的重叠距离，避免出现明显断层
-        private const float MaxTrailLength = 220f;   //尾迹最大长度
-        private const float HeadScale = 0.4f;      //弹头缩放
+        private const int TrailCacheLength = 40; // 增加尾迹缓存长度以平滑轨迹
+        private const float OuterTrailWidth = 10f; // 减小外层尾迹宽度以使尾迹更窄，更加光滑
+        private const float InnerTrailWidth = 6f; // 同样地，减小内层核心宽度以达到类似效果
+        private const float TrailSegmentOverlap = 16f; // 增加尾迹段之间的重叠距离，减少突然中断
+        private const float MaxTrailLength = 199f; // 减小尾迹的最大长度，使尾迹更早消失，更加光滑
+        private const float HeadScale = 0.83f;      //弹头缩放
         private const float GlowScale = 0.5f;      //光晕缩放
         private const float GlowOpacity = 0.14f;    //光晕不透明度
         private const float ConnectorOuterOpacity = 0.24f;

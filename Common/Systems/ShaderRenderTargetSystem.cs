@@ -98,13 +98,39 @@ namespace TestMod.Common.Systems
             if (starFlares.Count <= 0 && blackHoleLenses.Count <= 0)
                 return true;
 
-            EnsureOverlayTarget();
-            RenderOverlayTarget();
-            DrawOverlayTarget();
+            DrawOverlayDirect();
 
             starFlares.Clear();
             blackHoleLenses.Clear();
             return true;
+        }
+
+        private static void DrawOverlayDirect()
+        {
+            SpriteBatch spriteBatch = Main.spriteBatch;
+
+            spriteBatch.End();
+            spriteBatch.Begin(
+                SpriteSortMode.Deferred,
+                BlendState.Additive,
+                SamplerState.LinearClamp,
+                DepthStencilState.None,
+                RasterizerState.CullNone,
+                null,
+                Matrix.Identity);
+
+            DrawBlackHoleLensMasks(spriteBatch);
+            DrawAntaresFlareMasks(spriteBatch);
+
+            spriteBatch.End();
+            spriteBatch.Begin(
+                SpriteSortMode.Deferred,
+                BlendState.AlphaBlend,
+                Main.DefaultSamplerState,
+                DepthStencilState.None,
+                Main.Rasterizer,
+                null,
+                Main.UIScaleMatrix);
         }
 
         private static void EnsureOverlayTarget()
