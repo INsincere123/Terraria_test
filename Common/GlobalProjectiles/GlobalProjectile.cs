@@ -4,14 +4,14 @@ using Terraria.ModLoader;
 using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
-using TestMod.Buffs;
+using TestMod.Content.Buffs;
 using TestMod.Common.DynamicText;
 using TestMod.Common.Players;
-using TestMod.Items.Accessories.Effects;
-using TestMod.Items.DamageTypes;
-using TestMod.Projectiles.Melee;
-using TestMod.Projectiles.Minions;
-using TestMod.Projectiles.Ranged;
+using TestMod.Content.Items.Accessories.Effects;
+using TestMod.Content.Items.DamageTypes;
+using TestMod.Content.Projectiles.Melee;
+using TestMod.Content.Projectiles.Minions;
+using TestMod.Content.Projectiles.Ranged;
 
 namespace TestMod.Common.GlobalProjectiles
 {

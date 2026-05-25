@@ -4,9 +4,9 @@ using Terraria;
 using Terraria.Audio;
 using Terraria.ID;
 using Terraria.ModLoader;
-using TestMod.Buffs;
+using TestMod.Content.Buffs;
 using TestMod.Common.Systems;
-using TestMod.Items.Armor;
+using TestMod.Content.Items.Armor;
 
 namespace TestMod.Common.Players
 {

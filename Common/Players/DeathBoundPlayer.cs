@@ -1,7 +1,7 @@
 using Terraria;
 using Terraria.DataStructures;
 using Terraria.ModLoader;
-using TestMod.Items.Accessories;
+using TestMod.Content.Items.Accessories;
 
 namespace TestMod.Common.Players
 {

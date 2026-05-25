@@ -3,7 +3,7 @@ using System.Reflection;
 using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
-using TestMod.Prefixes;
+using TestMod.Content.Prefixes;
 
 namespace TestMod.Common.Systems
 {

@@ -4,7 +4,7 @@ using Microsoft.Xna.Framework;
 using Terraria;
 using Terraria.ModLoader;
 using TestMod.Common.DynamicText.Fonts;
-using TestMod.Items.DamageTypes;
+using TestMod.Content.Items.DamageTypes;
 
 namespace TestMod.Common.DynamicText
 {

@@ -3,7 +3,7 @@ using Terraria;
 using Terraria.DataStructures;
 using Terraria.ID;
 using Terraria.ModLoader;
-using TestMod.Projectiles.Ranged;
+using TestMod.Content.Projectiles.Ranged;
 
 namespace TestMod.Common.GlobalItems
 {

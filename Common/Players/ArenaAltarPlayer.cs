@@ -1,7 +1,7 @@
 using Terraria;
 using Terraria.ModLoader;
-using TestMod.Buffs;
-using TestMod.Items.Accessories.Effects;
+using TestMod.Content.Buffs;
+using TestMod.Content.Items.Accessories.Effects;
 
 namespace TestMod.Common.Players
 {

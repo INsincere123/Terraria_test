@@ -1,7 +1,8 @@
 using Terraria;
 using Terraria.ModLoader;
 using TestMod.Common.Mechanics.ArmorShred;
-using TestMod.Items.DamageTypes;
+using TestMod.Content.Items.DamageTypes;
+using TestMod.Content.Buffs;
 
 namespace TestMod.Common.GlobalNPCs
 {
@@ -19,7 +20,7 @@ namespace TestMod.Common.GlobalNPCs
 
         private static void ClearArmorShredIfExpired(NPC npc)
         {
-            if (!npc.HasBuff(ModContent.BuffType<Buffs.ArmorShredDebuff>()))
+            if (!npc.HasBuff(ModContent.BuffType<ArmorShredDebuff>()))
                 ArmorShredSystem.Remove(npc.whoAmI);
         }
     }

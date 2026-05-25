@@ -2,8 +2,9 @@ using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
 using Terraria.Utilities;
-using TestMod.Items.DamageTypes;
+using TestMod.Content.Items.DamageTypes;
 using TestMod.Common.Utilities;
+using TestMod.Content.Prefixes;
 
 namespace TestMod.Common.GlobalItems
 {
@@ -22,7 +23,7 @@ namespace TestMod.Common.GlobalItems
             // ── 真实伤害武器 ──────────────────────────────────────────
             if (item.DamageType == TrueDamageClass.Instance && item.damage > 0)
             {
-                int r = ModContent.GetInstance<Prefixes.RefinementPrefix>().Type;
+                int r = ModContent.GetInstance<RefinementPrefix>().Type;
                 return CurveUtils.WeightedRandom(rand, [
                     // 通用词缀（Universal）
                     (PrefixID.Keen,      10), (PrefixID.Superior,  10), (PrefixID.Forceful,  10),
@@ -46,7 +47,7 @@ namespace TestMod.Common.GlobalItems
             // ── 鞭子（SummonMeleeSpeed）— 先于 Summon/Melee 判断 ──────
             if (item.CountsAsClass(DamageClass.SummonMeleeSpeed))
             {
-                int r = ModContent.GetInstance<Prefixes.RefinementWhipPrefix>().Type;
+                int r = ModContent.GetInstance<RefinementWhipPrefix>().Type;
                 return CurveUtils.WeightedRandom(rand, [
                     (PrefixID.Keen,10),(PrefixID.Superior,10),(PrefixID.Forceful,10),
                     (PrefixID.Broken,3),(PrefixID.Damaged,3),(PrefixID.Shoddy,3),
@@ -69,8 +70,8 @@ namespace TestMod.Common.GlobalItems
             {
                 bool hasKB = item.knockBack > 0f;
                 int r = hasKB
-                    ? ModContent.GetInstance<Prefixes.RefinementSummonPrefix>().Type
-                    : ModContent.GetInstance<Prefixes.RefinementSummonNoKBPrefix>().Type;
+                    ? ModContent.GetInstance<RefinementSummonPrefix>().Type
+                    : ModContent.GetInstance<RefinementSummonNoKBPrefix>().Type;
 
                 (int id, int weight)[] pool = hasKB
                     ? [
@@ -98,8 +99,8 @@ namespace TestMod.Common.GlobalItems
             {
                 bool hasKB = item.knockBack > 0f;
                 int r = hasKB
-                    ? ModContent.GetInstance<Prefixes.RefinementMagicPrefix>().Type
-                    : ModContent.GetInstance<Prefixes.RefinementMagicNoKBPrefix>().Type;
+                    ? ModContent.GetInstance<RefinementMagicPrefix>().Type
+                    : ModContent.GetInstance<RefinementMagicNoKBPrefix>().Type;
 
                 // 魔法专属正面：Mystic(26) Adept(27) Masterful(28) Intense(32) Taboo(33)
                 // 魔法负面（ReducedNaturalChance）：Inept(29) Ignorant(30) Deranged(31)
@@ -144,8 +145,8 @@ namespace TestMod.Common.GlobalItems
             {
                 bool hasKB = item.knockBack > 0f;
                 int r = hasKB
-                    ? ModContent.GetInstance<Prefixes.RefinementRangedPrefix>().Type
-                    : ModContent.GetInstance<Prefixes.RefinementRangedNoKBPrefix>().Type;
+                    ? ModContent.GetInstance<RefinementRangedPrefix>().Type
+                    : ModContent.GetInstance<RefinementRangedNoKBPrefix>().Type;
 
                 // 远程专属正面：Sighted(16) Rapid(17) Hasty(18) Staunch(21) Powerful(25)
                 // 远程负面（ReducedNaturalChance）：Awful(22) Lethargic(23) Awkward(24)
@@ -191,8 +192,8 @@ namespace TestMod.Common.GlobalItems
                 // noUseGraphic=true → 矛/连枷/悠悠球（Other）；false → 挥砍剑（Swing）
                 bool isSwing = !item.noUseGraphic;
                 int r = isSwing
-                    ? ModContent.GetInstance<Prefixes.RefinementMeleeSwingPrefix>().Type
-                    : ModContent.GetInstance<Prefixes.RefinementMeleeOtherPrefix>().Type;
+                    ? ModContent.GetInstance<RefinementMeleeSwingPrefix>().Type
+                    : ModContent.GetInstance<RefinementMeleeOtherPrefix>().Type;
 
                 // 近战专属正面：Dangerous(3) Savage(4) Sharp(5) Pointy(6) Bulky(12)
                 //              Heavy(14) Light(15) Intimidating(19) Deadly(20) Celestial(34) Furious(35)
@@ -247,7 +248,7 @@ namespace TestMod.Common.GlobalItems
             // 融合概率 = 1 / (20×6+1) = 1/121 ≈ 0.83%，约为普通词缀的 1/6
             if (item.accessory)
             {
-                int fusion = ModContent.GetInstance<Prefixes.FusionPrefix>().Type;
+                int fusion = ModContent.GetInstance<FusionPrefix>().Type;
                 return CurveUtils.WeightedRandom(rand,
                 [
                     // 防御类

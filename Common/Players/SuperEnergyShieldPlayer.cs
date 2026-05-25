@@ -1,6 +1,6 @@
 using Terraria;
 using Terraria.ModLoader;
-using TestMod.Buffs;
+using TestMod.Content.Buffs;
 
 namespace TestMod.Common.Players
 {

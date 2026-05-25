@@ -1,7 +1,7 @@
 using Microsoft.Xna.Framework;
 using Terraria;
 using Terraria.ModLoader;
-using TestMod.Projectiles.Minions;
+using TestMod.Content.Projectiles.Minions;
 
 namespace TestMod.Common.Systems
 {

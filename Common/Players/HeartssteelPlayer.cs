@@ -5,7 +5,7 @@ using Terraria.ID;
 using Terraria.ModLoader;
 using Terraria.ModLoader.IO;
 using TestMod.Common.DynamicText;
-using TestMod.Items.Accessories.Effects;
+using TestMod.Content.Items.Accessories.Effects;
 
 namespace TestMod.Common.Players
 {

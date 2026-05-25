@@ -1,7 +1,7 @@
 using Terraria;
 using Terraria.ModLoader;
 using Microsoft.Xna.Framework;
-using TestMod.Buffs;
+using TestMod.Content.Buffs;
 using TestMod.Common.Utilities;
 
 namespace TestMod.Common.GlobalProjectiles

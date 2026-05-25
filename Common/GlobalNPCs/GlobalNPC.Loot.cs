@@ -2,8 +2,8 @@ using Terraria;
 using Terraria.GameContent.ItemDropRules;
 using Terraria.ID;
 using Terraria.ModLoader;
-using TestMod.Items.Accessories;
-using TestMod.Items.Weapons.Melee;
+using TestMod.Content.Items.Accessories;
+using TestMod.Content.Items.Weapons.Melee;
 
 namespace TestMod.Common.GlobalNPCs
 {

@@ -4,10 +4,10 @@ using Terraria;
 using Terraria.Audio;
 using Terraria.ID;
 using Terraria.ModLoader;
-using TestMod.Buffs;
+using TestMod.Content.Buffs;
 using TestMod.Common.Particles;
-using TestMod.Items.Accessories.Effects;
-using TestMod.Items.DamageTypes;
+using TestMod.Content.Items.Accessories.Effects;
+using TestMod.Content.Items.DamageTypes;
 
 namespace TestMod.Common.Players
 {

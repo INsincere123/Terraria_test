@@ -1,7 +1,7 @@
 using Microsoft.Xna.Framework.Graphics;
 using Terraria;
 using Terraria.ModLoader;
-using TestMod.Rarities;
+using TestMod.Content.Rarities;
 
 namespace TestMod.Common.Systems
 {

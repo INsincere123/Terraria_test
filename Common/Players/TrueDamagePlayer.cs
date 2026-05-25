@@ -1,7 +1,7 @@
 using System;
 using Terraria;
 using Terraria.ModLoader;
-using TestMod.Items.DamageTypes;
+using TestMod.Content.Items.DamageTypes;
 
 namespace TestMod.Common.Players
 {

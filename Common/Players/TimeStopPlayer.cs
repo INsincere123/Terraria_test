@@ -1,6 +1,6 @@
 using Luminance.Core.Graphics;
 using Microsoft.Xna.Framework;
-using TestMod.Buffs;
+using TestMod.Content.Buffs;
 using Terraria;
 using Terraria.Audio;
 using Terraria.ID;

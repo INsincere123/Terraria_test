@@ -2,7 +2,7 @@ using System;
 using Microsoft.Xna.Framework;
 using Terraria;
 using Terraria.ModLoader;
-using TestMod.Buffs;
+using TestMod.Content.Buffs;
 using TestMod.Common.DynamicText;
 
 namespace TestMod.Common.Players

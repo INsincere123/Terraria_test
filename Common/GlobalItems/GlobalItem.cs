@@ -4,7 +4,7 @@ using Terraria.ID;
 using Terraria.ModLoader;
 using TestMod.Common.DynamicText;
 using TestMod.Common.Players;
-using TestMod.Rarities;
+using TestMod.Content.Rarities;
 
 namespace TestMod.Common.GlobalItems
 {

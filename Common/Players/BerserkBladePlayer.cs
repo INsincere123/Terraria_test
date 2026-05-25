@@ -1,11 +1,11 @@
 using Microsoft.Xna.Framework;
 using Terraria;
 using Terraria.ModLoader;
-using TestMod.Buffs;
+using TestMod.Content.Buffs;
 using TestMod.Common.DynamicText;
 using TestMod.Common.Systems;
-using TestMod.Items.Accessories.Effects;
-using TestMod.Items.DamageTypes;
+using TestMod.Content.Items.Accessories.Effects;
+using TestMod.Content.Items.DamageTypes;
 
 namespace TestMod.Common.Players
 {

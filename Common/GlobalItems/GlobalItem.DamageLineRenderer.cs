@@ -6,7 +6,7 @@ using Terraria;
 using Terraria.GameContent;
 using Terraria.ModLoader;
 using Terraria.UI.Chat;
-using TestMod.Items.DamageTypes;
+using TestMod.Content.Items.DamageTypes;
 
 namespace TestMod.Common.GlobalItems
 {

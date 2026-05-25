@@ -4,8 +4,8 @@ using Microsoft.Xna.Framework;
 using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
-using TestMod.Buffs;
-using TestMod.Tiles;
+using TestMod.Content.Buffs;
+using TestMod.Content.Tiles;
 
 namespace TestMod.Common.Systems
 {
