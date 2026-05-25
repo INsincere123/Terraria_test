@@ -1,11 +1,11 @@
 using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
-using TestMod.Content.Items.Accessories.Effects;
+using TestMod.Common.Mechanics.AccessoryEffects;
 using TestMod.Common.Systems;
 using TestMod.Content.Buffs;
 using TestMod.Content.Rarities;
-using TestMod.Content.Items.Accessories.Dashes;
+using TestMod.Common.Mechanics.Dashes;
 using System.Collections.Generic;
 
 namespace TestMod.Content.Items.Accessories

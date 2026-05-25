@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using TestMod.Content.Buffs;
 using TestMod.Common.DynamicText;
 using TestMod.Common.Players;
-using TestMod.Content.Items.Accessories.Effects;
+using TestMod.Common.Mechanics.AccessoryEffects;
 using TestMod.Content.Items.DamageTypes;
 using TestMod.Content.Projectiles.Melee;
 using TestMod.Content.Projectiles.Minions;

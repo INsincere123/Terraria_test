@@ -4,8 +4,8 @@ using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
 using TestMod.Common.Players;
-using TestMod.DataStructures;
-using TestMod.Content.Items.Accessories.Effects;
+using TestMod.Common.DataStructures;
+using TestMod.Common.Mechanics.AccessoryEffects;
 
 namespace TestMod.Content.Items.Accessories
 {

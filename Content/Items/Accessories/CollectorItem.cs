@@ -3,7 +3,7 @@ using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
 using TestMod.Common.Players;
-using TestMod.Content.Items.Accessories.Effects;
+using TestMod.Common.Mechanics.AccessoryEffects;
 using TestMod.Content.Rarities;
 
 namespace TestMod.Content.Items.Accessories

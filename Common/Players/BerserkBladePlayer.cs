@@ -4,7 +4,7 @@ using Terraria.ModLoader;
 using TestMod.Content.Buffs;
 using TestMod.Common.DynamicText;
 using TestMod.Common.Systems;
-using TestMod.Content.Items.Accessories.Effects;
+using TestMod.Common.Mechanics.AccessoryEffects;
 using TestMod.Content.Items.DamageTypes;
 
 namespace TestMod.Common.Players

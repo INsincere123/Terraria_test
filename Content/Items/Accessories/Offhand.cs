@@ -1,7 +1,7 @@
 using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
-using TestMod.Content.Items.Accessories.Effects;
+using TestMod.Common.Mechanics.AccessoryEffects;
 using TestMod.Content.Projectiles.Accessories;
 
 namespace TestMod.Content.Items.Accessories

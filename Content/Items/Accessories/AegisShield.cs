@@ -2,7 +2,7 @@ using Terraria;
 using Terraria.Audio;
 using Terraria.ID;
 using Terraria.ModLoader;
-using TestMod.Content.Items.Accessories.Dashes;
+using TestMod.Common.Mechanics.Dashes;
 
 namespace TestMod.Content.Items.Accessories
 {

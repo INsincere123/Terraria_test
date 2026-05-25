@@ -1,6 +1,6 @@
 using TestMod.Common.Players;
 using TestMod.Common.Systems;
-using TestMod.Content.Items.Accessories.Effects;
+using TestMod.Common.Mechanics.AccessoryEffects;
 using TestMod.Content.Buffs;
 using TestMod.Content.Rarities;
 using Terraria;

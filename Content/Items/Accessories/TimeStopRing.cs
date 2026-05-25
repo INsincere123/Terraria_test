@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using TestMod.Common.Systems;
-using TestMod.Content.Items.Accessories.Effects;
+using TestMod.Common.Mechanics.AccessoryEffects;
 using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;

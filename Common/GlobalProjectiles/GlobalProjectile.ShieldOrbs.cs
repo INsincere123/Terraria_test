@@ -1,6 +1,6 @@
 using Terraria;
 using Terraria.ModLoader;
-using TestMod.Content.Items.Accessories.Effects;
+using TestMod.Common.Mechanics.AccessoryEffects;
 
 namespace TestMod.Common.GlobalProjectiles
 {
