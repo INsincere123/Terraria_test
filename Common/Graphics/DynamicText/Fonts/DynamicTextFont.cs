@@ -3,7 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using ReLogic.Graphics;
 using Terraria.UI.Chat;
 
-namespace TestMod.Common.DynamicText.Fonts
+namespace TestMod.Common.Graphics.DynamicText.Fonts
 {
     public readonly struct DynamicTextFont
     {

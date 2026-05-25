@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Terraria;
 using Terraria.ModLoader;
-using TestMod.Common.DynamicText.Fonts;
+using TestMod.Common.Graphics.DynamicText.Fonts;
 using TestMod.Content.Items.DamageTypes;
 
-namespace TestMod.Common.DynamicText
+namespace TestMod.Common.Graphics.DynamicText
 {
     public static class DynamicTextStyleRegistry
     {

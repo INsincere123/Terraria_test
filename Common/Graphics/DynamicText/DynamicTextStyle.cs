@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Terraria;
-using TestMod.Common.DynamicText.Fonts;
+using TestMod.Common.Graphics.DynamicText.Fonts;
 
-namespace TestMod.Common.DynamicText
+namespace TestMod.Common.Graphics.DynamicText
 {
     public enum DynamicTextSurface
     {

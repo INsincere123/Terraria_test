@@ -2,7 +2,7 @@ using Microsoft.Xna.Framework;
 using Terraria;
 using Terraria.ModLoader;
 using TestMod.Content.Buffs;
-using TestMod.Common.DynamicText;
+using TestMod.Common.Graphics.DynamicText;
 using TestMod.Common.Systems;
 using TestMod.Common.Mechanics.AccessoryEffects;
 using TestMod.Content.Items.DamageTypes;

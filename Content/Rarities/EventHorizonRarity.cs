@@ -8,7 +8,7 @@ using ReLogic.Graphics;
 using Terraria;
 using Terraria.ModLoader;
 using Terraria.UI.Chat;
-using TestMod.Common.DynamicText;
+using TestMod.Common.Graphics.DynamicText;
 using TestMod.Common.Systems;
 
 namespace TestMod.Content.Rarities

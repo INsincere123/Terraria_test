@@ -1,7 +1,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace TestMod.Common.Particles
+namespace TestMod.Common.Graphics.Particles
 {
     public sealed class SmokeParticle : TestModParticle
     {

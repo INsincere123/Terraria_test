@@ -6,7 +6,7 @@ using Terraria.GameContent;
 using Terraria.ID;
 using Terraria.ModLoader;
 using TestMod.Content.Buffs;
-using TestMod.Common.DynamicText;
+using TestMod.Common.Graphics.DynamicText;
 using TestMod.Common.Players;
 using TestMod.Common.Systems;
 

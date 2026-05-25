@@ -7,9 +7,9 @@ using Terraria.GameContent;
 using Terraria.ID;
 using Terraria.ModLoader;
 using Terraria.UI;
-using TestMod.Common.DynamicText.Fonts;
+using TestMod.Common.Graphics.DynamicText.Fonts;
 
-namespace TestMod.Common.DynamicText
+namespace TestMod.Common.Graphics.DynamicText
 {
     public readonly struct DynamicWorldTextRequest
     {

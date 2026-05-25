@@ -8,7 +8,7 @@ using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
 
-namespace TestMod.Common.DynamicText.Fonts
+namespace TestMod.Common.Graphics.DynamicText.Fonts
 {
     public sealed class DynamicTextFontSystem : ModSystem
     {

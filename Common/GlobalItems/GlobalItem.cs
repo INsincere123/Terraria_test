@@ -2,7 +2,7 @@ using System.Collections.ObjectModel;
 using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
-using TestMod.Common.DynamicText;
+using TestMod.Common.Graphics.DynamicText;
 using TestMod.Common.Players;
 using TestMod.Content.Rarities;
 

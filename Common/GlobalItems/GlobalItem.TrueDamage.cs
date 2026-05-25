@@ -1,6 +1,6 @@
 using Terraria;
 using Terraria.ID;
-using TestMod.Common.DynamicText;
+using TestMod.Common.Graphics.DynamicText;
 using TestMod.Content.Items.DamageTypes;
 
 namespace TestMod.Common.GlobalItems

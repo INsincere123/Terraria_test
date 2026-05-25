@@ -7,7 +7,7 @@ using Terraria.GameContent.UI.ResourceSets;
 using Terraria.ModLoader;
 using TestMod.Common.Players;
 
-namespace TestMod.Common.Overlays
+namespace TestMod.Common.UI.ResourceOverlays
 {
     /// <summary>
     /// Draws the shield overlay for vanilla horizontal resource bars.

@@ -4,7 +4,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Terraria;
 using Terraria.GameContent;
 
-namespace TestMod.Common.DynamicText
+namespace TestMod.Common.Graphics.DynamicText
 {
     public sealed class TextPlainLayer : IDynamicTextLayer
     {

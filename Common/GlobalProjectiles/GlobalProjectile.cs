@@ -5,7 +5,7 @@ using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
 using TestMod.Content.Buffs;
-using TestMod.Common.DynamicText;
+using TestMod.Common.Graphics.DynamicText;
 using TestMod.Common.Players;
 using TestMod.Common.Mechanics.AccessoryEffects;
 using TestMod.Content.Items.DamageTypes;

@@ -3,9 +3,9 @@ using Microsoft.Xna.Framework.Graphics;
 using ReLogic.Graphics;
 using Terraria;
 using Terraria.ModLoader;
-using TestMod.Common.DynamicText.Fonts;
+using TestMod.Common.Graphics.DynamicText.Fonts;
 
-namespace TestMod.Common.DynamicText
+namespace TestMod.Common.Graphics.DynamicText
 {
     public static class DynamicTextTooltipRenderer
     {

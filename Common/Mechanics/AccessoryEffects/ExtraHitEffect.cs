@@ -3,7 +3,7 @@ using Microsoft.Xna.Framework;
 using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
-using TestMod.Common.DynamicText;
+using TestMod.Common.Graphics.DynamicText;
 
 namespace TestMod.Common.Mechanics.AccessoryEffects
 {

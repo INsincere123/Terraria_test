@@ -5,7 +5,7 @@ using Terraria.Audio;
 using Terraria.ID;
 using Terraria.ModLoader;
 using TestMod.Content.Buffs;
-using TestMod.Common.Particles;
+using TestMod.Common.Graphics.Particles;
 using TestMod.Common.Mechanics.AccessoryEffects;
 using TestMod.Content.Items.DamageTypes;
 

@@ -4,7 +4,7 @@ using ReLogic.Graphics;
 using Terraria;
 using Terraria.GameContent;
 using Terraria.ModLoader;
-using TestMod.Common.DynamicText;
+using TestMod.Common.Graphics.DynamicText;
 
 namespace TestMod.Content.Rarities
 {

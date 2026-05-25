@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace TestMod.Common.DynamicText.Fonts
+namespace TestMod.Common.Graphics.DynamicText.Fonts
 {
     public sealed class DynamicTextFontSpec
     {

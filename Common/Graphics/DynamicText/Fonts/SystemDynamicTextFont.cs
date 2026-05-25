@@ -8,7 +8,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Terraria;
 using XnaColor = Microsoft.Xna.Framework.Color;
 
-namespace TestMod.Common.DynamicText.Fonts
+namespace TestMod.Common.Graphics.DynamicText.Fonts
 {
     public sealed class SystemDynamicTextFont : IDisposable
     {

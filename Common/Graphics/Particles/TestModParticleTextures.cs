@@ -1,4 +1,4 @@
-namespace TestMod.Common.Particles
+namespace TestMod.Common.Graphics.Particles
 {
     public static class TestModParticleTextures
     {
