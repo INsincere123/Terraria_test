@@ -100,6 +100,7 @@ namespace TestMod.Common.Players
                 return;
             }
 
+            float previousMaxShield = MaxShield;
             float newMax     = 0f;
             float maxDecay   = 0f;
             int   maxDelay   = 0;
@@ -121,10 +122,6 @@ namespace TestMod.Common.Players
                     ShieldEdgeColor = def.ShieldEdgeColor;
                     colorSet        = true;
                 }
-
-                // 护盾存活时执行属性加成
-                if (CurrentShield > 0f)
-                    def.OnActive?.Invoke(Player);
             }
 
             MaxShield       = Math.Max(0f, newMax);
@@ -132,9 +129,21 @@ namespace TestMod.Common.Players
             _rechargeDelay  = maxDelay;
             _rechargeRate   = minRate == float.MaxValue ? 0f : minRate;
 
+            // 首次装备护盾，或重新装备护盾时，立即填充初始护盾。
+            // 仅在上一帧没有护盾上限时初始化，避免护盾破碎后在同一装备周期内自动充满。
+            if (previousMaxShield <= 0f && MaxShield > 0f)
+                CurrentShield = MaxShield;
+
             // 护盾上限缩小时同步裁剪当前值
             if (CurrentShield > MaxShield)
                 CurrentShield = MaxShield;
+
+            // 护盾存活时执行属性加成
+            if (CurrentShield > 0f)
+            {
+                foreach (var def in _defs)
+                    def.OnActive?.Invoke(Player);
+            }
 
             // 护盾存活时免疫击退（全局效果，不依赖具体 def）
             if (CurrentShield > 0f)
