@@ -3,6 +3,7 @@ using Terraria.Audio;
 using Terraria.ID;
 using Terraria.ModLoader;
 using TestMod.Common.Mechanics.Dashes;
+using TestMod.Content.Dusts;
 
 namespace TestMod.Content.Items.Accessories
 {
@@ -25,7 +26,7 @@ namespace TestMod.Content.Items.Accessories
 		//public override string Texture => "Terraria/Images/Item_1256"; // Paladin's Shield
 
 		// ── 数值调节区 ────────────────────────────────────────────────────────
-		private static readonly DashConfig DashCfg = new DashConfig
+		private static DashConfig CreateDashConfig() => new DashConfig
 		{
 			// 运动
 			InitialSpeed         = 23.3f,   // px/帧
@@ -56,10 +57,10 @@ namespace TestMod.Content.Items.Accessories
 			OnHitBuffDuration = 0,
 
 			// 视觉（冰蓝 + 洋红，灾厄配色）
-			TrailDustType   = DustID.IceTorch,
+			TrailDustType   = ModContent.DustType<ShieldShardDust>(),
 			TrailDustPerFrame = 3,
 			TrailDustScale  = 1.4f,
-			BurstDustType   = DustID.IceTorch,
+			BurstDustType   = ModContent.DustType<ShieldShardDust>(),
 			BurstDustCount  = 30,
 			StartSound      = SoundID.Item24,
 			HitSound        = SoundID.Item14,
@@ -79,7 +80,7 @@ namespace TestMod.Content.Items.Accessories
 		{
 			DashPlayer dp = player.GetModPlayer<DashPlayer>();
 			dp.VanillaDashEffectId = "StandardDash";
-			dp.VanillaDashConfig   = DashCfg;
+			dp.VanillaDashConfig   = CreateDashConfig();
 			// dashType = 0：与灾厄相同。
 			// 置 0 后 DashMovement() 在 dash==0 处提前退出，不再执行固定速度/dashDelay 逻辑。
 			// HelpfulHotkeys 兼容性由 PostUpdateRunSpeeds 里检测 Player.dashTime > 0 保证

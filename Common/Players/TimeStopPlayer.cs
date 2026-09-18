@@ -5,6 +5,7 @@ using Terraria;
 using Terraria.Audio;
 using Terraria.ID;
 using Terraria.ModLoader;
+using TestMod.Common.Utilities;
 
 namespace TestMod.Common.Players
 {
@@ -115,6 +116,7 @@ namespace TestMod.Common.Players
             TimeSlowActive  = true;
             TimeSlowTimer   = TimeSlowDuration;
             TimeSlowCooldown = TimeSlowCooldownMax;
+            DustUtils.SpawnTemporalBurst(Player.Center, 18, new Color(130, 205, 255), 1.2f, 4.2f, 0.85f);
             return true;
         }
 
@@ -122,6 +124,7 @@ namespace TestMod.Common.Players
         {
             TimeSlowActive = false;
             TimeSlowTimer  = 0;
+            DustUtils.SpawnTemporalBurst(Player.Center, 10, new Color(185, 225, 255), 0.8f, 2.8f, 0.65f);
         }
 
         public bool TryActivateTimeStop()
@@ -137,6 +140,7 @@ namespace TestMod.Common.Players
             currentRadius01 = 1.5f; // 从全屏外开始收缩
 
             SoundEngine.PlaySound(SoundID.Item122 with { Volume = 0.8f, Pitch = -0.2f }, Player.Center);
+            DustUtils.SpawnTemporalBurst(Player.Center, 34, new Color(150, 210, 255), 2.4f, 7.2f, 1.05f);
             return true;
         }
 
@@ -148,6 +152,7 @@ namespace TestMod.Common.Players
             TimeStopTimer = 0;
 
             SoundEngine.PlaySound(SoundID.Item117 with { Volume = 0.8f, Pitch = 0.2f }, Player.Center);
+            DustUtils.SpawnTemporalBurst(Player.Center, 22, new Color(210, 230, 255), 1.4f, 4.8f, 0.9f);
         }
 
         public override void OnRespawn()

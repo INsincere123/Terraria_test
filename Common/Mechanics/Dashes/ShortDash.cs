@@ -4,6 +4,7 @@ using Terraria;
 using Terraria.Audio;
 using Terraria.ID;
 using Terraria.ModLoader;
+using TestMod.Common.Utilities;
 
 namespace TestMod.Common.Mechanics.Dashes
 {
@@ -47,8 +48,7 @@ namespace TestMod.Common.Mechanics.Dashes
 		public const int ContactIFrames = 30;
 
 		// 视觉 (蓝白系, 与长冲刺金火焰区分)
-		public const int TrailDustType    = DustID.AncientLight;
-		public const int ContactDustType  = DustID.PortalBoltTrail;
+		private static readonly Color DashDustColor = new(130, 205, 255);
 		public const int ContactDustCount = 35;
 
 		// ========================================================================
@@ -77,14 +77,7 @@ namespace TestMod.Common.Mechanics.Dashes
 
 			SoundEngine.PlaySound(SoundID.Item8, player.Center);
 
-			for (int i = 0; i < 40; i++)
-			{
-				Dust d = Dust.NewDustDirect(
-					player.position, player.width, player.height,
-					TrailDustType, 0f, 0f, 100, default, 1.6f);
-				d.noGravity = true;
-				d.velocity  = Main.rand.NextVector2Circular(4f, 4f);
-			}
+			DustUtils.SpawnTemporalBurst(player.Center, 34, DashDustColor, 1.6f, 4.4f, 0.95f);
 		}
 
 		// =================================================
@@ -112,11 +105,9 @@ namespace TestMod.Common.Mechanics.Dashes
 
 			for (int i = 0; i < 3; i++)
 			{
-				Dust d = Dust.NewDustDirect(
-					player.position, player.width, player.height,
-					TrailDustType, -unitDir.X * 3f, -unitDir.Y * 3f, 100, default, 1.6f);
-				d.noGravity = true;
-				d.velocity *= 0.4f;
+				Vector2 position = player.Center + Main.rand.NextVector2Circular(player.width * 0.45f, player.height * 0.45f);
+				Vector2 velocity = -unitDir * Main.rand.NextFloat(2f, 4.2f) + Main.rand.NextVector2Circular(0.7f, 0.7f);
+				DustUtils.SpawnTemporalShard(position, velocity, new Color(140, 215, 255), Main.rand.NextFloat(0.78f, 1.08f), 55);
 			}
 
 			CheckContactDamage(player, dirX);
@@ -189,14 +180,7 @@ namespace TestMod.Common.Mechanics.Dashes
 				if (Main.netMode == NetmodeID.MultiplayerClient)
 					NetMessage.SendStrikeNPC(npc, hitInfo);
 
-				for (int j = 0; j < ContactDustCount; j++)
-				{
-					Dust d = Dust.NewDustDirect(
-						npc.position, npc.width, npc.height,
-						ContactDustType, 0f, 0f, 0, default, 2.2f);
-					d.noGravity = true;
-					d.velocity  = Main.rand.NextVector2Circular(5f, 5f);
-				}
+				DustUtils.SpawnImpactBurst(npc.Center, ContactDustCount, DashDustColor, 2.2f, 6.4f, 1.05f);
 
 				SoundEngine.PlaySound(SoundID.Item14, npc.Center);
 				player.SetImmuneTimeForAllTypes(ContactIFrames);

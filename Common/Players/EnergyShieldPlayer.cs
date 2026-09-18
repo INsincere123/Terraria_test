@@ -9,6 +9,7 @@ using Terraria.ID;
 using Terraria.ModLoader;
 using TestMod.Common.Graphics.DynamicText;
 using TestMod.Common.DataStructures;
+using TestMod.Common.Utilities;
 
 namespace TestMod.Common.Players
 {
@@ -239,6 +240,7 @@ namespace TestMod.Common.Players
             _shieldHitFlashTimer = ShieldHitFlashFrames;
             PlayShieldHitSound();
             SpawnShieldDamageText(absorbed);
+            DustUtils.SpawnShieldHit(Player, ShieldEdgeColor, info.HitDirection);
 
             if (CurrentShield <= 0f && _wasShielded)
                 TriggerOnBreak();
@@ -334,6 +336,7 @@ namespace TestMod.Common.Players
         {
             _wasShielded = false;
             SpawnShieldBreakText();
+            DustUtils.SpawnShieldBurst(Player.Center, 28, ShieldEdgeColor, 2.6f, 6.8f, 1.1f);
             foreach (var def in _defs)
                 def.OnBreak?.Invoke(Player);
         }

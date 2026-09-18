@@ -239,11 +239,14 @@ namespace TestMod.Content.Projectiles.Minions
                         {
                             float angle = MathHelper.TwoPi / burstCount * d;
                             Vector2 vel = angle.ToRotationVector2() * Main.rand.NextFloat(8f, 14f);
-                            // RedTorch 和 Torch 交替，增加层次感
-                            int dustType = (d % 2 == 0) ? DustID.RedTorch : DustID.Torch;
-                            Dust dust = Dust.NewDustPerfect(Projectile.Center, dustType, vel,
-                                100, default, Main.rand.NextFloat(1.2f, 2.0f));
-                            dust.noGravity = true;
+                            // Custom star dust keeps the ascension pulse distinct from vanilla torch dust.
+                            Color burstColor = d % 2 == 0
+                                ? new Color(255, 78, 28)
+                                : new Color(255, 188, 84);
+                            DustUtils.SpawnCosmicSpark(Projectile.Center, vel, burstColor, Main.rand.NextFloat(1.1f, 1.75f), 60);
+
+                            if (d % 3 == 0)
+                                DustUtils.SpawnImpactLine(Projectile.Center, vel * 0.72f, burstColor, Main.rand.NextFloat(0.8f, 1.18f), 30);
                         }
                     }
                 }
@@ -279,12 +282,12 @@ namespace TestMod.Content.Projectiles.Minions
                 if (!Main.rand.NextBool(isAntares ? 5 : 8))
                     continue;
 
-                int dustType = isAntares ? DustID.RedTorch : (tier >= 2 && Main.rand.NextBool(4) ? DustID.GoldFlame : DustID.BlueTorch);
                 float intensity = star.Brightness * (isAntares ? 0.66f : 0.42f) * (1f + tier * 0.12f);
-                int d = Dust.NewDust(pos - Vector2.One, 2, 2, dustType, 0f, 0f, 150, default, intensity);
-                Main.dust[d].noGravity = true;
-                Main.dust[d].velocity *= 0.08f;
-                Main.dust[d].scale = intensity * Main.rand.NextFloat(0.45f, 0.78f);
+                Color dustColor = isAntares
+                    ? Color.Lerp(new Color(255, 62, 22), new Color(255, 196, 82), Main.rand.NextFloat(0.38f))
+                    : Color.Lerp(star.CoreColor, tier >= 2 ? new Color(255, 210, 90) : new Color(140, 210, 255), Main.rand.NextFloat(0.42f));
+                Vector2 velocity = Main.rand.NextVector2Circular(0.18f, 0.18f);
+                DustUtils.SpawnCosmicSpark(pos + Main.rand.NextVector2Circular(1.2f, 1.2f), velocity, dustColor, intensity * Main.rand.NextFloat(0.42f, 0.72f), 120);
             }
         }
 
@@ -384,13 +387,13 @@ namespace TestMod.Content.Projectiles.Minions
             if (spawnEffectPlayed) return;
 
             const int dustAmt = 50;
-            for (int d = 0; d < dustAmt; d++)
-            {
-                float angle = MathHelper.TwoPi / dustAmt * d;
-                Vector2 v = angle.ToRotationVector2() * 20f;
-                Dust dust = Dust.NewDustPerfect(Owner.Center - Vector2.UnitY * 60f, DustID.PurificationPowder, v);
-                dust.noGravity = true;
-            }
+            DustUtils.SpawnCosmicBurst(
+                Owner.Center - Vector2.UnitY * 60f,
+                dustAmt,
+                new Color(255, 126, 64),
+                8f,
+                18f,
+                1.1f);
             spawnEffectPlayed = true;
         }
 
@@ -411,8 +414,7 @@ namespace TestMod.Content.Projectiles.Minions
             {
                 float angle = MathHelper.TwoPi / 16 * d;
                 Vector2 v = angle.ToRotationVector2() * 20f;
-                Dust dust = Dust.NewDustPerfect(Projectile.Center, DustID.PurificationPowder, v);
-                dust.noGravity = true;
+                DustUtils.SpawnImpactLine(Projectile.Center, v, new Color(255, 160, 72), Main.rand.NextFloat(0.82f, 1.18f), 45);
             }
 
             // 5% 概率触发爆发射击，数量 = 当前占用召唤槽

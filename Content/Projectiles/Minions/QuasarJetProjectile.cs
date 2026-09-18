@@ -415,8 +415,20 @@ namespace TestMod.Content.Projectiles.Minions
             Vector2 position = Projectile.Center
                 + direction * Main.rand.NextFloat(24f, BeamLength * 0.72f)
                 + normal * Main.rand.NextFloat(-CollisionWidth, CollisionWidth);
-            Dust dust = Dust.NewDustPerfect(position, DustID.Electric, direction * Main.rand.NextFloat(1.6f, 4.2f), 80, JetColor, Main.rand.NextFloat(0.7f, 1.35f));
-            dust.noGravity = true;
+            DustUtils.SpawnImpactLine(
+                position,
+                direction * Main.rand.NextFloat(1.8f, 4.6f),
+                Color.Lerp(JetColor, HotCoreColor, Main.rand.NextFloat(0.2f, 0.58f)),
+                Main.rand.NextFloat(0.72f, 1.12f),
+                55);
+
+            if (Main.rand.NextBool(4))
+                DustUtils.SpawnCosmicSpark(
+                    position + normal * Main.rand.NextFloat(-8f, 8f),
+                    direction * Main.rand.NextFloat(0.8f, 2.4f) + Main.rand.NextVector2Circular(0.5f, 0.5f),
+                    HotCoreColor,
+                    Main.rand.NextFloat(0.35f, 0.58f),
+                    80);
         }
     }
 }

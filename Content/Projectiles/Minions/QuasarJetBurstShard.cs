@@ -6,6 +6,7 @@ using Terraria.ID;
 using Terraria.ModLoader;
 using TestMod.Common.Players;
 using TestMod.Common.Systems;
+using TestMod.Common.Utilities;
 
 namespace TestMod.Content.Projectiles.Minions
 {
@@ -117,16 +118,11 @@ namespace TestMod.Content.Projectiles.Minions
             Vector2 velocity = -direction * Main.rand.NextFloat(1.6f, 4.6f)
                 + normal * Main.rand.NextFloat(-2.1f, 2.1f);
 
-            int dustType = Main.rand.NextBool(3) ? DustID.Electric : DustID.BlueTorch;
-            Dust dust = Dust.NewDustPerfect(
-                position,
-                dustType,
-                velocity,
-                35,
-                Color.Lerp(JetColor, HotCoreColor, Main.rand.NextFloat(0.25f, 0.8f)),
-                Main.rand.NextFloat(1.1f, 1.9f));
-            dust.noGravity = true;
-            dust.velocity *= Main.rand.NextFloat(0.82f, 1.16f);
+            Color color = Color.Lerp(JetColor, HotCoreColor, Main.rand.NextFloat(0.25f, 0.8f));
+            DustUtils.SpawnCosmicSpark(position, velocity * Main.rand.NextFloat(0.82f, 1.16f), color, Main.rand.NextFloat(0.62f, 1.05f), 45);
+
+            if (Main.rand.NextBool(3))
+                DustUtils.SpawnImpactLine(position, velocity * 0.72f, color, Main.rand.NextFloat(0.58f, 0.9f), 60);
         }
 
         public override void ModifyHitNPC(NPC target, ref NPC.HitModifiers modifiers)

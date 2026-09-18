@@ -3,6 +3,7 @@ using Terraria.Audio;
 using Terraria.ID;
 using Terraria.ModLoader;
 using TestMod.Common.Mechanics.Dashes;
+using TestMod.Content.Dusts;
 
 namespace TestMod.Content.Items.Accessories
 {
@@ -23,7 +24,7 @@ namespace TestMod.Content.Items.Accessories
 		//public override string Texture => "Terraria/Images/Item_1850"; // Master Ninja Gear
 
 		// ── 数值调节区 ────────────────────────────────────────────────────────
-		private static readonly DashConfig DashCfg = new DashConfig
+		private static DashConfig CreateDashConfig() => new DashConfig
 		{
 			// 运动
 			InitialSpeed           = 64f,    // px/帧
@@ -54,10 +55,10 @@ namespace TestMod.Content.Items.Accessories
 			OnHitBuffDuration = 0,
 
 			// 视觉（暗紫 / 阴影火焰，对应原版暗紫配色）
-			TrailDustType    = DustID.Shadowflame,
+			TrailDustType    = ModContent.DustType<GraviticVoidDust>(),
 			TrailDustPerFrame = 4,
 			TrailDustScale   = 1.2f,
-			BurstDustType    = DustID.Shadowflame,
+			BurstDustType    = ModContent.DustType<GraviticVoidDust>(),
 			BurstDustCount   = 20,
 			StartSound       = SoundID.Item8,
 			HitSound         = null,
@@ -77,7 +78,7 @@ namespace TestMod.Content.Items.Accessories
 		{
 			DashPlayer dp = player.GetModPlayer<DashPlayer>();
 			dp.VanillaDashEffectId = "StandardDash";
-			dp.VanillaDashConfig   = DashCfg;
+			dp.VanillaDashConfig   = CreateDashConfig();
 			player.dashType = 0; // 同上，见 AegisShield
 		}
 	}

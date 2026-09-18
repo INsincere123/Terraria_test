@@ -4,6 +4,7 @@ using Terraria;
 using Terraria.ModLoader;
 using TestMod.Content.Buffs;
 using TestMod.Common.Graphics.DynamicText;
+using TestMod.Common.Utilities;
 
 namespace TestMod.Common.Players
 {
@@ -161,6 +162,8 @@ namespace TestMod.Common.Players
         {
             // AddBuff 以真实帧数添加，tML 自动倒计时并显示
             Player.AddBuff(ModContent.BuffType<CrimsonBerserkBuff>(), BerserkDuration);
+            DustUtils.SpawnBloodMistCloud(Player.Hitbox, 24, new Color(150, 18, 32), 1.15f);
+            DustUtils.SpawnImpactBurst(Player.Center, 10, new Color(210, 28, 42), 2.4f, 5.6f, 0.82f);
             DynamicWorldTextSystem.Spawn(new DynamicWorldTextRequest(
                 "BLOOD FEED",
                 Player.Top - Vector2.UnitY * 18f,
