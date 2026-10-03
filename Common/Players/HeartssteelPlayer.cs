@@ -28,7 +28,7 @@ namespace TestMod.Common.Players
         private const float BonusDmgFlat     = 240f;   // 触发额外伤害固定部分
         private const float BonusDmgHpRatio  = 0.88f;  // 触发额外伤害：基于最大生命的比例
         private const float HpGainRatio      = 0.008f; // 每次触发：从实际伤害中获得的永久生命比例
-        public  const int   MaxBonusHP       = 200;    // 永久叠层生命上限
+        public  const int   MaxBonusHP       = 666;    // 永久叠层生命上限
         // ────────────────────────────────────────────────────────────────────────
 
         // ── 持久状态（跨存档保存）──

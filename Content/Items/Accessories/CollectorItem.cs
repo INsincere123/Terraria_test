@@ -31,8 +31,8 @@ namespace TestMod.Content.Items.Accessories
         public const int   PlanteraCrit = 5;
         public const int   GolemCrit = 10;
         public const int   MoonLordArmorPenetration = 20;
-        public const float MoonLordDamage = 0.20f;
-        public const int   MoonLordCrit = 15;
+        public const float MoonLordDamage = 0.10f;
+        public const int   MoonLordCrit = 10;
         public const int   ElectrifiedDebuffDuration = 300;
         // ─────────────────────────────────────────────────────────────
 
@@ -56,7 +56,7 @@ namespace TestMod.Content.Items.Accessories
 
             if (collector.ExecutedMoonLord)
             {
-                player.GetModPlayer<CorePlayer>().independentDamageMult *= 1.05f;
+                player.GetModPlayer<CorePlayer>().independentDamageMult *= 1.02f;
                 OnHitDebuffPlayer.AddDebuff(player, BuffID.Electrified, ElectrifiedDebuffDuration);
             }
         }
@@ -69,7 +69,7 @@ namespace TestMod.Content.Items.Accessories
             string statsLine = BuildStatsLine(stats, collector.ExecutedMoonLord);
             int index = tooltips.FindIndex(t => t.Name == "Tooltip0");
             if (index >= 0)
-                tooltips.Insert(index + 1, new TooltipLine(Mod, "CollectorStats", statsLine));
+                tooltips.Insert(index, new TooltipLine(Mod, "CollectorStats", statsLine));
             else
                 tooltips.Add(new TooltipLine(Mod, "CollectorStats", statsLine));
         }
@@ -130,7 +130,7 @@ namespace TestMod.Content.Items.Accessories
                 parts.Add($"[c/FFD700:+{stats.Crit}% 暴击率]");
             if (electrified)
             {
-                parts.Add("[c/FFD700:伤害变为 1.05 倍]");
+                parts.Add("[c/FFD700:伤害变为 1.02 倍]");
                 parts.Add("[c/66CCFF:命中附着带电]");
             }
 

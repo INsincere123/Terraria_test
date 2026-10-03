@@ -16,30 +16,30 @@ namespace TestMod.Content.Prefixes
         // 不需要的属性：同时注释掉下方对应的 ApplyAccessoryEffects 行和 GetTooltipLines 行
 
         // ---------- 生存类 ----------
-        public const int DefenseBonus = 4;              // 防御值（整数）
+        public const int DefenseBonus = 2;              // 防御值（整数）
         public const float DamageReduction = 0.01f;     // 伤害减免，0.01f = 1%
-        public const int MaxLifeBonus = 15;             // 最大生命值（整数）
-        public const int LifeRegenBonus = 2;            // 生命回复（2 = 每秒 +1 HP）
+        public const int MaxLifeBonus = 10;             // 最大生命值（整数）
+        public const int LifeRegenBonus = 1;            // 生命回复（2 = 每秒 +1 HP）
 
         // ---------- 伤害类 ----------
-        public const float DamageBonus = 0.04f;         // 全伤害加成，0.04f = 4%
-        public const int CritChanceBonus = 4;           // 全暴击率加成（整数，单位：%）
+        public const float DamageBonus = 0.025f;         // 全伤害加成，0.04f = 4%
+        public const int CritChanceBonus = 2;           // 全暴击率加成（整数，单位：%）
         public const int ArmorPenetrationBonus = 2;     // 护甲穿透（整数）
 
         // ---------- 速度类 ----------
-        public const float MoveSpeedBonus = 0.04f;      // 移动速度加成，0.04f = 4%
-        public const float MeleeSpeedBonus = 0.04f;     // 近战攻速加成，0.04f = 4%
+        public const float MoveSpeedBonus = 0.03f;      // 移动速度加成，0.04f = 4%
+        public const float MeleeSpeedBonus = 0.02f;     // 近战攻速加成，0.04f = 4%
 
         // ---------- 魔法类 ----------
         public const int MaxManaBonus = 10;             // 最大魔力加成（整数）
-        public const float ManaCostReduction = 0.03f;   // 魔力消耗减少，0.03f = 3%
+        public const float ManaCostReduction = 0.02f;   // 魔力消耗减少，0.03f = 3%
 
         // ---------- 幸运 ----------
         public const float LuckBonus = 0.1f;            // 幸运值加成
 
         // ---------- 重铸价值倍率 ----------
         // 1.0f = 不变，1.05f ≈ 稀有度+1，1.2f ≈ 稀有度+2
-        public const float ReforgeValueMult = 10.0f;
+        public const float ReforgeValueMult = 8.0f;
 
         // ============================================================
         // =====================【实现 - 一般无需改动】==================

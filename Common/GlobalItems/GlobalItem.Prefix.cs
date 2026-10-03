@@ -11,13 +11,21 @@ namespace TestMod.Common.GlobalItems
     /// <summary>
     /// 前缀权重池。所有武器类型和饰品的 ChoosePrefix 逻辑集中于此。
     ///
-    /// 权重规则（还原原版行为）：
+    /// 默认权重规则（具体参数见下方权重调节区）：
     ///   正面/中性词缀              weight = 10
     ///   ReducedNaturalChance 词缀  weight = 3   （原版 66% 拒绝率 → 10×34%≈3）
     ///   自定义炼化/融合（极稀有）   weight = 1   （正面词缀的 1/10）
     /// </summary>
     public partial class GlobalItem
     {
+        // ── 权重调节区：每个词缀的相对权重，越大越容易抽中 ──
+        private const int WeaponNormalWeight = 40;    // 武器普通词缀
+        private const int WeaponReducedWeight = 12;    // 武器 ReducedNaturalChance 词缀
+        private const int RefinementWeight = 1;       // 自定义炼化词缀（所有武器类型）
+        private const int AccessoryNormalWeight = 40;  // 饰品普通词缀
+        private const int FusionWeight = 1;           // 自定义融合词缀
+        // 抽中概率 = 该词缀权重 / 当前池的总权重；修改后需 Build + Reload。
+
         public override int ChoosePrefix(Item item, UnifiedRandom rand)
         {
             // ── 真实伤害武器 ──────────────────────────────────────────
@@ -26,19 +34,19 @@ namespace TestMod.Common.GlobalItems
                 int r = ModContent.GetInstance<RefinementPrefix>().Type;
                 return CurveUtils.WeightedRandom(rand, [
                     // 通用词缀（Universal）
-                    (PrefixID.Keen,      10), (PrefixID.Superior,  10), (PrefixID.Forceful,  10),
-                    (PrefixID.Broken,     3), (PrefixID.Damaged,    3), (PrefixID.Shoddy,     3), // ReducedNaturalChance
-                    (PrefixID.Hurtful,   10), (PrefixID.Strong,    10), (PrefixID.Unpleasant,10),
-                    (PrefixID.Weak,       3), (PrefixID.Ruthless,  10), (PrefixID.Godly,     10), // Weak=ReducedNaturalChance
-                    (PrefixID.Demonic,   10), (PrefixID.Zealous,   10),
+                    (PrefixID.Keen,      WeaponNormalWeight), (PrefixID.Superior,  WeaponNormalWeight), (PrefixID.Forceful,  WeaponNormalWeight),
+                    (PrefixID.Broken,     WeaponReducedWeight), (PrefixID.Damaged,    WeaponReducedWeight), (PrefixID.Shoddy,     WeaponReducedWeight), // ReducedNaturalChance
+                    (PrefixID.Hurtful,   WeaponNormalWeight), (PrefixID.Strong,    WeaponNormalWeight), (PrefixID.Unpleasant,WeaponNormalWeight),
+                    (PrefixID.Weak,       WeaponReducedWeight), (PrefixID.Ruthless,  WeaponNormalWeight), (PrefixID.Godly,     WeaponNormalWeight), // Weak=ReducedNaturalChance
+                    (PrefixID.Demonic,   WeaponNormalWeight), (PrefixID.Zealous,   WeaponNormalWeight),
                     // 公共词缀（含攻速修正）
                     // Deadly2=43 是通用版；Deadly=20 是近战专属（有尺寸修正），两者不同
-                    (PrefixID.Quick,     10), (PrefixID.Deadly2,   10), (PrefixID.Agile,     10),
-                    (PrefixID.Nimble,    10), (PrefixID.Murderous, 10), (PrefixID.Slow,       3), // ReducedNaturalChance
-                    (PrefixID.Sluggish,   3), (PrefixID.Lazy,       3), (PrefixID.Annoying,  10), // ReducedNaturalChance
-                    (PrefixID.Nasty,     10),
+                    (PrefixID.Quick,     WeaponNormalWeight), (PrefixID.Deadly2,   WeaponNormalWeight), (PrefixID.Agile,     WeaponNormalWeight),
+                    (PrefixID.Nimble,    WeaponNormalWeight), (PrefixID.Murderous, WeaponNormalWeight), (PrefixID.Slow,       WeaponReducedWeight), // ReducedNaturalChance
+                    (PrefixID.Sluggish,   WeaponReducedWeight), (PrefixID.Lazy,       WeaponReducedWeight), (PrefixID.Annoying,  WeaponNormalWeight), // ReducedNaturalChance
+                    (PrefixID.Nasty,     WeaponNormalWeight),
                     // 炼化（极稀有）
-                    (r, 1),
+                    (r, RefinementWeight),
                 ]);
             }
 
@@ -49,19 +57,19 @@ namespace TestMod.Common.GlobalItems
             {
                 int r = ModContent.GetInstance<RefinementWhipPrefix>().Type;
                 return CurveUtils.WeightedRandom(rand, [
-                    (PrefixID.Keen,10),(PrefixID.Superior,10),(PrefixID.Forceful,10),
-                    (PrefixID.Broken,3),(PrefixID.Damaged,3),(PrefixID.Shoddy,3),
-                    (PrefixID.Hurtful,10),(PrefixID.Strong,10),(PrefixID.Unpleasant,10),
-                    (PrefixID.Weak,3),(PrefixID.Ruthless,10),(PrefixID.Godly,10),
-                    (PrefixID.Demonic,10),(PrefixID.Zealous,10),
-                    (PrefixID.Quick,10),(PrefixID.Deadly2,10),(PrefixID.Agile,10),
-                    (PrefixID.Nimble,10),(PrefixID.Murderous,10),(PrefixID.Slow,3),
-                    (PrefixID.Sluggish,3),(PrefixID.Lazy,3),(PrefixID.Annoying,10),(PrefixID.Nasty,10),
+                    (PrefixID.Keen,WeaponNormalWeight),(PrefixID.Superior,WeaponNormalWeight),(PrefixID.Forceful,WeaponNormalWeight),
+                    (PrefixID.Broken,WeaponReducedWeight),(PrefixID.Damaged,WeaponReducedWeight),(PrefixID.Shoddy,WeaponReducedWeight),
+                    (PrefixID.Hurtful,WeaponNormalWeight),(PrefixID.Strong,WeaponNormalWeight),(PrefixID.Unpleasant,WeaponNormalWeight),
+                    (PrefixID.Weak,WeaponReducedWeight),(PrefixID.Ruthless,WeaponNormalWeight),(PrefixID.Godly,WeaponNormalWeight),
+                    (PrefixID.Demonic,WeaponNormalWeight),(PrefixID.Zealous,WeaponNormalWeight),
+                    (PrefixID.Quick,WeaponNormalWeight),(PrefixID.Deadly2,WeaponNormalWeight),(PrefixID.Agile,WeaponNormalWeight),
+                    (PrefixID.Nimble,WeaponNormalWeight),(PrefixID.Murderous,WeaponNormalWeight),(PrefixID.Slow,WeaponReducedWeight),
+                    (PrefixID.Sluggish,WeaponReducedWeight),(PrefixID.Lazy,WeaponReducedWeight),(PrefixID.Annoying,WeaponNormalWeight),(PrefixID.Nasty,WeaponNormalWeight),
                     // 近战系附加
-                    (PrefixID.Dangerous,10),(PrefixID.Savage,10),(PrefixID.Sharp,10),
-                    (PrefixID.Bulky,10),(PrefixID.Heavy,10),(PrefixID.Light,10),
-                    (PrefixID.Celestial,10),(PrefixID.Furious,10),
-                    (r, 1),
+                    (PrefixID.Dangerous,WeaponNormalWeight),(PrefixID.Savage,WeaponNormalWeight),(PrefixID.Sharp,WeaponNormalWeight),
+                    (PrefixID.Bulky,WeaponNormalWeight),(PrefixID.Heavy,WeaponNormalWeight),(PrefixID.Light,WeaponNormalWeight),
+                    (PrefixID.Celestial,WeaponNormalWeight),(PrefixID.Furious,WeaponNormalWeight),
+                    (r, RefinementWeight),
                 ]);
             }
 
@@ -75,21 +83,21 @@ namespace TestMod.Common.GlobalItems
 
                 (int id, int weight)[] pool = hasKB
                     ? [
-                        (PrefixID.Godly,10),(PrefixID.Demonic,10),(PrefixID.Ruthless,10),
-                        (PrefixID.Hurtful,10),(PrefixID.Strong,10),(PrefixID.Keen,10),
-                        (PrefixID.Zealous,10),(PrefixID.Broken,3),(PrefixID.Damaged,3),
-                        (PrefixID.Weak,3),(PrefixID.Quick,10),(PrefixID.Nimble,10),
-                        (PrefixID.Slow,3),(PrefixID.Sluggish,3),
-                        (PrefixID.Mythical,10),
-                        (r, 1),
+                        (PrefixID.Godly,WeaponNormalWeight),(PrefixID.Demonic,WeaponNormalWeight),(PrefixID.Ruthless,WeaponNormalWeight),
+                        (PrefixID.Hurtful,WeaponNormalWeight),(PrefixID.Strong,WeaponNormalWeight),(PrefixID.Keen,WeaponNormalWeight),
+                        (PrefixID.Zealous,WeaponNormalWeight),(PrefixID.Broken,WeaponReducedWeight),(PrefixID.Damaged,WeaponReducedWeight),
+                        (PrefixID.Weak,WeaponReducedWeight),(PrefixID.Quick,WeaponNormalWeight),(PrefixID.Nimble,WeaponNormalWeight),
+                        (PrefixID.Slow,WeaponReducedWeight),(PrefixID.Sluggish,WeaponReducedWeight),
+                        (PrefixID.Mythical,WeaponNormalWeight),
+                        (r, RefinementWeight),
                       ]
                     : [
-                        (PrefixID.Demonic,10),(PrefixID.Ruthless,10),
-                        (PrefixID.Hurtful,10),(PrefixID.Keen,10),
-                        (PrefixID.Zealous,10),(PrefixID.Broken,3),(PrefixID.Damaged,3),
-                        (PrefixID.Quick,10),(PrefixID.Nimble,10),(PrefixID.Slow,3),
-                        (PrefixID.Mythical,10),
-                        (r, 1),
+                        (PrefixID.Demonic,WeaponNormalWeight),(PrefixID.Ruthless,WeaponNormalWeight),
+                        (PrefixID.Hurtful,WeaponNormalWeight),(PrefixID.Keen,WeaponNormalWeight),
+                        (PrefixID.Zealous,WeaponNormalWeight),(PrefixID.Broken,WeaponReducedWeight),(PrefixID.Damaged,WeaponReducedWeight),
+                        (PrefixID.Quick,WeaponNormalWeight),(PrefixID.Nimble,WeaponNormalWeight),(PrefixID.Slow,WeaponReducedWeight),
+                        (PrefixID.Mythical,WeaponNormalWeight),
+                        (r, RefinementWeight),
                       ];
                 return CurveUtils.WeightedRandom(rand, pool);
             }
@@ -107,35 +115,35 @@ namespace TestMod.Common.GlobalItems
                 // 最优：Mythical(83)
                 (int id, int weight)[] basePool =
                 [
-                    (PrefixID.Keen,10),(PrefixID.Superior,10),(PrefixID.Forceful,10),
-                    (PrefixID.Broken,3),(PrefixID.Damaged,3),(PrefixID.Shoddy,3),
-                    (PrefixID.Hurtful,10),(PrefixID.Unpleasant,10),
-                    (PrefixID.Weak,3),(PrefixID.Ruthless,10),(PrefixID.Godly,10),
-                    (PrefixID.Demonic,10),(PrefixID.Zealous,10),
-                    (PrefixID.Quick,10),(PrefixID.Deadly2,10),(PrefixID.Agile,10),
-                    (PrefixID.Nimble,10),(PrefixID.Murderous,10),(PrefixID.Slow,3),
-                    (PrefixID.Sluggish,3),(PrefixID.Lazy,3),(PrefixID.Annoying,10),(PrefixID.Nasty,10),
-                    (PrefixID.Mystic,10),(PrefixID.Adept,10),(PrefixID.Masterful,10),
-                    (PrefixID.Inept,3),(PrefixID.Ignorant,3),(PrefixID.Deranged,3),
-                    (PrefixID.Intense,10),(PrefixID.Taboo,10),
-                    (PrefixID.Mythical,10),
-                    (r, 1),
+                    (PrefixID.Keen,WeaponNormalWeight),(PrefixID.Superior,WeaponNormalWeight),(PrefixID.Forceful,WeaponNormalWeight),
+                    (PrefixID.Broken,WeaponReducedWeight),(PrefixID.Damaged,WeaponReducedWeight),(PrefixID.Shoddy,WeaponReducedWeight),
+                    (PrefixID.Hurtful,WeaponNormalWeight),(PrefixID.Unpleasant,WeaponNormalWeight),
+                    (PrefixID.Weak,WeaponReducedWeight),(PrefixID.Ruthless,WeaponNormalWeight),(PrefixID.Godly,WeaponNormalWeight),
+                    (PrefixID.Demonic,WeaponNormalWeight),(PrefixID.Zealous,WeaponNormalWeight),
+                    (PrefixID.Quick,WeaponNormalWeight),(PrefixID.Deadly2,WeaponNormalWeight),(PrefixID.Agile,WeaponNormalWeight),
+                    (PrefixID.Nimble,WeaponNormalWeight),(PrefixID.Murderous,WeaponNormalWeight),(PrefixID.Slow,WeaponReducedWeight),
+                    (PrefixID.Sluggish,WeaponReducedWeight),(PrefixID.Lazy,WeaponReducedWeight),(PrefixID.Annoying,WeaponNormalWeight),(PrefixID.Nasty,WeaponNormalWeight),
+                    (PrefixID.Mystic,WeaponNormalWeight),(PrefixID.Adept,WeaponNormalWeight),(PrefixID.Masterful,WeaponNormalWeight),
+                    (PrefixID.Inept,WeaponReducedWeight),(PrefixID.Ignorant,WeaponReducedWeight),(PrefixID.Deranged,WeaponReducedWeight),
+                    (PrefixID.Intense,WeaponNormalWeight),(PrefixID.Taboo,WeaponNormalWeight),
+                    (PrefixID.Mythical,WeaponNormalWeight),
+                    (r, RefinementWeight),
                 ];
                 (int id, int weight)[] noKBPool =
                 [
-                    (PrefixID.Keen,10),(PrefixID.Superior,10),
-                    (PrefixID.Broken,3),(PrefixID.Damaged,3),(PrefixID.Shoddy,3),
-                    (PrefixID.Hurtful,10),(PrefixID.Unpleasant,10),
-                    (PrefixID.Weak,3),(PrefixID.Ruthless,10),(PrefixID.Godly,10),
-                    (PrefixID.Demonic,10),(PrefixID.Zealous,10),
-                    (PrefixID.Quick,10),(PrefixID.Deadly2,10),(PrefixID.Agile,10),
-                    (PrefixID.Nimble,10),(PrefixID.Murderous,10),(PrefixID.Slow,3),
-                    (PrefixID.Sluggish,3),(PrefixID.Lazy,3),(PrefixID.Annoying,10),(PrefixID.Nasty,10),
-                    (PrefixID.Mystic,10),(PrefixID.Adept,10),(PrefixID.Masterful,10),
-                    (PrefixID.Inept,3),(PrefixID.Ignorant,3),(PrefixID.Deranged,3),
-                    (PrefixID.Intense,10),(PrefixID.Taboo,10),
-                    (PrefixID.Mythical,10),
-                    (r, 1),
+                    (PrefixID.Keen,WeaponNormalWeight),(PrefixID.Superior,WeaponNormalWeight),
+                    (PrefixID.Broken,WeaponReducedWeight),(PrefixID.Damaged,WeaponReducedWeight),(PrefixID.Shoddy,WeaponReducedWeight),
+                    (PrefixID.Hurtful,WeaponNormalWeight),(PrefixID.Unpleasant,WeaponNormalWeight),
+                    (PrefixID.Weak,WeaponReducedWeight),(PrefixID.Ruthless,WeaponNormalWeight),(PrefixID.Godly,WeaponNormalWeight),
+                    (PrefixID.Demonic,WeaponNormalWeight),(PrefixID.Zealous,WeaponNormalWeight),
+                    (PrefixID.Quick,WeaponNormalWeight),(PrefixID.Deadly2,WeaponNormalWeight),(PrefixID.Agile,WeaponNormalWeight),
+                    (PrefixID.Nimble,WeaponNormalWeight),(PrefixID.Murderous,WeaponNormalWeight),(PrefixID.Slow,WeaponReducedWeight),
+                    (PrefixID.Sluggish,WeaponReducedWeight),(PrefixID.Lazy,WeaponReducedWeight),(PrefixID.Annoying,WeaponNormalWeight),(PrefixID.Nasty,WeaponNormalWeight),
+                    (PrefixID.Mystic,WeaponNormalWeight),(PrefixID.Adept,WeaponNormalWeight),(PrefixID.Masterful,WeaponNormalWeight),
+                    (PrefixID.Inept,WeaponReducedWeight),(PrefixID.Ignorant,WeaponReducedWeight),(PrefixID.Deranged,WeaponReducedWeight),
+                    (PrefixID.Intense,WeaponNormalWeight),(PrefixID.Taboo,WeaponNormalWeight),
+                    (PrefixID.Mythical,WeaponNormalWeight),
+                    (r, RefinementWeight),
                 ];
                 return CurveUtils.WeightedRandom(rand, hasKB ? basePool : noKBPool);
             }
@@ -153,35 +161,35 @@ namespace TestMod.Common.GlobalItems
                 // 最优：Unreal(82)
                 (int id, int weight)[] basePool =
                 [
-                    (PrefixID.Keen,10),(PrefixID.Superior,10),(PrefixID.Forceful,10),
-                    (PrefixID.Broken,3),(PrefixID.Damaged,3),(PrefixID.Shoddy,3),
-                    (PrefixID.Hurtful,10),(PrefixID.Strong,10),(PrefixID.Unpleasant,10),
-                    (PrefixID.Weak,3),(PrefixID.Ruthless,10),(PrefixID.Godly,10),
-                    (PrefixID.Demonic,10),(PrefixID.Zealous,10),
-                    (PrefixID.Quick,10),(PrefixID.Deadly2,10),(PrefixID.Agile,10),
-                    (PrefixID.Nimble,10),(PrefixID.Murderous,10),(PrefixID.Slow,3),
-                    (PrefixID.Sluggish,3),(PrefixID.Lazy,3),(PrefixID.Annoying,10),(PrefixID.Nasty,10),
-                    (PrefixID.Sighted,10),(PrefixID.Rapid,10),(PrefixID.Hasty,10),
-                    (PrefixID.Staunch,10),(PrefixID.Powerful,10),
-                    (PrefixID.Awful,3),(PrefixID.Lethargic,3),(PrefixID.Awkward,3),
-                    (PrefixID.Unreal,10),
-                    (r, 1),
+                    (PrefixID.Keen,WeaponNormalWeight),(PrefixID.Superior,WeaponNormalWeight),(PrefixID.Forceful,WeaponNormalWeight),
+                    (PrefixID.Broken,WeaponReducedWeight),(PrefixID.Damaged,WeaponReducedWeight),(PrefixID.Shoddy,WeaponReducedWeight),
+                    (PrefixID.Hurtful,WeaponNormalWeight),(PrefixID.Strong,WeaponNormalWeight),(PrefixID.Unpleasant,WeaponNormalWeight),
+                    (PrefixID.Weak,WeaponReducedWeight),(PrefixID.Ruthless,WeaponNormalWeight),(PrefixID.Godly,WeaponNormalWeight),
+                    (PrefixID.Demonic,WeaponNormalWeight),(PrefixID.Zealous,WeaponNormalWeight),
+                    (PrefixID.Quick,WeaponNormalWeight),(PrefixID.Deadly2,WeaponNormalWeight),(PrefixID.Agile,WeaponNormalWeight),
+                    (PrefixID.Nimble,WeaponNormalWeight),(PrefixID.Murderous,WeaponNormalWeight),(PrefixID.Slow,WeaponReducedWeight),
+                    (PrefixID.Sluggish,WeaponReducedWeight),(PrefixID.Lazy,WeaponReducedWeight),(PrefixID.Annoying,WeaponNormalWeight),(PrefixID.Nasty,WeaponNormalWeight),
+                    (PrefixID.Sighted,WeaponNormalWeight),(PrefixID.Rapid,WeaponNormalWeight),(PrefixID.Hasty,WeaponNormalWeight),
+                    (PrefixID.Staunch,WeaponNormalWeight),(PrefixID.Powerful,WeaponNormalWeight),
+                    (PrefixID.Awful,WeaponReducedWeight),(PrefixID.Lethargic,WeaponReducedWeight),(PrefixID.Awkward,WeaponReducedWeight),
+                    (PrefixID.Unreal,WeaponNormalWeight),
+                    (r, RefinementWeight),
                 ];
                 (int id, int weight)[] noKBPool =
                 [
-                    (PrefixID.Keen,10),(PrefixID.Superior,10),
-                    (PrefixID.Broken,3),(PrefixID.Damaged,3),(PrefixID.Shoddy,3),
-                    (PrefixID.Hurtful,10),(PrefixID.Unpleasant,10),
-                    (PrefixID.Weak,3),(PrefixID.Ruthless,10),(PrefixID.Godly,10),
-                    (PrefixID.Demonic,10),(PrefixID.Zealous,10),
-                    (PrefixID.Quick,10),(PrefixID.Deadly2,10),(PrefixID.Agile,10),
-                    (PrefixID.Nimble,10),(PrefixID.Murderous,10),(PrefixID.Slow,3),
-                    (PrefixID.Sluggish,3),(PrefixID.Lazy,3),(PrefixID.Annoying,10),(PrefixID.Nasty,10),
-                    (PrefixID.Sighted,10),(PrefixID.Rapid,10),(PrefixID.Hasty,10),
-                    (PrefixID.Staunch,10),(PrefixID.Powerful,10),
-                    (PrefixID.Awful,3),(PrefixID.Lethargic,3),(PrefixID.Awkward,3),
-                    (PrefixID.Unreal,10),
-                    (r, 1),
+                    (PrefixID.Keen,WeaponNormalWeight),(PrefixID.Superior,WeaponNormalWeight),
+                    (PrefixID.Broken,WeaponReducedWeight),(PrefixID.Damaged,WeaponReducedWeight),(PrefixID.Shoddy,WeaponReducedWeight),
+                    (PrefixID.Hurtful,WeaponNormalWeight),(PrefixID.Unpleasant,WeaponNormalWeight),
+                    (PrefixID.Weak,WeaponReducedWeight),(PrefixID.Ruthless,WeaponNormalWeight),(PrefixID.Godly,WeaponNormalWeight),
+                    (PrefixID.Demonic,WeaponNormalWeight),(PrefixID.Zealous,WeaponNormalWeight),
+                    (PrefixID.Quick,WeaponNormalWeight),(PrefixID.Deadly2,WeaponNormalWeight),(PrefixID.Agile,WeaponNormalWeight),
+                    (PrefixID.Nimble,WeaponNormalWeight),(PrefixID.Murderous,WeaponNormalWeight),(PrefixID.Slow,WeaponReducedWeight),
+                    (PrefixID.Sluggish,WeaponReducedWeight),(PrefixID.Lazy,WeaponReducedWeight),(PrefixID.Annoying,WeaponNormalWeight),(PrefixID.Nasty,WeaponNormalWeight),
+                    (PrefixID.Sighted,WeaponNormalWeight),(PrefixID.Rapid,WeaponNormalWeight),(PrefixID.Hasty,WeaponNormalWeight),
+                    (PrefixID.Staunch,WeaponNormalWeight),(PrefixID.Powerful,WeaponNormalWeight),
+                    (PrefixID.Awful,WeaponReducedWeight),(PrefixID.Lethargic,WeaponReducedWeight),(PrefixID.Awkward,WeaponReducedWeight),
+                    (PrefixID.Unreal,WeaponNormalWeight),
+                    (r, RefinementWeight),
                 ];
                 return CurveUtils.WeightedRandom(rand, hasKB ? basePool : noKBPool);
             }
@@ -202,69 +210,69 @@ namespace TestMod.Common.GlobalItems
                 // 最优：Legendary(81)
                 (int id, int weight)[] swingPool =
                 [
-                    (PrefixID.Keen,10),(PrefixID.Superior,10),(PrefixID.Forceful,10),
-                    (PrefixID.Broken,3),(PrefixID.Damaged,3),(PrefixID.Shoddy,3),
-                    (PrefixID.Hurtful,10),(PrefixID.Strong,10),(PrefixID.Unpleasant,10),
-                    (PrefixID.Weak,3),(PrefixID.Ruthless,10),(PrefixID.Godly,10),
-                    (PrefixID.Demonic,10),(PrefixID.Zealous,10),
-                    (PrefixID.Quick,10),(PrefixID.Deadly2,10),(PrefixID.Agile,10),
-                    (PrefixID.Nimble,10),(PrefixID.Murderous,10),(PrefixID.Slow,3),
-                    (PrefixID.Sluggish,3),(PrefixID.Lazy,3),(PrefixID.Annoying,10),(PrefixID.Nasty,10),
+                    (PrefixID.Keen,WeaponNormalWeight),(PrefixID.Superior,WeaponNormalWeight),(PrefixID.Forceful,WeaponNormalWeight),
+                    (PrefixID.Broken,WeaponReducedWeight),(PrefixID.Damaged,WeaponReducedWeight),(PrefixID.Shoddy,WeaponReducedWeight),
+                    (PrefixID.Hurtful,WeaponNormalWeight),(PrefixID.Strong,WeaponNormalWeight),(PrefixID.Unpleasant,WeaponNormalWeight),
+                    (PrefixID.Weak,WeaponReducedWeight),(PrefixID.Ruthless,WeaponNormalWeight),(PrefixID.Godly,WeaponNormalWeight),
+                    (PrefixID.Demonic,WeaponNormalWeight),(PrefixID.Zealous,WeaponNormalWeight),
+                    (PrefixID.Quick,WeaponNormalWeight),(PrefixID.Deadly2,WeaponNormalWeight),(PrefixID.Agile,WeaponNormalWeight),
+                    (PrefixID.Nimble,WeaponNormalWeight),(PrefixID.Murderous,WeaponNormalWeight),(PrefixID.Slow,WeaponReducedWeight),
+                    (PrefixID.Sluggish,WeaponReducedWeight),(PrefixID.Lazy,WeaponReducedWeight),(PrefixID.Annoying,WeaponNormalWeight),(PrefixID.Nasty,WeaponNormalWeight),
                     // 近战通用
-                    (PrefixID.Dangerous,10),(PrefixID.Savage,10),(PrefixID.Sharp,10),
-                    (PrefixID.Pointy,10),(PrefixID.Bulky,10),(PrefixID.Heavy,10),
-                    (PrefixID.Light,10),(PrefixID.Intimidating,10),(PrefixID.Deadly,10),
-                    (PrefixID.Celestial,10),(PrefixID.Furious,10),
-                    (PrefixID.Terrible,3),(PrefixID.Dull,3),(PrefixID.Unhappy,3),(PrefixID.Shameful,3),
+                    (PrefixID.Dangerous,WeaponNormalWeight),(PrefixID.Savage,WeaponNormalWeight),(PrefixID.Sharp,WeaponNormalWeight),
+                    (PrefixID.Pointy,WeaponNormalWeight),(PrefixID.Bulky,WeaponNormalWeight),(PrefixID.Heavy,WeaponNormalWeight),
+                    (PrefixID.Light,WeaponNormalWeight),(PrefixID.Intimidating,WeaponNormalWeight),(PrefixID.Deadly,WeaponNormalWeight),
+                    (PrefixID.Celestial,WeaponNormalWeight),(PrefixID.Furious,WeaponNormalWeight),
+                    (PrefixID.Terrible,WeaponReducedWeight),(PrefixID.Dull,WeaponReducedWeight),(PrefixID.Unhappy,WeaponReducedWeight),(PrefixID.Shameful,WeaponReducedWeight),
                     // 仅 Swing：尺寸修正
-                    (PrefixID.Large,10),(PrefixID.Massive,10),
-                    (PrefixID.Tiny,3),(PrefixID.Small,3),
-                    (PrefixID.Legendary,10),
-                    (r, 1),
+                    (PrefixID.Large,WeaponNormalWeight),(PrefixID.Massive,WeaponNormalWeight),
+                    (PrefixID.Tiny,WeaponReducedWeight),(PrefixID.Small,WeaponReducedWeight),
+                    (PrefixID.Legendary,WeaponNormalWeight),
+                    (r, RefinementWeight),
                 ];
                 (int id, int weight)[] otherPool =
                 [
-                    (PrefixID.Keen,10),(PrefixID.Superior,10),(PrefixID.Forceful,10),
-                    (PrefixID.Broken,3),(PrefixID.Damaged,3),(PrefixID.Shoddy,3),
-                    (PrefixID.Hurtful,10),(PrefixID.Strong,10),(PrefixID.Unpleasant,10),
-                    (PrefixID.Weak,3),(PrefixID.Ruthless,10),(PrefixID.Godly,10),
-                    (PrefixID.Demonic,10),(PrefixID.Zealous,10),
-                    (PrefixID.Quick,10),(PrefixID.Deadly2,10),(PrefixID.Agile,10),
-                    (PrefixID.Nimble,10),(PrefixID.Murderous,10),(PrefixID.Slow,3),
-                    (PrefixID.Sluggish,3),(PrefixID.Lazy,3),(PrefixID.Annoying,10),(PrefixID.Nasty,10),
+                    (PrefixID.Keen,WeaponNormalWeight),(PrefixID.Superior,WeaponNormalWeight),(PrefixID.Forceful,WeaponNormalWeight),
+                    (PrefixID.Broken,WeaponReducedWeight),(PrefixID.Damaged,WeaponReducedWeight),(PrefixID.Shoddy,WeaponReducedWeight),
+                    (PrefixID.Hurtful,WeaponNormalWeight),(PrefixID.Strong,WeaponNormalWeight),(PrefixID.Unpleasant,WeaponNormalWeight),
+                    (PrefixID.Weak,WeaponReducedWeight),(PrefixID.Ruthless,WeaponNormalWeight),(PrefixID.Godly,WeaponNormalWeight),
+                    (PrefixID.Demonic,WeaponNormalWeight),(PrefixID.Zealous,WeaponNormalWeight),
+                    (PrefixID.Quick,WeaponNormalWeight),(PrefixID.Deadly2,WeaponNormalWeight),(PrefixID.Agile,WeaponNormalWeight),
+                    (PrefixID.Nimble,WeaponNormalWeight),(PrefixID.Murderous,WeaponNormalWeight),(PrefixID.Slow,WeaponReducedWeight),
+                    (PrefixID.Sluggish,WeaponReducedWeight),(PrefixID.Lazy,WeaponReducedWeight),(PrefixID.Annoying,WeaponNormalWeight),(PrefixID.Nasty,WeaponNormalWeight),
                     // 近战通用（无尺寸修正，无 Legendary）
-                    (PrefixID.Dangerous,10),(PrefixID.Savage,10),(PrefixID.Sharp,10),
-                    (PrefixID.Pointy,10),(PrefixID.Bulky,10),(PrefixID.Heavy,10),
-                    (PrefixID.Light,10),(PrefixID.Intimidating,10),(PrefixID.Deadly,10),
-                    (PrefixID.Celestial,10),(PrefixID.Furious,10),
-                    (PrefixID.Terrible,3),(PrefixID.Dull,3),(PrefixID.Unhappy,3),(PrefixID.Shameful,3),
-                    (r, 1),
+                    (PrefixID.Dangerous,WeaponNormalWeight),(PrefixID.Savage,WeaponNormalWeight),(PrefixID.Sharp,WeaponNormalWeight),
+                    (PrefixID.Pointy,WeaponNormalWeight),(PrefixID.Bulky,WeaponNormalWeight),(PrefixID.Heavy,WeaponNormalWeight),
+                    (PrefixID.Light,WeaponNormalWeight),(PrefixID.Intimidating,WeaponNormalWeight),(PrefixID.Deadly,WeaponNormalWeight),
+                    (PrefixID.Celestial,WeaponNormalWeight),(PrefixID.Furious,WeaponNormalWeight),
+                    (PrefixID.Terrible,WeaponReducedWeight),(PrefixID.Dull,WeaponReducedWeight),(PrefixID.Unhappy,WeaponReducedWeight),(PrefixID.Shameful,WeaponReducedWeight),
+                    (r, RefinementWeight),
                 ];
                 return CurveUtils.WeightedRandom(rand, isSwing ? swingPool : otherPool);
             }
 
             // ── 饰品 ─────────────────────────────────────────────────
-            // 原版 20 个饰品词缀全部平等（weight=6），融合（自定义）weight=1
-            // 融合概率 = 1 / (20×6+1) = 1/121 ≈ 0.83%，约为普通词缀的 1/6
+            // 原版 20 个饰品词缀共用 AccessoryNormalWeight，融合使用 FusionWeight
+            // 融合概率 = FusionWeight / (20 × AccessoryNormalWeight + FusionWeight)，默认约 0.83%
             if (item.accessory)
             {
                 int fusion = ModContent.GetInstance<FusionPrefix>().Type;
                 return CurveUtils.WeightedRandom(rand,
                 [
                     // 防御类
-                    (PrefixID.Hard,6),(PrefixID.Guarding,6),(PrefixID.Armored,6),(PrefixID.Warding,6),
+                    (PrefixID.Hard,AccessoryNormalWeight),(PrefixID.Guarding,AccessoryNormalWeight),(PrefixID.Armored,AccessoryNormalWeight),(PrefixID.Warding,AccessoryNormalWeight),
                     // 魔力/暴击
-                    (PrefixID.Arcane,6),(PrefixID.Precise,6),(PrefixID.Lucky,6),
+                    (PrefixID.Arcane,AccessoryNormalWeight),(PrefixID.Precise,AccessoryNormalWeight),(PrefixID.Lucky,AccessoryNormalWeight),
                     // 伤害
-                    (PrefixID.Jagged,6),(PrefixID.Spiked,6),(PrefixID.Angry,6),(PrefixID.Menacing,6),
+                    (PrefixID.Jagged,AccessoryNormalWeight),(PrefixID.Spiked,AccessoryNormalWeight),(PrefixID.Angry,AccessoryNormalWeight),(PrefixID.Menacing,AccessoryNormalWeight),
                     // 移速
-                    (PrefixID.Brisk,6),(PrefixID.Fleeting,6),(PrefixID.Hasty2,6),(PrefixID.Quick2,6),
+                    (PrefixID.Brisk,AccessoryNormalWeight),(PrefixID.Fleeting,AccessoryNormalWeight),(PrefixID.Hasty2,AccessoryNormalWeight),(PrefixID.Quick2,AccessoryNormalWeight),
                     // 近战速度
-                    (PrefixID.Wild,6),(PrefixID.Rash,6),(PrefixID.Intrepid,6),(PrefixID.Violent,6),
+                    (PrefixID.Wild,AccessoryNormalWeight),(PrefixID.Rash,AccessoryNormalWeight),(PrefixID.Intrepid,AccessoryNormalWeight),(PrefixID.Violent,AccessoryNormalWeight),
                     // 最优
-                    (PrefixID.Legendary2,6),
+                    (PrefixID.Legendary2,AccessoryNormalWeight),
                     // 融合（极稀有）
-                    (fusion, 1),
+                    (fusion, FusionWeight),
                 ]);
             }
 

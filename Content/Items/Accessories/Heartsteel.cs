@@ -15,6 +15,7 @@ namespace TestMod.Content.Items.Accessories
         private const float MinBodyScale  = 1f;    // 最小体型（原始大小）
         private const float MaxBodyScale  = 2f;    // 最大体型（+100%，即 2 倍原始）
         private const int   MaxHpForScale = 2000;  // 达到最大体型所需最大生命值
+        private const float IndependentDamageMultiplier = 0.66f; // 装备时的独立伤害倍率
 
         public override void SetDefaults()
         {
@@ -41,18 +42,37 @@ namespace TestMod.Content.Items.Accessories
 
             if (idx >= 0)
             {
-                tooltips.Insert(idx + 5, line);
+                tooltips.Insert(idx + 7, line);
             }
 
+        }
+
+        public override void AddRecipes()
+        {
+            foreach (int barType in new[] { ItemID.TitaniumBar, ItemID.AdamantiteBar })
+            {
+                CreateRecipe()
+                    .AddIngredient(ItemID.CobaltShield)
+                    .AddIngredient(ItemID.SoulofLight, 10)
+                    .AddIngredient(ItemID.SoulofNight, 10)
+                    .AddIngredient(barType, 20)
+                    .AddTile(TileID.MythrilAnvil)
+                    .Register();
+            }
         }
 
         public override void UpdateAccessory(Player player, bool hideVisual)
         {
             // 标记本帧装备状态（HeartssteelPlayer 据此决定是否应用叠层生命）
             player.GetModPlayer<HeartssteelPlayer>().HasHeartsteel = true;
+            player.GetModPlayer<CorePlayer>().independentDamageMult *= IndependentDamageMultiplier;
 
             // 免疫击退
             player.noKnockback = true;
+
+            // 原版哲学家之石效果与常驻蜂蜜效果
+            player.pStone = true;
+            player.AddBuff(BuffID.Honey, 2);
             
             // 体型效果：随最大生命线性增长，每 100 HP → +5%，上限 +100%
             PlayerSizeEffect.Apply(player, new PlayerSizeConfig

@@ -15,7 +15,19 @@ namespace TestMod.Content.Items.Accessories
     /// </summary>
     public abstract class DeathBoundItem : ModItem
     {
-        public bool IsActive = true;
+        private bool _isActive = true;
+        public bool IsActive
+        {
+            get => _isActive;
+            set
+            {
+                _isActive = value;
+                OnActiveStateChanged();
+            }
+        }
+
+        /// <summary>失效状态改变或从存档恢复时，更新物品实例的附加状态。</summary>
+        protected virtual void OnActiveStateChanged() { }
 
         /// <summary>物品有效时每帧调用，子类在此写实际效果。</summary>
         protected abstract void UpdateEffect(Player player, bool hideVisual);
