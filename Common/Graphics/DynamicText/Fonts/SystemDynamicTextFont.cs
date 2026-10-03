@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Terraria;
@@ -10,15 +11,18 @@ using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace TestMod.Common.Graphics.DynamicText.Fonts
 {
-    public sealed class SystemDynamicTextFont : IDisposable
+    public sealed partial class SystemDynamicTextFont : IDisposable
     {
         private const int TexturePadding = 4;
         private const int MaxCachedTextTextures = 256;
+        private const long MaxCachedTextureBytes = 8 * 1024 * 1024;
 
         private readonly object font;
         private readonly object privateFontCollection;
-        private readonly Dictionary<string, CachedTextTexture> textureCache = [];
-        private readonly Dictionary<string, Vector2> measureCache = [];
+        private readonly DynamicTextCache<string, CachedTextTexture> textureCache;
+        private readonly DynamicTextCache<string, Vector2> measureCache = new(1024, 256 * 1024);
+        private readonly List<Texture2D> retiredTextures = [];
+        private bool retirementQueued;
         private bool disposed;
 
         public string SourceDescription { get; }
@@ -28,24 +32,31 @@ namespace TestMod.Common.Graphics.DynamicText.Fonts
             font = SystemDrawingTextInterop.CreateFont(fontFamily, size);
             this.privateFontCollection = privateFontCollection;
             SourceDescription = sourceDescription;
+            textureCache = new(MaxCachedTextTextures, MaxCachedTextureBytes, cached => RetireTexture(cached.Texture));
         }
 
         public Vector2 MeasureString(string text)
         {
-            if (string.IsNullOrEmpty(text))
+            if (string.IsNullOrEmpty(text) || disposed)
                 return Vector2.Zero;
+
+            if (IsNumericText(text))
+                return MeasureNumericText(text);
 
             if (measureCache.TryGetValue(text, out Vector2 cached))
                 return cached;
 
             Vector2 measured = MeasureStringUncached(text);
-            measureCache[text] = measured;
+            measureCache.Add(text, measured, 32L + text.Length * 2L);
             return measured;
         }
 
         public void Draw(SpriteBatch spriteBatch, string text, Vector2 position, XnaColor color, float rotation, Vector2 origin, Vector2 scale)
         {
-            if (string.IsNullOrEmpty(text) || color.A <= 0)
+            if (string.IsNullOrEmpty(text) || disposed || color == XnaColor.Transparent)
+                return;
+
+            if (TryDrawNumeric(spriteBatch, text, position, color, rotation, origin, scale))
                 return;
 
             CachedTextTexture cached = GetTexture(text);
@@ -96,6 +107,9 @@ namespace TestMod.Common.Graphics.DynamicText.Fonts
             DisposeObject(privateFontCollection);
 
             List<Texture2D> textures = [];
+            if (numericTexture is not null && !numericTexture.IsDisposed)
+                textures.Add(numericTexture);
+            numericTexture = null;
             foreach (CachedTextTexture cached in textureCache.Values)
             {
                 if (cached.Texture is not null && !cached.Texture.IsDisposed)
@@ -104,6 +118,8 @@ namespace TestMod.Common.Graphics.DynamicText.Fonts
 
             textureCache.Clear();
             measureCache.Clear();
+            textures.AddRange(retiredTextures);
+            retiredTextures.Clear();
             return textures;
         }
 
@@ -172,14 +188,20 @@ namespace TestMod.Common.Graphics.DynamicText.Fonts
                 SystemDrawingTextInterop.SetTextRenderingHint(graphics);
                 SystemDrawingTextInterop.DrawString(graphics, text, font, brush, TexturePadding, TexturePadding, format);
 
-                using MemoryStream stream = new();
-                SystemDrawingTextInterop.SavePng(bitmap, stream);
-                stream.Position = 0;
-
-                Texture2D texture = Texture2D.FromStream(Main.graphics.GraphicsDevice, stream);
+                // 直接读取 BGRA，预乘后只上传一次，避免 PNG 编解码和 GPU 回读。
+                XnaColor[] pixels = SystemDrawingTextInterop.ReadPremultipliedPixels(bitmap, width, height);
+                Texture2D texture = new(Main.graphics.GraphicsDevice, width, height);
+                try
+                {
+                    texture.SetData(pixels);
+                }
+                catch
+                {
+                    texture.Dispose();
+                    throw;
+                }
                 cached = new CachedTextTexture(texture);
-                TrimTextureCache();
-                textureCache[text] = cached;
+                textureCache.Add(text, cached, (long)width * height * 4);
                 return cached;
             }
             finally
@@ -191,24 +213,27 @@ namespace TestMod.Common.Graphics.DynamicText.Fonts
             }
         }
 
-        private void TrimTextureCache()
+        private void RetireTexture(Texture2D texture)
         {
-            while (textureCache.Count >= MaxCachedTextTextures)
+            if (texture is null || texture.IsDisposed)
+                return;
+
+            retiredTextures.Add(texture);
+            if (retirementQueued)
+                return;
+
+            retirementQueued = true;
+            // 下一次 Update 的主线程队列处理阶段，上一帧的 Deferred 批次已提交。
+            Main.QueueMainThreadAction(() =>
             {
-                string oldestKey = null;
-                foreach (string key in textureCache.Keys)
+                foreach (Texture2D retired in retiredTextures)
                 {
-                    oldestKey = key;
-                    break;
+                    if (!retired.IsDisposed)
+                        retired.Dispose();
                 }
-
-                if (oldestKey is null)
-                    return;
-
-                textureCache[oldestKey].Texture?.Dispose();
-                textureCache.Remove(oldestKey);
-                measureCache.Remove(oldestKey);
-            }
+                retiredTextures.Clear();
+                retirementQueued = false;
+            });
         }
 
         private static void DisposeObject(object value)
@@ -238,7 +263,9 @@ namespace TestMod.Common.Graphics.DynamicText.Fonts
         private static readonly Type FontStyleType = GetType("System.Drawing.FontStyle");
         private static readonly Type GraphicsType = GetType("System.Drawing.Graphics");
         private static readonly Type GraphicsUnitType = GetType("System.Drawing.GraphicsUnit");
-        private static readonly Type ImageFormatType = GetType("System.Drawing.Imaging.ImageFormat");
+        private static readonly Type RectangleType = GetType("System.Drawing.Rectangle");
+        private static readonly Type ImageLockModeType = GetType("System.Drawing.Imaging.ImageLockMode");
+        private static readonly Type BitmapDataType = GetType("System.Drawing.Imaging.BitmapData");
         private static readonly Type InstalledFontCollectionType = GetType("System.Drawing.Text.InstalledFontCollection");
         private static readonly Type PixelFormatType = GetType("System.Drawing.Imaging.PixelFormat");
         private static readonly Type PointFType = GetType("System.Drawing.PointF");
@@ -251,7 +278,12 @@ namespace TestMod.Common.Graphics.DynamicText.Fonts
         private static readonly MethodInfo FromImageMethod = GraphicsType.GetMethod("FromImage", BindingFlags.Public | BindingFlags.Static, null, [GetType("System.Drawing.Image")], null);
         private static readonly MethodInfo MeasureStringMethod = GraphicsType.GetMethod("MeasureString", BindingFlags.Public | BindingFlags.Instance, null, [typeof(string), FontType, PointFType, StringFormatType], null);
         private static readonly MethodInfo DrawStringMethod = GraphicsType.GetMethod("DrawString", BindingFlags.Public | BindingFlags.Instance, null, [typeof(string), FontType, BrushType, PointFType, StringFormatType], null);
-        private static readonly MethodInfo SaveMethod = GetType("System.Drawing.Image").GetMethod("Save", BindingFlags.Public | BindingFlags.Instance, null, [typeof(Stream), ImageFormatType], null);
+        private static readonly MethodInfo LockBitsMethod = BitmapType.GetMethod("LockBits", [RectangleType, ImageLockModeType, PixelFormatType]);
+        private static readonly MethodInfo UnlockBitsMethod = BitmapType.GetMethod("UnlockBits", [BitmapDataType]);
+        private static readonly PropertyInfo Scan0Property = BitmapDataType.GetProperty("Scan0");
+        private static readonly PropertyInfo StrideProperty = BitmapDataType.GetProperty("Stride");
+        private static readonly object ReadOnlyLock = Enum.Parse(ImageLockModeType, "ReadOnly");
+        private static readonly object Argb32 = Enum.Parse(PixelFormatType, "Format32bppArgb");
 
         public static object CreateFont(object family, float size)
         {
@@ -287,8 +319,7 @@ namespace TestMod.Common.Graphics.DynamicText.Fonts
 
         public static object CreateBitmap(int width, int height)
         {
-            object format = Enum.Parse(PixelFormatType, "Format32bppArgb");
-            return Activator.CreateInstance(BitmapType, width, height, format);
+            return Activator.CreateInstance(BitmapType, width, height, Argb32);
         }
 
         public static object CreateGraphics(object bitmap)
@@ -338,10 +369,32 @@ namespace TestMod.Common.Graphics.DynamicText.Fonts
             DrawStringMethod.Invoke(graphics, [text, font, brush, point, format]);
         }
 
-        public static void SavePng(object bitmap, Stream stream)
+        public static XnaColor[] ReadPremultipliedPixels(object bitmap, int width, int height)
         {
-            object png = ImageFormatType.GetProperty("Png", BindingFlags.Public | BindingFlags.Static).GetValue(null);
-            SaveMethod.Invoke(bitmap, [stream, png]);
+            object rectangle = Activator.CreateInstance(RectangleType, 0, 0, width, height);
+            object data = LockBitsMethod.Invoke(bitmap, [rectangle, ReadOnlyLock, Argb32]);
+            try
+            {
+                IntPtr scan0 = (IntPtr)Scan0Property.GetValue(data);
+                int stride = (int)StrideProperty.GetValue(data);
+                byte[] row = new byte[checked(width * 4)];
+                XnaColor[] pixels = new XnaColor[checked(width * height)];
+                for (int y = 0; y < height; y++)
+                {
+                    // Scan0 指向逻辑首行，保留 stride 的符号兼容倒序存储。
+                    Marshal.Copy(IntPtr.Add(scan0, checked(y * stride)), row, 0, row.Length);
+                    for (int x = 0; x < width; x++)
+                    {
+                        int offset = x * 4;
+                        pixels[y * width + x] = XnaColor.FromNonPremultiplied(row[offset + 2], row[offset + 1], row[offset], row[offset + 3]);
+                    }
+                }
+                return pixels;
+            }
+            finally
+            {
+                UnlockBitsMethod.Invoke(bitmap, [data]);
+            }
         }
 
         public static float GetSingleProperty(object value, string propertyName)

@@ -32,6 +32,28 @@ namespace TestMod.Common.Graphics.DynamicText
         public readonly Color SecondaryColor;
         public readonly Color ShadowColor;
         public readonly DynamicTextSurface Surface;
+        public readonly DynamicTextLayout Layout;
+
+        public Vector2 TextSize => Layout.Size * Scale;
+
+        // local 是已缩放的文字局部坐标；所有装饰共用正文的原点和旋转。
+        public Vector2 ToScreen(Vector2 local) => Position + (local - Origin * Scale).RotatedBy(Rotation);
+
+        public void DrawText(Vector2 position, Color color, bool ignoreColors = false) =>
+            Font.DrawLayout(SpriteBatch, Layout, position, color, Rotation, Origin, Scale, MaxWidth, ignoreColors);
+
+        public void DrawShadow(Color color)
+        {
+            if (Spread <= 0f)
+                return;
+            DrawText(Position + new Vector2(-Spread, 0f), color, true);
+            DrawText(Position + new Vector2(Spread, 0f), color, true);
+            DrawText(Position + new Vector2(0f, -Spread), color, true);
+            DrawText(Position + new Vector2(0f, Spread), color, true);
+        }
+
+        public void DrawGlyph(string glyph, Vector2 localOffset, Color color) =>
+            Font.DrawGlyph(SpriteBatch, glyph, Position + localOffset.RotatedBy(Rotation), color, Rotation, Origin, Scale);
 
         public DynamicTextDrawContext(
             SpriteBatch spriteBatch,
@@ -50,7 +72,8 @@ namespace TestMod.Common.Graphics.DynamicText
             Color primaryColor,
             Color secondaryColor,
             Color shadowColor,
-            DynamicTextSurface surface)
+            DynamicTextSurface surface,
+            DynamicTextLayout layout = null)
         {
             SpriteBatch = spriteBatch;
             Font = font;
@@ -69,6 +92,7 @@ namespace TestMod.Common.Graphics.DynamicText
             SecondaryColor = secondaryColor;
             ShadowColor = shadowColor;
             Surface = surface;
+            Layout = layout ?? DynamicTextLayout.Get(font, text, scale.X > 0f && maxWidth > 0f ? maxWidth / scale.X : -1f);
         }
     }
 

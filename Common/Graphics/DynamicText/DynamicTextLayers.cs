@@ -13,15 +13,7 @@ namespace TestMod.Common.Graphics.DynamicText
             if (context.Opacity <= 0f)
                 return;
 
-            context.Font.DrawColorCodedString(
-                context.SpriteBatch,
-                context.Text,
-                context.Position,
-                context.PrimaryColor * context.Opacity,
-                context.Rotation,
-                context.Origin,
-                context.Scale,
-                context.MaxWidth);
+            context.DrawText(context.Position, context.PrimaryColor * context.Opacity);
         }
     }
 
@@ -40,28 +32,8 @@ namespace TestMod.Common.Graphics.DynamicText
         {
             Color color = context.PrimaryColor * (context.Opacity * opacity);
             if (drawMain)
-            {
-                context.Font.DrawColorCodedStringWithShadow(
-                    context.SpriteBatch,
-                    context.Text,
-                    context.Position,
-                    color,
-                    context.Rotation,
-                    context.Origin,
-                    context.Scale,
-                    context.MaxWidth,
-                    context.Spread);
-                return;
-            }
-
-            context.Font.DrawColorCodedString(
-                context.SpriteBatch,
-                context.Text,
-                context.Position,
-                color,
-                context.Rotation,
-                context.Origin,
-                context.Scale);
+                context.DrawShadow(Color.Black * (color.A / 255f));
+            context.DrawText(context.Position, color);
         }
     }
 
@@ -86,28 +58,18 @@ namespace TestMod.Common.Graphics.DynamicText
             Color outline = context.ShadowColor * (outlineOpacity * context.Opacity);
             Color fill = context.PrimaryColor * (fillOpacity * context.Opacity);
 
-            for (int i = 0; i < 8; i++)
+            // 数字优先使用帧前生成的描边遮罩，缓存未就绪时保留原来的八方向描边。
+            if (!context.Font.TryDrawOutline(context, outline, radius))
             {
-                float angle = MathHelper.TwoPi * i / 8f;
-                Vector2 offset = new(MathF.Cos(angle) * radius, MathF.Sin(angle) * radius);
-                context.Font.DrawColorCodedString(
-                    context.SpriteBatch,
-                    context.Text,
-                    context.Position + offset,
-                    outline,
-                    context.Rotation,
-                    context.Origin,
-                    context.Scale);
+                for (int i = 0; i < 8; i++)
+                {
+                    float angle = MathHelper.TwoPi * i / 8f;
+                    Vector2 offset = new(MathF.Cos(angle) * radius, MathF.Sin(angle) * radius);
+                    context.DrawText(context.Position + offset, outline, true);
+                }
             }
 
-            context.Font.DrawColorCodedString(
-                context.SpriteBatch,
-                context.Text,
-                context.Position,
-                fill,
-                context.Rotation,
-                context.Origin,
-                context.Scale);
+            context.DrawText(context.Position, fill);
         }
     }
 
@@ -141,14 +103,7 @@ namespace TestMod.Common.Graphics.DynamicText
             {
                 float angle = MathHelper.TwoPi * i / layers + context.Time * 0.8f;
                 Vector2 offset = new(MathF.Cos(angle) * pulseRadius, MathF.Sin(angle) * pulseRadius * verticalSquash);
-                context.Font.DrawColorCodedString(
-                    context.SpriteBatch,
-                    context.Text,
-                    context.Position + offset,
-                    color,
-                    context.Rotation,
-                    context.Origin,
-                    context.Scale);
+                context.DrawText(context.Position + offset, color, true);
             }
         }
     }
@@ -175,32 +130,23 @@ namespace TestMod.Common.Graphics.DynamicText
             if (string.IsNullOrEmpty(context.Text) || width <= 0f || context.Opacity <= 0f)
                 return;
 
-            float textWidth = context.Font.MeasureString(context.Text).X * context.Scale.X;
+            // 逐字扫光不能拆开富文本标签或换行；主体和整串光晕仍由 ChatManager 绘制。
+            if (!context.Layout.SupportsGlyphEffects)
+                return;
+
+            float textWidth = context.TextSize.X;
             float cycle = textWidth + width * 2f + Math.Abs(speed) * interval;
             float shineX = PositiveModulo(context.Time * speed + context.Seed * 13f, cycle) - width;
-            float charOffset = 0f;
-
-            foreach (char character in context.Text)
+            foreach (DynamicTextLayout.Glyph glyph in context.Layout.GetGlyphs(context.Font))
             {
-                string glyph = character.ToString();
-                float glyphWidth = context.Font.MeasureString(glyph).X * context.Scale.X;
+                float charOffset = glyph.Offset * context.Scale.X;
+                float glyphWidth = glyph.Width * context.Scale.X;
                 float center = charOffset + glyphWidth * 0.5f;
                 float intensity = 1f - MathHelper.Clamp(Math.Abs(center - shineX) / width, 0f, 1f);
                 intensity *= intensity;
 
                 if (intensity > 0.01f)
-                {
-                    context.Font.DrawColorCodedString(
-                        context.SpriteBatch,
-                        glyph,
-                        context.Position + Vector2.UnitX * charOffset,
-                        color * (intensity * opacity * context.Opacity),
-                        context.Rotation,
-                        context.Origin,
-                        context.Scale);
-                }
-
-                charOffset += glyphWidth;
+                    context.DrawGlyph(glyph.Text, Vector2.UnitX * charOffset, color * (intensity * opacity * context.Opacity));
             }
         }
 
@@ -238,14 +184,7 @@ namespace TestMod.Common.Graphics.DynamicText
 
         private void DrawShift(in DynamicTextDrawContext context, Vector2 offsetVector, Color color, float weight)
         {
-            context.Font.DrawColorCodedString(
-                context.SpriteBatch,
-                context.Text,
-                context.Position + offsetVector,
-                color * (opacity * weight * context.Opacity),
-                context.Rotation,
-                context.Origin,
-                context.Scale);
+            context.DrawText(context.Position + offsetVector, color * (opacity * weight * context.Opacity), true);
         }
     }
 
@@ -270,27 +209,18 @@ namespace TestMod.Common.Graphics.DynamicText
 
         public void Draw(in DynamicTextDrawContext context)
         {
-            if (string.IsNullOrEmpty(context.Text) || amplitude == 0f || context.Opacity <= 0f)
+            if (!context.Layout.SupportsGlyphEffects || amplitude == 0f || context.Opacity <= 0f)
                 return;
 
-            float charOffset = 0f;
-            for (int i = 0; i < context.Text.Length; i++)
+            ReadOnlySpan<DynamicTextLayout.Glyph> glyphs = context.Layout.GetGlyphs(context.Font);
+            for (int i = 0; i < glyphs.Length; i++)
             {
-                string glyph = context.Text[i].ToString();
-                float glyphWidth = context.Font.MeasureString(glyph).X * context.Scale.X;
+                DynamicTextLayout.Glyph glyph = glyphs[i];
+                float charOffset = glyph.Offset * context.Scale.X;
                 float wave = MathF.Sin(context.Time * speed + i * phaseStep + context.Seed * 0.01f);
                 Vector2 offset = direction * amplitude * wave;
 
-                context.Font.DrawColorCodedString(
-                    context.SpriteBatch,
-                    glyph,
-                    context.Position + Vector2.UnitX * charOffset + offset,
-                    color * (opacity * context.Opacity * (0.72f + 0.28f * MathF.Abs(wave))),
-                    context.Rotation,
-                    context.Origin,
-                    context.Scale);
-
-                charOffset += glyphWidth;
+                context.DrawGlyph(glyph.Text, Vector2.UnitX * charOffset + offset, color * (opacity * context.Opacity * (0.72f + 0.28f * MathF.Abs(wave))));
             }
         }
     }
@@ -321,7 +251,7 @@ namespace TestMod.Common.Graphics.DynamicText
 
             Texture2D pixel = TextureAssets.MagicPixel.Value;
             Rectangle source = new(0, 0, 1, 1);
-            Vector2 size = context.Font.MeasureString(context.Text) * context.Scale;
+            Vector2 size = context.TextSize;
             if (size.X <= 1f || size.Y <= 1f)
                 return;
 
@@ -333,14 +263,14 @@ namespace TestMod.Common.Graphics.DynamicText
                 float y = size.Y * (0.22f + Hash01(context.Seed + i * 193) * 0.56f);
                 float centerFade = 1f - MathHelper.Clamp(Math.Abs(x - size.X * 0.5f) / (size.X * 0.72f), 0f, 1f);
                 float alpha = (0.28f + centerFade * 0.72f) * opacity * context.Opacity;
-                Vector2 position = context.Position + new Vector2(x, y);
+                Vector2 position = context.ToScreen(new Vector2(x, y));
 
                 context.SpriteBatch.Draw(
                     pixel,
                     position,
                     source,
                     color * alpha,
-                    0f,
+                    context.Rotation,
                     new Vector2(0f, 0.5f),
                     new Vector2(length, width),
                     SpriteEffects.None,
@@ -394,12 +324,11 @@ namespace TestMod.Common.Graphics.DynamicText
                 return;
 
             Texture2D pixel = TextureAssets.MagicPixel.Value;
-            Vector2 size = context.Font.MeasureString(context.Text) * context.Scale;
+            Vector2 size = context.TextSize;
             if (size.X <= 1f || size.Y <= 1f)
                 return;
 
-            Vector2 topLeft = context.Position - context.Origin * context.Scale;
-            Vector2 center = topLeft + size * 0.5f;
+            Vector2 center = context.ToScreen(size * 0.5f);
             Vector2 ellipse = size * 0.5f + new Vector2(radiusPadding * context.Scale.X, radiusPadding * 0.55f * context.Scale.Y);
             Rectangle source = new(0, 0, 1, 1);
             Vector2 origin = new(0.5f);
@@ -413,10 +342,10 @@ namespace TestMod.Common.Graphics.DynamicText
                 float twinkle = MathF.Pow(0.5f + 0.5f * MathF.Sin(context.Time * 5.1f + seed * MathHelper.TwoPi), 2.3f);
                 Color runeColor = Color.Lerp(context.SecondaryColor, color, depth) * ((0.32f + twinkle * 0.68f) * opacity * context.Opacity);
                 float scale = runeSize * context.Scale.X * (0.68f + depth * 0.32f);
-                Vector2 position = center + offset;
+                Vector2 position = center + offset.RotatedBy(context.Rotation);
 
-                DrawDiamond(context.SpriteBatch, pixel, source, position, runeColor, angle, origin, scale);
-                DrawSpark(context.SpriteBatch, pixel, source, position, runeColor * 0.55f, angle, origin, scale * 1.25f);
+                DrawDiamond(context.SpriteBatch, pixel, source, position, runeColor, angle + context.Rotation, origin, scale);
+                DrawSpark(context.SpriteBatch, pixel, source, position, runeColor * 0.55f, angle + context.Rotation, origin, scale * 1.25f);
             }
         }
 
@@ -471,11 +400,10 @@ namespace TestMod.Common.Graphics.DynamicText
                 return;
 
             Texture2D pixel = TextureAssets.MagicPixel.Value;
-            Vector2 size = context.Font.MeasureString(context.Text) * context.Scale;
+            Vector2 size = context.TextSize;
             if (size.X <= 1f || size.Y <= 1f)
                 return;
 
-            Vector2 topLeft = context.Position - context.Origin * context.Scale;
             Rectangle source = new(0, 0, 1, 1);
             Vector2 origin = new(0.5f, 1f);
             float scaledHeight = height * context.Scale.Y;
@@ -484,8 +412,8 @@ namespace TestMod.Common.Graphics.DynamicText
             {
                 float seed = Hash01(context.Seed + i * 269);
                 float cycle = PositiveModulo(context.Time * speed + seed, 1f);
-                float x = topLeft.X + size.X * Hash01(context.Seed + i * 491);
-                float y = topLeft.Y + size.Y * (0.92f - cycle * 0.86f);
+                float x = size.X * Hash01(context.Seed + i * 491);
+                float y = size.Y * (0.92f - cycle * 0.86f);
                 float sway = MathF.Sin(context.Time * 4.3f + i * 1.67f) * 4.2f * context.Scale.X;
                 float fade = MathF.Sin(cycle * MathHelper.Pi);
                 float length = scaledHeight * (0.35f + cycle * 0.65f);
@@ -493,10 +421,10 @@ namespace TestMod.Common.Graphics.DynamicText
 
                 context.SpriteBatch.Draw(
                     pixel,
-                    new Vector2(x + sway, y),
+                    context.ToScreen(new Vector2(x + sway, y)),
                     source,
                     wispColor,
-                    -0.18f + sway * 0.015f,
+                    context.Rotation - 0.18f + sway * 0.015f,
                     origin,
                     new Vector2(width * context.Scale.X, length),
                     SpriteEffects.None,
@@ -551,11 +479,10 @@ namespace TestMod.Common.Graphics.DynamicText
 
             Texture2D pixel = TextureAssets.MagicPixel.Value;
             Rectangle source = new(0, 0, 1, 1);
-            Vector2 size = context.Font.MeasureString(context.Text) * context.Scale;
+            Vector2 size = context.TextSize;
             if (size.X <= 1f || size.Y <= 1f)
                 return;
 
-            Vector2 topLeft = context.Position - context.Origin * context.Scale;
             float cycle = size.X + length * 2f;
             for (int i = 0; i < slashCount; i++)
             {
@@ -567,13 +494,13 @@ namespace TestMod.Common.Graphics.DynamicText
                 if (fade <= 0.02f)
                     continue;
 
-                Vector2 position = topLeft + new Vector2(sweep, y);
+                Vector2 position = context.ToScreen(new Vector2(sweep, y));
                 context.SpriteBatch.Draw(
                     pixel,
                     position,
                     source,
                     color * (fade * opacity * context.Opacity),
-                    -0.48f,
+                    context.Rotation - 0.48f,
                     new Vector2(0f, 0.5f),
                     new Vector2(length, width) * context.Scale.X,
                     SpriteEffects.None,
@@ -626,27 +553,26 @@ namespace TestMod.Common.Graphics.DynamicText
 
             Texture2D pixel = TextureAssets.MagicPixel.Value;
             Rectangle source = new(0, 0, 1, 1);
-            Vector2 size = context.Font.MeasureString(context.Text) * context.Scale;
+            Vector2 size = context.TextSize;
             if (size.X <= 1f || size.Y <= 1f)
                 return;
 
-            Vector2 topLeft = context.Position - context.Origin * context.Scale;
             float pulse = 0.78f + 0.22f * MathF.Sin(context.Time * 5.4f + context.Seed * 0.03f);
             Color drawColor = color * (opacity * pulse * context.Opacity);
             float lineWidth = width * context.Scale.X;
             float lineLength = bracketLength * context.Scale.X;
             float pad = inset * context.Scale.X;
 
-            DrawCorner(context.SpriteBatch, pixel, source, topLeft + new Vector2(-pad, -pad), lineLength, lineWidth, drawColor, 1f, 1f);
-            DrawCorner(context.SpriteBatch, pixel, source, topLeft + new Vector2(size.X + pad, -pad), lineLength, lineWidth, drawColor, -1f, 1f);
-            DrawCorner(context.SpriteBatch, pixel, source, topLeft + new Vector2(-pad, size.Y + pad), lineLength, lineWidth, drawColor, 1f, -1f);
-            DrawCorner(context.SpriteBatch, pixel, source, topLeft + size + new Vector2(pad), lineLength, lineWidth, drawColor, -1f, -1f);
+            DrawCorner(context.SpriteBatch, pixel, source, context.ToScreen(new Vector2(-pad, -pad)), lineLength, lineWidth, drawColor, 1f, 1f, context.Rotation);
+            DrawCorner(context.SpriteBatch, pixel, source, context.ToScreen(new Vector2(size.X + pad, -pad)), lineLength, lineWidth, drawColor, -1f, 1f, context.Rotation);
+            DrawCorner(context.SpriteBatch, pixel, source, context.ToScreen(new Vector2(-pad, size.Y + pad)), lineLength, lineWidth, drawColor, 1f, -1f, context.Rotation);
+            DrawCorner(context.SpriteBatch, pixel, source, context.ToScreen(size + new Vector2(pad)), lineLength, lineWidth, drawColor, -1f, -1f, context.Rotation);
         }
 
-        private static void DrawCorner(SpriteBatch spriteBatch, Texture2D pixel, Rectangle source, Vector2 corner, float length, float width, Color color, float xDirection, float yDirection)
+        private static void DrawCorner(SpriteBatch spriteBatch, Texture2D pixel, Rectangle source, Vector2 corner, float length, float width, Color color, float xDirection, float yDirection, float rotation)
         {
-            spriteBatch.Draw(pixel, corner, source, color, 0f, new Vector2(0f, 0.5f), new Vector2(length * xDirection, width), SpriteEffects.None, 0f);
-            spriteBatch.Draw(pixel, corner, source, color, MathHelper.PiOver2, new Vector2(0f, 0.5f), new Vector2(length * yDirection, width), SpriteEffects.None, 0f);
+            spriteBatch.Draw(pixel, corner, source, color, rotation, new Vector2(0f, 0.5f), new Vector2(length * xDirection, width), SpriteEffects.None, 0f);
+            spriteBatch.Draw(pixel, corner, source, color, rotation + MathHelper.PiOver2, new Vector2(0f, 0.5f), new Vector2(length * yDirection, width), SpriteEffects.None, 0f);
         }
     }
 
@@ -676,9 +602,8 @@ namespace TestMod.Common.Graphics.DynamicText
 
             Texture2D pixel = TextureAssets.MagicPixel.Value;
             Rectangle source = new(0, 0, 1, 1);
-            Vector2 textSize = context.Font.MeasureString(context.Text) * context.Scale;
-            Vector2 topLeft = context.Position - context.Origin * context.Scale;
-            Vector2 center = topLeft + textSize * 0.5f;
+            Vector2 textSize = context.TextSize;
+            Vector2 center = context.ToScreen(textSize * 0.5f);
             Vector2 origin = new(0.5f);
 
             for (int i = 0; i < wispCount; i++)
@@ -688,7 +613,7 @@ namespace TestMod.Common.Graphics.DynamicText
                 Vector2 orbit = new(MathF.Cos(phase) * (textSize.X * 0.48f + orbitRadius), MathF.Sin(phase * 1.37f) * (textSize.Y * 0.42f + orbitRadius * 0.42f));
                 float pulse = 0.55f + 0.45f * MathF.Sin(context.Time * 4.7f + seed * MathHelper.TwoPi);
                 Color wispColor = Color.Lerp(context.PrimaryColor, color, pulse) * (opacity * (0.55f + pulse * 0.45f) * context.Opacity);
-                Vector2 position = center + orbit + Vector2.UnitY * MathF.Sin(context.Time * 2.2f + i) * 2.5f;
+                Vector2 position = center + (orbit + Vector2.UnitY * MathF.Sin(context.Time * 2.2f + i) * 2.5f).RotatedBy(context.Rotation);
                 float scale = size * context.Scale.X * (0.75f + pulse * 0.5f);
 
                 DrawSoftDot(context.SpriteBatch, pixel, source, position, wispColor * 0.42f, origin, scale * 2.6f);
@@ -740,20 +665,19 @@ namespace TestMod.Common.Graphics.DynamicText
 
             Texture2D pixel = TextureAssets.MagicPixel.Value;
             Rectangle source = new(0, 0, 1, 1);
-            Vector2 size = context.Font.MeasureString(context.Text) * context.Scale;
+            Vector2 size = context.TextSize;
             if (size.X <= 1f || size.Y <= 1f)
                 return;
 
-            Vector2 topLeft = context.Position - context.Origin * context.Scale;
             for (int i = 0; i < crackCount; i++)
             {
                 float seed = Hash01(context.Seed + i * 347);
                 float x = size.X * seed;
                 float y = size.Y * (0.18f + Hash01(context.Seed + i * 541) * 0.64f);
                 float flicker = 0.65f + 0.35f * MathF.Sin(context.Time * 8.5f + i * 1.4f);
-                Vector2 position = topLeft + new Vector2(x, y);
+                Vector2 position = context.ToScreen(new Vector2(x, y));
                 float crackLength = length * context.Scale.Y * (0.65f + Hash01(context.Seed + i * 719) * 0.65f);
-                float angle = -0.95f + Hash01(context.Seed + i * 919) * 1.9f;
+                float angle = context.Rotation - 0.95f + Hash01(context.Seed + i * 919) * 1.9f;
 
                 context.SpriteBatch.Draw(
                     pixel,
@@ -810,14 +734,7 @@ namespace TestMod.Common.Graphics.DynamicText
                 Color color = Color.Lerp(context.PrimaryColor, context.SecondaryColor, t) * ((1f - t) * opacity * context.Opacity);
                 Vector2 offset = travel * t;
 
-                context.Font.DrawColorCodedString(
-                    context.SpriteBatch,
-                    context.Text,
-                    context.Position + offset,
-                    color,
-                    context.Rotation,
-                    context.Origin,
-                    context.Scale);
+                context.DrawText(context.Position + offset, color, true);
             }
         }
 
@@ -847,7 +764,7 @@ namespace TestMod.Common.Graphics.DynamicText
                 return;
 
             Texture2D pixel = TextureAssets.MagicPixel.Value;
-            Vector2 textSize = context.Font.MeasureString(context.Text) * context.Scale;
+            Vector2 textSize = context.TextSize;
 
             for (int i = 0; i < sparkleCount; i++)
             {
@@ -859,20 +776,20 @@ namespace TestMod.Common.Graphics.DynamicText
                 if (brightness <= 0.025f)
                     continue;
 
-                Vector2 position = context.Position + new Vector2(x, y);
+                Vector2 position = context.ToScreen(new Vector2(x, y));
                 Color color = Color.Lerp(context.PrimaryColor, Color.White, 0.65f) * (brightness * opacity * context.Opacity);
                 float size = maxSize * (0.35f + brightness);
 
-                DrawSpark(context.SpriteBatch, pixel, position, color, size);
+                DrawSpark(context.SpriteBatch, pixel, position, color, size * context.Scale.X, context.Rotation);
             }
         }
 
-        private static void DrawSpark(SpriteBatch spriteBatch, Texture2D pixel, Vector2 position, Color color, float size)
+        private static void DrawSpark(SpriteBatch spriteBatch, Texture2D pixel, Vector2 position, Color color, float size, float rotation)
         {
             Rectangle source = new(0, 0, 1, 1);
             Vector2 origin = new(0.5f);
-            spriteBatch.Draw(pixel, position, source, color, 0f, origin, new Vector2(size, 1f), SpriteEffects.None, 0f);
-            spriteBatch.Draw(pixel, position, source, color, MathHelper.PiOver2, origin, new Vector2(size, 1f), SpriteEffects.None, 0f);
+            spriteBatch.Draw(pixel, position, source, color, rotation, origin, new Vector2(size, 1f), SpriteEffects.None, 0f);
+            spriteBatch.Draw(pixel, position, source, color, rotation + MathHelper.PiOver2, origin, new Vector2(size, 1f), SpriteEffects.None, 0f);
         }
 
         private static float Hash01(int seed)
@@ -911,19 +828,19 @@ namespace TestMod.Common.Graphics.DynamicText
 
         public void Draw(in DynamicTextDrawContext context)
         {
-            if (string.IsNullOrEmpty(context.Text) || cycle <= 0f || duration <= 0f)
+            if (!context.Layout.SupportsGlyphEffects || context.Opacity <= 0f || cycle <= 0f || duration <= 0f)
                 return;
 
             Texture2D pixel = TextureAssets.MagicPixel.Value;
             float localCycle = PositiveModulo(context.Time * 1.45f + context.Seed * 0.09f, cycle);
-            float charHeight = context.Font.MeasureString("A").Y * context.Scale.Y;
-            float charOffset = 0f;
+            float charHeight = context.TextSize.Y;
+            ReadOnlySpan<DynamicTextLayout.Glyph> glyphs = context.Layout.GetGlyphs(context.Font);
 
-            for (int i = 0; i < context.Text.Length; i++)
+            for (int i = 0; i < glyphs.Length; i++)
             {
-                string glyph = context.Text[i].ToString();
-                float glyphWidth = context.Font.MeasureString(glyph).X * context.Scale.X;
-                float start = i / (float)Math.Max(1, context.Text.Length) * spread;
+                float charOffset = glyphs[i].Offset * context.Scale.X;
+                float glyphWidth = glyphs[i].Width * context.Scale.X;
+                float start = i / (float)Math.Max(1, glyphs.Length) * spread;
                 float localTime = PositiveModulo(localCycle - start, cycle);
 
                 if (localTime >= 0f && localTime < duration)
@@ -932,25 +849,24 @@ namespace TestMod.Common.Graphics.DynamicText
                     float fade = progress < 0.16f ? progress / 0.16f : progress > 0.72f ? 1f - (progress - 0.72f) / 0.28f : 1f;
                     fade = MathHelper.Clamp(fade, 0f, 1f);
                     float wobble = MathF.Sin(context.Time * 5.2f + i * 1.73f + context.Seed * 0.013f) * 1.2f * context.Scale.X;
-                    float fall = SmoothStep(progress) * fallDistance;
+                    float fall = SmoothStep(progress) * fallDistance * context.Scale.Y;
 
-                    Vector2 basePosition = context.Position + new Vector2(charOffset + glyphWidth * 0.5f + wobble, charHeight * 0.78f + fall);
-                    DrawDrop(context.SpriteBatch, pixel, basePosition, color * (fade * opacity * context.Opacity), context.Scale.X, progress);
+                    Vector2 basePosition = context.ToScreen(new Vector2(charOffset + glyphWidth * 0.5f + wobble, charHeight * 0.78f + fall));
+                    DrawDrop(context.SpriteBatch, pixel, basePosition, color * (fade * opacity * context.Opacity), context.Scale.X, progress, context.Rotation);
                 }
 
-                charOffset += glyphWidth;
             }
         }
 
-        private static void DrawDrop(SpriteBatch spriteBatch, Texture2D pixel, Vector2 top, Color color, float scale, float progress)
+        private static void DrawDrop(SpriteBatch spriteBatch, Texture2D pixel, Vector2 top, Color color, float scale, float progress, float rotation)
         {
             Rectangle source = new(0, 0, 1, 1);
             Vector2 origin = new(0.5f);
             float stretch = 1f + progress * 0.7f;
-            spriteBatch.Draw(pixel, top - Vector2.UnitY * 3.5f * scale, source, color * 0.38f, 0f, origin, new Vector2(0.8f, 5.4f * stretch) * scale, SpriteEffects.None, 0f);
-            spriteBatch.Draw(pixel, top, source, color * 0.78f, 0f, origin, new Vector2(1.1f, 4.8f * stretch) * scale, SpriteEffects.None, 0f);
-            spriteBatch.Draw(pixel, top + Vector2.UnitY * 4.4f * scale, source, color, 0f, origin, new Vector2(3.1f, 5.2f) * scale, SpriteEffects.None, 0f);
-            spriteBatch.Draw(pixel, top + Vector2.UnitY * 8f * scale, source, color * 0.78f, 0f, origin, new Vector2(1.8f, 2.6f) * scale, SpriteEffects.None, 0f);
+            spriteBatch.Draw(pixel, top - Vector2.UnitY.RotatedBy(rotation) * 3.5f * scale, source, color * 0.38f, rotation, origin, new Vector2(0.8f, 5.4f * stretch) * scale, SpriteEffects.None, 0f);
+            spriteBatch.Draw(pixel, top, source, color * 0.78f, rotation, origin, new Vector2(1.1f, 4.8f * stretch) * scale, SpriteEffects.None, 0f);
+            spriteBatch.Draw(pixel, top + Vector2.UnitY.RotatedBy(rotation) * 4.4f * scale, source, color, rotation, origin, new Vector2(3.1f, 5.2f) * scale, SpriteEffects.None, 0f);
+            spriteBatch.Draw(pixel, top + Vector2.UnitY.RotatedBy(rotation) * 8f * scale, source, color * 0.78f, rotation, origin, new Vector2(1.8f, 2.6f) * scale, SpriteEffects.None, 0f);
         }
 
         private static float SmoothStep(float value)

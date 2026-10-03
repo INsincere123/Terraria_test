@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -50,6 +51,10 @@ namespace TestMod.Common.Graphics.DynamicText
     {
         private const int MaxActiveTexts = 90;
         private static readonly List<DynamicWorldTextInstance> ActiveTexts = [];
+        private static SpriteBatch worldSpriteBatch;
+
+        public override void OnWorldLoad() => ActiveTexts.Clear();
+        public override void OnWorldUnload() => ActiveTexts.Clear();
 
         public static void Spawn(DynamicWorldTextRequest request)
         {
@@ -78,6 +83,10 @@ namespace TestMod.Common.Graphics.DynamicText
         public override void Unload()
         {
             ActiveTexts.Clear();
+            SpriteBatch oldBatch = worldSpriteBatch;
+            worldSpriteBatch = null;
+            if (oldBatch is not null)
+                Main.QueueMainThreadAction(oldBatch.Dispose);
         }
 
         public override void PreUpdateEntities()
@@ -107,8 +116,14 @@ namespace TestMod.Common.Graphics.DynamicText
             if (Main.netMode == NetmodeID.Server || ActiveTexts.Count <= 0)
                 return true;
 
-            Main.spriteBatch.End();
-            Main.spriteBatch.Begin(
+            GraphicsDevice device = Main.graphics.GraphicsDevice;
+            if (worldSpriteBatch is null || worldSpriteBatch.IsDisposed || worldSpriteBatch.GraphicsDevice != device)
+            {
+                worldSpriteBatch?.Dispose();
+                worldSpriteBatch = new SpriteBatch(device);
+            }
+            // interface layer 已管理 Main.spriteBatch，使用独立批次保留其生命周期。
+            worldSpriteBatch.Begin(
                 SpriteSortMode.Deferred,
                 BlendState.AlphaBlend,
                 Main.DefaultSamplerState,
@@ -117,18 +132,15 @@ namespace TestMod.Common.Graphics.DynamicText
                 null,
                 Main.GameViewMatrix.TransformationMatrix);
 
-            foreach (DynamicWorldTextInstance text in ActiveTexts)
-                text.Draw(Main.spriteBatch);
-
-            Main.spriteBatch.End();
-            Main.spriteBatch.Begin(
-                SpriteSortMode.Deferred,
-                BlendState.AlphaBlend,
-                Main.DefaultSamplerState,
-                DepthStencilState.None,
-                Main.Rasterizer,
-                null,
-                Main.UIScaleMatrix);
+            try
+            {
+                foreach (DynamicWorldTextInstance text in ActiveTexts)
+                    text.Draw(worldSpriteBatch);
+            }
+            finally
+            {
+                worldSpriteBatch.End();
+            }
 
             return true;
         }
@@ -144,6 +156,8 @@ namespace TestMod.Common.Graphics.DynamicText
             private int time;
             private Vector2 position;
             private Vector2 velocity;
+            private DynamicTextFont font;
+            private DynamicTextLayout layout;
 
             public string Text { get; }
             public bool Expired => time >= lifetime;
@@ -176,12 +190,25 @@ namespace TestMod.Common.Graphics.DynamicText
                 if (opacity <= 0f)
                     return;
 
-                DynamicSpriteFont fallbackFont = FontAssets.CombatText[crit ? 1 : 0].Value;
-                DynamicTextFont font = DynamicTextFontSystem.Resolve(style.FontSpec, fallbackFont);
-                Vector2 textSize = font.MeasureString(Text);
+                if (layout is null || !layout.CanCache)
+                {
+                    DynamicSpriteFont fallbackFont = FontAssets.CombatText[crit ? 1 : 0].Value;
+                    font = DynamicTextFontSystem.Resolve(style.FontSpec, fallbackFont).ForText(Text);
+                    layout = DynamicTextLayout.Get(font, Text);
+                }
+                Vector2 textSize = layout.Size;
                 Vector2 scale = Vector2.One * style.GetWorldScale(progress, crit, requestScale);
                 Vector2 drawPosition = position - Main.screenPosition;
                 Vector2 origin = textSize * 0.5f;
+                Matrix transform = Main.GameViewMatrix.TransformationMatrix;
+                Vector2 screenCenter = Vector2.Transform(drawPosition, transform);
+                Vector2 extent = textSize * scale * 0.5f + new Vector2(96f);
+                Vector2 screenExtent = new(
+                    MathF.Abs(transform.M11) * extent.X + MathF.Abs(transform.M21) * extent.Y,
+                    MathF.Abs(transform.M12) * extent.X + MathF.Abs(transform.M22) * extent.Y);
+                if (screenCenter.X + screenExtent.X < 0f || screenCenter.Y + screenExtent.Y < 0f ||
+                    screenCenter.X - screenExtent.X > Main.screenWidth || screenCenter.Y - screenExtent.Y > Main.screenHeight)
+                    return;
                 Color primary = overrideColor ?? style.PrimaryColor;
 
                 DynamicTextDrawContext context = new(
@@ -201,7 +228,8 @@ namespace TestMod.Common.Graphics.DynamicText
                     primary,
                     style.SecondaryColor,
                     style.ShadowColor,
-                    DynamicTextSurface.World);
+                    DynamicTextSurface.World,
+                    layout);
 
                 style.Draw(context);
             }

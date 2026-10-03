@@ -2,6 +2,7 @@ sampler baseTexture : register(s0);
 
 float2 sourcePositions[3];
 float sourceStrengths[3];
+float2 textureSize;
 float lensRadius;
 float distortionStrength;
 int sourceCount;
@@ -22,11 +23,12 @@ float4 PixelShaderFunction(float4 sampleColor : COLOR0, float2 coords : TEXCOORD
         if (i >= sourceCount)
             break;
 
-        float2 delta = distortedCoords - sourcePositions[i];
+        // 使用像素空间旋转，保持透镜圆形，并消除复用纹理尺寸对半径的影响。
+        float2 delta = (distortedCoords - sourcePositions[i]) * textureSize;
         float distanceToSource = length(delta);
         float lensMask = exp(-distanceToSource / max(lensRadius, 0.0001));
         float angle = sourceStrengths[i] * distortionStrength * lensMask;
-        distortedCoords = RotatedBy(distortedCoords - sourcePositions[i], angle) + sourcePositions[i];
+        distortedCoords = RotatedBy(delta, angle) / textureSize + sourcePositions[i];
     }
 
     float4 color = tex2D(baseTexture, distortedCoords) * sampleColor;

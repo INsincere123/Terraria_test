@@ -1,4 +1,3 @@
-using System.Collections.ObjectModel;
 using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
@@ -38,14 +37,14 @@ namespace TestMod.Common.GlobalItems
 
         public override bool PreDrawTooltipLine(Item item, DrawableTooltipLine line, ref int yOffset)
         {
-            if (item.rare == ModContent.RarityType<EventHorizonRarity>())
-                return true;
-
             if (line.Mod != "Terraria")
                 return true;
 
             if (line.Name == "ItemName")
             {
+                if (item.rare == ModContent.RarityType<EventHorizonRarity>())
+                    return !EventHorizonRarity.TryDrawName(item, line);
+
                 if (item.rare == ModContent.RarityType<AntaresRarity>())
                 {
                     AntaresRarity.Draw(item, line);
@@ -59,20 +58,6 @@ namespace TestMod.Common.GlobalItems
                 return !DynamicTextTooltipRenderer.TryDrawDamageLine(item, line);
 
             return true;
-        }
-
-        public override bool PreDrawTooltip(Item item, ReadOnlyCollection<TooltipLine> lines, ref int x, ref int y)
-        {
-            if (item.rare == ModContent.RarityType<EventHorizonRarity>())
-                return false;
-
-            return true;
-        }
-
-        public override void PostDrawTooltip(Item item, ReadOnlyCollection<DrawableTooltipLine> lines)
-        {
-            if (item.rare == ModContent.RarityType<EventHorizonRarity>())
-                EventHorizonRarity.DrawTooltip(item, lines);
         }
     }
 }

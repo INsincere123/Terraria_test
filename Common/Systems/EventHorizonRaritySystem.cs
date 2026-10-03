@@ -1,4 +1,4 @@
-using Microsoft.Xna.Framework.Graphics;
+using Luminance.Core.Graphics;
 using Terraria;
 using Terraria.ModLoader;
 using TestMod.Content.Rarities;
@@ -12,11 +12,8 @@ namespace TestMod.Common.Systems
             if (Main.dedServ)
                 return;
 
-            Main.QueueMainThreadAction(() =>
-            {
-                Main.graphics.GraphicsDevice.PresentationParameters.RenderTargetUsage = RenderTargetUsage.PreserveContents;
-                Main.graphics.ApplyChanges();
-            });
+            // 离屏内容必须在世界和 UI 绘制前准备，不能在 tooltip 中切换目标并清掉当前帧。
+            RenderTargetManager.RenderTargetUpdateLoopEvent += EventHorizonRarity.PrepareNameTarget;
         }
 
         public override void Unload()
@@ -24,6 +21,7 @@ namespace TestMod.Common.Systems
             if (Main.dedServ)
                 return;
 
+            RenderTargetManager.RenderTargetUpdateLoopEvent -= EventHorizonRarity.PrepareNameTarget;
             EventHorizonRarity.UnloadResources();
         }
     }

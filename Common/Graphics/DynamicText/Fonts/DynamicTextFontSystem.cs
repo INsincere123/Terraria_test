@@ -12,8 +12,10 @@ namespace TestMod.Common.Graphics.DynamicText.Fonts
 {
     public sealed class DynamicTextFontSystem : ModSystem
     {
-        private static readonly Dictionary<string, SystemDynamicTextFont> ResolvedFonts = [];
-        private static readonly HashSet<string> FailedKeys = [];
+        private readonly record struct FontKey(DynamicTextFontSource Source, string Value, string FamilyName, float Size);
+        private static readonly Dictionary<FontKey, SystemDynamicTextFont> ResolvedFonts = [];
+        private static readonly HashSet<FontKey> FailedKeys = [];
+        private static readonly Dictionary<DynamicTextFontSpec, SystemDynamicTextFont> ResolvedSpecs = [];
         private static readonly List<string> PendingMissingFontReports = [];
         private static object installedFonts;
         private static int missingFontReportTimer = -1;
@@ -26,12 +28,19 @@ namespace TestMod.Common.Graphics.DynamicText.Fonts
             if (Main.netMode == NetmodeID.Server || !OperatingSystem.IsWindows() || spec is null || !spec.HasCandidates)
                 return new DynamicTextFont(fallbackFont);
 
+            if (ResolvedSpecs.TryGetValue(spec, out SystemDynamicTextFont resolved))
+                return new DynamicTextFont(fallbackFont, resolved);
+
             foreach (DynamicTextFontCandidate candidate in spec.Candidates)
             {
                 if (TryResolveSystemFont(candidate, spec.Size, out SystemDynamicTextFont systemFont))
+                {
+                    ResolvedSpecs[spec] = systemFont;
                     return new DynamicTextFont(fallbackFont, systemFont);
+                }
             }
 
+            ResolvedSpecs[spec] = null;
             return new DynamicTextFont(fallbackFont);
         }
 
@@ -61,6 +70,7 @@ namespace TestMod.Common.Graphics.DynamicText.Fonts
 
         public override void OnWorldUnload()
         {
+            DynamicTextLayout.ClearCache();
             PendingMissingFontReports.Clear();
             missingFontReportTimer = -1;
         }
@@ -85,6 +95,8 @@ namespace TestMod.Common.Graphics.DynamicText.Fonts
                 texturesToDispose.AddRange(font.DisposeAndCollectTextures());
 
             ResolvedFonts.Clear();
+            ResolvedSpecs.Clear();
+            DynamicTextLayout.ClearCache();
             FailedKeys.Clear();
             PendingMissingFontReports.Clear();
             missingFontReportTimer = -1;
@@ -144,7 +156,7 @@ namespace TestMod.Common.Graphics.DynamicText.Fonts
             if (string.IsNullOrWhiteSpace(candidate.Value))
                 return false;
 
-            string key = $"{candidate.Source}|{candidate.Value}|{candidate.FamilyName}|{size}";
+            FontKey key = new(candidate.Source, candidate.Value, candidate.FamilyName, size);
             if (ResolvedFonts.TryGetValue(key, out systemFont))
                 return true;
 
@@ -195,25 +207,33 @@ namespace TestMod.Common.Graphics.DynamicText.Fonts
                 return null;
 
             object collection = SystemDrawingTextInterop.CreatePrivateFontCollection();
-            SystemDrawingTextInterop.AddFontFile(collection, path);
-
-            object family = null;
-            if (!string.IsNullOrWhiteSpace(candidate.FamilyName))
+            bool ownershipTransferred = false;
+            try
             {
-                family = SystemDrawingTextInterop.GetFamilies(collection)
-                    .Cast<object>()
-                    .FirstOrDefault(f => string.Equals(SystemDrawingTextInterop.GetFamilyName(f), candidate.FamilyName, StringComparison.OrdinalIgnoreCase));
+                SystemDrawingTextInterop.AddFontFile(collection, path);
+
+                object family = null;
+                if (!string.IsNullOrWhiteSpace(candidate.FamilyName))
+                {
+                    family = SystemDrawingTextInterop.GetFamilies(collection)
+                        .Cast<object>()
+                        .FirstOrDefault(f => string.Equals(SystemDrawingTextInterop.GetFamilyName(f), candidate.FamilyName, StringComparison.OrdinalIgnoreCase));
+                }
+
+                family ??= SystemDrawingTextInterop.GetFamilies(collection).Cast<object>().FirstOrDefault();
+                if (family is null)
+                    return null;
+
+                SystemDynamicTextFont resolved = new(family, size, collection, $"file:{path}");
+                ownershipTransferred = true;
+                return resolved;
             }
-
-            family ??= SystemDrawingTextInterop.GetFamilies(collection).Cast<object>().FirstOrDefault();
-            if (family is null)
+            finally
             {
-                if (collection is IDisposable disposable)
+                // 加载或构造失败时仍释放集合；成功后由字体实例持有并负责卸载。
+                if (!ownershipTransferred && collection is IDisposable disposable)
                     disposable.Dispose();
-                return null;
             }
-
-            return new SystemDynamicTextFont(family, size, collection, $"file:{path}");
         }
     }
 }

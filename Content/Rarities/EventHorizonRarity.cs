@@ -1,14 +1,13 @@
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using Luminance.Core.Graphics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using ReLogic.Graphics;
 using Terraria;
 using Terraria.ModLoader;
-using Terraria.UI.Chat;
 using TestMod.Common.Graphics.DynamicText;
+using TestMod.Common.Graphics.DynamicText.Fonts;
 using TestMod.Common.Systems;
 
 namespace TestMod.Content.Rarities
@@ -46,14 +45,14 @@ namespace TestMod.Content.Rarities
         public const float ParticleGlowRadius = 2.2f;
         public const float ParticleOpacity = 0.16f;
 
-        // 文字透镜：独立随机出现在 tooltip 区域内，范围较小，避免整框大幅晃动。
+        // 文字透镜：只作用于物品名，半径使用局部纹理像素，避免宽高比改变扭曲形状。
         public const int LensSourceCount = 3;
         public const float LensCycleSeconds = 7.2f;
         public const float LensActiveSeconds = 4.8f;
         public const float LensSpawnMargin = 18f;
         public const float LensWanderRadius = 10f;
-        public const float TextLensRadius = 0.026f;
-        public const float TextLensStrength = 3.6f;
+        public const float TextLensRadius = 8f;
+        public const float TextLensStrength = 1.1f;
 
         // 物品名闪光：参考 Infernum 稀有度的横向辉光和红色闪电粒子，但换成事件视界的橙金/深红风格。
         public const int NameGlowLayers = 12;
@@ -64,38 +63,137 @@ namespace TestMod.Content.Rarities
         private static RenderTarget2D textTarget;
         private static Effect textLensShader;
         private static bool loggedShaderLoadFailure;
+        private static bool loggedDrawFailure;
         private static readonly List<NameSparkle> nameSparkles = [];
         private static string sparkleOwnerText;
+        private static SpriteBatch nameSpriteBatch;
+        private static NameRenderRequest? pendingName;
+        private static NameRenderRequest? preparedName;
+        private static NameRenderRequest? layoutName;
+        private static Rectangle layoutBounds;
+        private static Rectangle preparedBounds;
+        private static Vector2[] preparedSourcePositions;
+        private static float[] preparedSourceStrengths;
+        private static readonly Vector2[] particlePositions = new Vector2[FallingParticleCount];
+        private static readonly Vector2[] lensPositions = new Vector2[LensSourceCount];
+        private static readonly Vector2[] sourcePositions = new Vector2[LensSourceCount];
+        private static readonly float[] sourceStrengths = new float[LensSourceCount];
+        // RenderTrail 在返回前完成顶点上传和绘制，顺序调用可复用这组控制点。
+        private static readonly Vector2[] trailPoints = new Vector2[5];
+
+        // 只保存绘制参数；鼠标位置不进入缓存键，移动 tooltip 不需要重建布局。
+        private readonly record struct NameRenderRequest(int ItemType, string Text, DynamicSpriteFont Font, float Rotation, Vector2 Origin, Vector2 Scale, Color? OverrideColor, float MaxWidth, float Spread);
 
         public override Color RarityColor => Color.Lerp(TextInnerColor, AccretionGold, 0.35f);
 
-        public static void DrawTooltip(Item item, ReadOnlyCollection<DrawableTooltipLine> lines)
+        public static bool TryDrawName(Item item, DrawableTooltipLine line)
         {
-            if (Main.dedServ || lines.Count <= 0)
-                return;
+            if (Main.dedServ || string.IsNullOrEmpty(line.Text))
+                return false;
 
-            Rectangle bounds = CalculateTooltipBounds(lines);
-            if (bounds.Width <= 0 || bounds.Height <= 0)
-                return;
+            NameRenderRequest request = new(item.type, line.Text, line.Font, line.Rotation, line.Origin, line.BaseScale, line.OverrideColor, line.MaxWidth, line.Spread);
+            pendingName = request;
+            // 第一次悬停或切换物品时先画普通文字；下一帧帧前准备完成后再启用特效。
+            if (preparedName != request || textTarget is null || textTarget.IsDisposed)
+                return false;
 
-            int targetWidth = bounds.Width + RenderPadding * 2;
-            int targetHeight = bounds.Height + RenderPadding * 2;
-            EnsureRenderTarget(targetWidth, targetHeight);
-
-            float time = Main.GlobalTimeWrappedHourly;
-            Vector2 tooltipSize = bounds.Size();
-            Vector2[] particlePositions = CalculateParticlePositions(item, tooltipSize, time);
-            Vector2[] lensPositions = CalculateLensPositions(item, tooltipSize, time, out float[] sourceStrengths);
-            Vector2[] sourcePositions = new Vector2[LensSourceCount];
-
-            for (int i = 0; i < LensSourceCount; i++)
+            SpriteBatch sb = Main.spriteBatch;
+            sb.End();
+            try
             {
-                Vector2 localPosition = lensPositions[i] + new Vector2(RenderPadding);
-                sourcePositions[i] = new Vector2(localPosition.X / targetWidth, localPosition.Y / targetHeight);
+                // 此处只合成纹理，绝不 SetRenderTarget 或 Clear，保留已经画好的世界和 UI。
+                Vector2 position = new(line.X + preparedBounds.X - RenderPadding, line.Y + preparedBounds.Y - RenderPadding);
+                DrawTargetWithShader(sb, position, preparedBounds.Width + RenderPadding * 2, preparedBounds.Height + RenderPadding * 2, preparedSourcePositions, preparedSourceStrengths);
+                return true;
             }
+            catch (Exception exception)
+            {
+                LogDrawFailure(exception);
+                // 特效失败时让原版继续画名字，不能留下空白 tooltip。
+                return false;
+            }
+            finally
+            {
+                sb.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, Main.DefaultSamplerState, DepthStencilState.None, Main.Rasterizer, null, Main.UIScaleMatrix);
+            }
+        }
 
-            DrawTooltipToTarget(item, Main.spriteBatch, lines, bounds, time, particlePositions);
-            DrawTargetWithShader(Main.spriteBatch, new Vector2(bounds.X - RenderPadding, bounds.Y - RenderPadding), targetWidth, targetHeight, sourcePositions, sourceStrengths);
+        public static void PrepareNameTarget()
+        {
+            NameRenderRequest? request = pendingName;
+            pendingName = null;
+            preparedName = null;
+            if (Main.dedServ || request is not NameRenderRequest name)
+                return;
+
+            GraphicsDevice device = Main.graphics.GraphicsDevice;
+            RenderTargetBinding[] previousTargets = device.GetRenderTargets();
+            Viewport previousViewport = device.Viewport;
+            Rectangle previousScissor = device.ScissorRectangle;
+            BlendState previousBlend = device.BlendState;
+            DepthStencilState previousDepth = device.DepthStencilState;
+            RasterizerState previousRasterizer = device.RasterizerState;
+            // Luminance 的 primitive 绘制会修改共享 CullNone，而不仅是替换状态引用。
+            bool previousCullNoneScissor = RasterizerState.CullNone.ScissorTestEnable;
+            SamplerState previousSampler = device.SamplerStates[0];
+            try
+            {
+                // 普通名称的布局只在参数变化时重算；自定义 snippet 保留动态尺寸。
+                DynamicTextLayout layout = GetNameLayout(name.Font, name.Text, name.Scale, name.MaxWidth);
+                if (layoutName != name || !layout.CanCache)
+                {
+                    layoutBounds = CalculateNameBounds(name);
+                    layoutName = name;
+                }
+                Rectangle bounds = layoutBounds;
+                EnsureRenderTarget(bounds.Width + RenderPadding * 2, bounds.Height + RenderPadding * 2);
+                if (nameSpriteBatch is null || nameSpriteBatch.IsDisposed || nameSpriteBatch.GraphicsDevice != device)
+                {
+                    nameSpriteBatch?.Dispose();
+                    nameSpriteBatch = new SpriteBatch(device);
+                }
+
+                float time = Main.GlobalTimeWrappedHourly;
+                Vector2 nameSize = bounds.Size();
+                CalculateParticlePositions(name.ItemType, nameSize, time, particlePositions);
+                CalculateLensPositions(name.ItemType, nameSize, time, lensPositions, sourceStrengths);
+                for (int i = 0; i < LensSourceCount; i++)
+                {
+                    Vector2 localPosition = lensPositions[i] + new Vector2(RenderPadding);
+                    sourcePositions[i] = new Vector2(localPosition.X / textTarget.Width, localPosition.Y / textTarget.Height);
+                }
+
+                // 使用独立 SpriteBatch，不干预 Main.spriteBatch 的 Begin/End 生命周期。
+                DrawNameToTarget(name, nameSpriteBatch, bounds, time, particlePositions);
+                preparedBounds = bounds;
+                preparedSourcePositions = sourcePositions;
+                preparedSourceStrengths = sourceStrengths;
+                preparedName = name;
+            }
+            catch (Exception exception)
+            {
+                LogDrawFailure(exception);
+            }
+            finally
+            {
+                device.SetRenderTargets(previousTargets);
+                device.Viewport = previousViewport;
+                device.ScissorRectangle = previousScissor;
+                device.BlendState = previousBlend;
+                device.DepthStencilState = previousDepth;
+                RasterizerState.CullNone.ScissorTestEnable = previousCullNoneScissor;
+                device.RasterizerState = previousRasterizer;
+                device.SamplerStates[0] = previousSampler;
+            }
+        }
+
+        private static void LogDrawFailure(Exception exception)
+        {
+            if (loggedDrawFailure)
+                return;
+
+            loggedDrawFailure = true;
+            ModContent.GetInstance<global::TestMod.TestMod>().Logger.Warn($"Failed to draw Event Horizon item name: {exception}");
         }
 
         private static void EnsureRenderTarget(int width, int height)
@@ -108,74 +206,60 @@ namespace TestMod.Content.Rarities
             textTarget = new RenderTarget2D(graphicsDevice, width, height, false, SurfaceFormat.Color, DepthFormat.None, 0, RenderTargetUsage.PreserveContents);
         }
 
-        private static void DrawTooltipToTarget(Item item, SpriteBatch sb, ReadOnlyCollection<DrawableTooltipLine> lines, Rectangle bounds, float time, Vector2[] particlePositions)
+        private static void DrawNameToTarget(NameRenderRequest name, SpriteBatch sb, Rectangle bounds, float time, Vector2[] particlePositions)
         {
             GraphicsDevice graphicsDevice = Main.graphics.GraphicsDevice;
 
-            sb.End();
             graphicsDevice.SetRenderTarget(textTarget);
             graphicsDevice.Clear(Color.Transparent);
 
             BeginTooltipTargetBatch(sb);
 
-            foreach (DrawableTooltipLine line in lines)
+            try
             {
-                Vector2 localPosition = new Vector2(line.X - bounds.X + RenderPadding, line.Y - bounds.Y + RenderPadding);
-                if (line.Mod == "Terraria" && line.Name == "ItemName")
-                {
-                    DrawRegistryNameEffects(item, sb, line.Font, line.Text, localPosition, line.Rotation, line.Origin, line.BaseScale, time);
-                    DrawNameSparkles(sb, line.Font, line.Text, localPosition, line.BaseScale, time);
-                    continue;
-                }
-
-                Color lineColor = line.OverrideColor ?? line.Color;
-                ChatManager.DrawColorCodedStringWithShadow(
-                    sb,
-                    line.Font,
-                    line.Text,
-                    localPosition,
-                    lineColor,
-                    line.Rotation,
-                    line.Origin,
-                    line.BaseScale,
-                    line.MaxWidth,
-                    line.Spread);
+                Vector2 localPosition = new(-bounds.X + RenderPadding, -bounds.Y + RenderPadding);
+                DrawRegistryNameEffects(name.ItemType, sb, name.Font, name.Text, localPosition, name.Rotation, name.Origin, name.Scale, time, name.OverrideColor, name.MaxWidth, name.Spread);
+                Vector2 textSize = GetNameLayout(name.Font, name.Text, name.Scale, name.MaxWidth).Size * name.Scale;
+                Vector2 sparkleCenter = localPosition + (textSize * new Vector2(0.5f, 0.45f) - name.Origin * name.Scale).RotatedBy(name.Rotation);
+                DrawNameSparkles(sb, name.Text, sparkleCenter, textSize, time);
+                DrawFallingParticles(name.ItemType, sb, particlePositions, time);
             }
-
-            DrawFallingParticles(item, sb, particlePositions, time);
-
-            sb.End();
-            graphicsDevice.SetRenderTarget(null);
+            finally
+            {
+                sb.End();
+            }
         }
 
         private static void DrawTargetWithShader(SpriteBatch sb, Vector2 screenPosition, int width, int height, Vector2[] sourcePositions, float[] sourceStrengths)
         {
             Effect shader = GetTextLensShader();
-            if (shader is null)
+            if (shader is not null)
             {
-                sb.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, Main.DefaultSamplerState, DepthStencilState.None, Main.Rasterizer, null, Main.UIScaleMatrix);
-                sb.Draw(textTarget, screenPosition, new Rectangle(0, 0, width, height), Color.White);
-                sb.End();
-                sb.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, Main.DefaultSamplerState, DepthStencilState.None, Main.Rasterizer, null, Main.UIScaleMatrix);
-                return;
+                shader.Parameters["sourcePositions"]?.SetValue(sourcePositions);
+                shader.Parameters["sourceStrengths"]?.SetValue(sourceStrengths);
+                shader.Parameters["sourceCount"]?.SetValue(LensSourceCount);
+                shader.Parameters["textureSize"]?.SetValue(new Vector2(textTarget.Width, textTarget.Height));
+                shader.Parameters["lensRadius"]?.SetValue(TextLensRadius);
+                shader.Parameters["distortionStrength"]?.SetValue(TextLensStrength);
             }
 
-            shader.Parameters["sourcePositions"]?.SetValue(sourcePositions);
-            shader.Parameters["sourceStrengths"]?.SetValue(sourceStrengths);
-            shader.Parameters["sourceCount"]?.SetValue(LensSourceCount);
-            shader.Parameters["lensRadius"]?.SetValue(TextLensRadius);
-            shader.Parameters["distortionStrength"]?.SetValue(TextLensStrength);
-
             sb.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend, SamplerState.LinearClamp, DepthStencilState.None, RasterizerState.CullNone, shader, Main.UIScaleMatrix);
-            sb.Draw(textTarget, screenPosition, new Rectangle(0, 0, width, height), Color.White);
-            sb.End();
-            sb.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, Main.DefaultSamplerState, DepthStencilState.None, Main.Rasterizer, null, Main.UIScaleMatrix);
+            try
+            {
+                sb.Draw(textTarget, screenPosition, new Rectangle(0, 0, width, height), Color.White);
+            }
+            finally
+            {
+                sb.End();
+            }
         }
 
         private static Effect GetTextLensShader()
         {
             if (textLensShader is not null && !textLensShader.IsDisposed)
                 return textLensShader;
+            if (loggedShaderLoadFailure)
+                return null;
 
             try
             {
@@ -200,20 +284,31 @@ namespace TestMod.Content.Rarities
         {
             RenderTarget2D oldTarget = textTarget;
             Effect oldShader = textLensShader;
+            SpriteBatch oldBatch = nameSpriteBatch;
 
             textTarget = null;
             textLensShader = null;
+            nameSpriteBatch = null;
+            pendingName = null;
+            preparedName = null;
+            layoutName = null;
+            layoutBounds = default;
+            preparedBounds = default;
+            preparedSourcePositions = null;
+            preparedSourceStrengths = null;
             loggedShaderLoadFailure = false;
+            loggedDrawFailure = false;
             nameSparkles.Clear();
             sparkleOwnerText = null;
 
-            if (Main.dedServ || oldTarget is null && oldShader is null)
+            if (Main.dedServ || oldTarget is null && oldShader is null && oldBatch is null)
                 return;
 
             Main.QueueMainThreadAction(() =>
             {
                 oldTarget?.Dispose();
                 oldShader?.Dispose();
+                oldBatch?.Dispose();
             });
         }
 
@@ -222,10 +317,10 @@ namespace TestMod.Content.Rarities
             sb.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.LinearClamp, DepthStencilState.None, RasterizerState.CullNone);
         }
 
-        private static void DrawRegistryNameEffects(Item item, SpriteBatch sb, DynamicSpriteFont font, string text, Vector2 position, float rotation, Vector2 origin, Vector2 baseScale, float time)
+        private static void DrawRegistryNameEffects(int itemType, SpriteBatch sb, DynamicSpriteFont font, string text, Vector2 position, float rotation, Vector2 origin, Vector2 baseScale, float time, Color? overrideColor, float maxWidth, float spread)
         {
-            Vector2 textSize = font.MeasureString(text) * baseScale;
-            Vector2 glowCenter = position + new Vector2(textSize.X * 0.5f, textSize.Y * 0.42f);
+            Vector2 textSize = GetNameLayout(font, text, baseScale, maxWidth).Size * baseScale;
+            Vector2 glowCenter = position + (new Vector2(textSize.X * 0.5f, textSize.Y * 0.42f) - origin * baseScale).RotatedBy(rotation);
             float pulse = 0.78f + 0.22f * MathF.Sin(time * 2.4f);
 
             DrawNameTexturedAura(sb, glowCenter, textSize, pulse, time);
@@ -240,23 +335,32 @@ namespace TestMod.Content.Rarities
                 origin,
                 baseScale,
                 DynamicTextStyleRegistry.Get(DynamicTextStyleRegistry.RarityEventHorizon),
-                item.type * 991 + text.GetHashCode());
+                itemType * 991 + text.GetHashCode(),
+                overrideColor,
+                maxWidth,
+                spread);
         }
 
-        private static Rectangle CalculateTooltipBounds(ReadOnlyCollection<DrawableTooltipLine> lines)
+        private static DynamicTextLayout GetNameLayout(DynamicSpriteFont font, string text, Vector2 scale, float maxWidth) =>
+            DynamicTextLayout.Get(new DynamicTextFont(font), text, scale.X > 0f && maxWidth > 0f ? maxWidth / scale.X : -1f);
+
+        private static Rectangle CalculateNameBounds(NameRenderRequest name)
         {
             float minX = float.MaxValue;
             float minY = float.MaxValue;
             float maxX = float.MinValue;
             float maxY = float.MinValue;
 
-            foreach (DrawableTooltipLine line in lines)
+            Vector2 size = GetNameLayout(name.Font, name.Text, name.Scale, name.MaxWidth).Size * name.Scale;
+            Vector2 origin = name.Origin * name.Scale;
+            Vector2[] corners = [Vector2.Zero, new Vector2(size.X, 0f), size, new Vector2(0f, size.Y)];
+            foreach (Vector2 corner in corners)
             {
-                Vector2 size = line.Font.MeasureString(line.Text) * line.BaseScale;
-                minX = MathF.Min(minX, line.X);
-                minY = MathF.Min(minY, line.Y);
-                maxX = MathF.Max(maxX, line.X + size.X);
-                maxY = MathF.Max(maxY, line.Y + size.Y);
+                Vector2 position = (corner - origin).RotatedBy(name.Rotation);
+                minX = MathF.Min(minX, position.X);
+                minY = MathF.Min(minY, position.Y);
+                maxX = MathF.Max(maxX, position.X);
+                maxY = MathF.Max(maxY, position.Y);
             }
 
             int x = (int)MathF.Floor(minX);
@@ -264,56 +368,6 @@ namespace TestMod.Content.Rarities
             int width = Math.Max(1, (int)MathF.Ceiling(maxX - minX));
             int height = Math.Max(1, (int)MathF.Ceiling(maxY - minY));
             return new Rectangle(x, y, width, height);
-        }
-
-        private static void DrawAccretionEdge(SpriteBatch sb, DynamicSpriteFont font, string text, Vector2 position, float rotation, Vector2 origin, Vector2 baseScale, float time)
-        {
-            float pulse = 0.82f + 0.18f * MathF.Sin(time * 1.35f);
-            for (int i = 0; i < EdgeGlowLayers; i++)
-            {
-                float progress = i / (float)EdgeGlowLayers;
-                float angle = MathHelper.TwoPi * progress + time * 0.35f;
-                Vector2 offset = new Vector2(MathF.Cos(angle), MathF.Sin(angle) * 0.55f) * EdgeGlowRadius;
-                Color edgeColor = Color.Lerp(AccretionOrange, AccretionGold, 0.5f + 0.5f * MathF.Sin(angle + time * 1.8f));
-                edgeColor.A = 0;
-
-                ChatManager.DrawColorCodedString(
-                    sb,
-                    font,
-                    text,
-                    position + offset,
-                    edgeColor * EdgeGlowOpacity * pulse,
-                    rotation,
-                    origin,
-                    baseScale);
-            }
-        }
-
-        private static void DrawNameGlow(SpriteBatch sb, DynamicSpriteFont font, string text, Vector2 position, float rotation, Vector2 origin, Vector2 baseScale, float time)
-        {
-            Vector2 textSize = font.MeasureString(text) * baseScale;
-            Vector2 glowCenter = position + new Vector2(textSize.X * 0.5f, textSize.Y * 0.42f);
-            float pulse = 0.78f + 0.22f * MathF.Sin(time * 2.4f);
-            DrawNameTexturedAura(sb, glowCenter, textSize, pulse, time);
-            DrawNameGlowPrimitive(sb, glowCenter, textSize, pulse, time);
-
-            for (int i = 0; i < NameGlowLayers; i++)
-            {
-                float angle = MathHelper.TwoPi * i / NameGlowLayers;
-                Vector2 offset = new Vector2(MathF.Cos(angle), MathF.Sin(angle) * 0.55f) * NameGlowRadius * pulse;
-                Color glowColor = Color.Lerp(new Color(115, 18, 28), AccretionGold, 0.42f + 0.18f * MathF.Sin(time * 1.7f + angle));
-                glowColor.A = 0;
-
-                ChatManager.DrawColorCodedString(
-                    sb,
-                    font,
-                    text,
-                    position + offset,
-                    glowColor * 0.28f,
-                    rotation,
-                    origin,
-                    baseScale);
-            }
         }
 
         private static void DrawNameTexturedAura(SpriteBatch sb, Vector2 glowCenter, Vector2 textSize, float pulse, float time)
@@ -338,74 +392,36 @@ namespace TestMod.Content.Rarities
                 return;
 
             sb.End();
-
-            Vector2 start = glowCenter + new Vector2(textSize.X * -0.62f, 0f);
-            Vector2 end = glowCenter + new Vector2(textSize.X * 0.62f, 0f);
-            Vector2[] points = CreateWavyLinePoints(start, end, 5, 1.2f, time * 1.7f);
-            AddScreenPosition(points);
-
-            Color glowColor = AccretionOrange * (0.2f * pulse);
-            glowColor.A = 0;
-            PrimitiveRenderer.RenderTrail(
-                points,
-                new PrimitiveSettings(
-                    completion => (8f + 2f * MathF.Sin(completion * MathHelper.Pi)) * pulse,
-                    completion => glowColor * MathF.Sin(completion * MathHelper.Pi),
-                    Smoothen: true,
-                    ProjectionAreaWidth: textTarget.Width,
-                    ProjectionAreaHeight: textTarget.Height,
-                    UseUnscaledMatrix: true),
-                16);
-
-            BeginTooltipTargetBatch(sb);
-        }
-
-        private static void DrawDarkCore(SpriteBatch sb, DynamicSpriteFont font, string text, Vector2 position, float rotation, Vector2 origin, Vector2 baseScale, float time)
-        {
-            for (int i = 0; i < ShadowLayers; i++)
+            try
             {
-                float angle = MathHelper.TwoPi * i / ShadowLayers;
-                Vector2 offset = new Vector2(MathF.Cos(angle), MathF.Sin(angle)) * ShadowRadius;
-                ChatManager.DrawColorCodedString(
-                    sb,
-                    font,
-                    text,
-                    position + offset,
-                    Color.Black * 0.82f,
-                    rotation,
-                    origin,
-                    baseScale);
+                Vector2 start = glowCenter + new Vector2(textSize.X * -0.62f, 0f);
+                Vector2 end = glowCenter + new Vector2(textSize.X * 0.62f, 0f);
+                Vector2[] points = trailPoints;
+                FillWavyLinePoints(points, start, end, 1.2f, time * 1.7f);
+                AddScreenPosition(points);
+
+                Color glowColor = AccretionOrange * (0.2f * pulse);
+                glowColor.A = 0;
+                PrimitiveRenderer.RenderTrail(
+                    points,
+                    new PrimitiveSettings(
+                        completion => (8f + 2f * MathF.Sin(completion * MathHelper.Pi)) * pulse,
+                        completion => glowColor * MathF.Sin(completion * MathHelper.Pi),
+                        Smoothen: true,
+                        ProjectionAreaWidth: textTarget.Width,
+                        ProjectionAreaHeight: textTarget.Height,
+                        UseUnscaledMatrix: true),
+                    16);
             }
-
-            float innerPulse = 0.5f + 0.5f * MathF.Sin(time * 0.9f);
-            Color textColor = Color.Lerp(TextCoreColor, TextInnerColor, 0.16f + innerPulse * 0.36f);
-            textColor.A = 255;
-
-            ChatManager.DrawColorCodedStringShadow(
-                sb,
-                font,
-                text,
-                position,
-                Color.Black * 0.95f,
-                rotation,
-                origin,
-                baseScale);
-
-            ChatManager.DrawColorCodedString(
-                sb,
-                font,
-                text,
-                position,
-                textColor,
-                rotation,
-                origin,
-                baseScale);
+            finally
+            {
+                BeginTooltipTargetBatch(sb);
+            }
         }
 
-        private static Vector2[] CalculateParticlePositions(Item item, Vector2 areaSize, float time)
+        private static void CalculateParticlePositions(int itemType, Vector2 areaSize, float time, Vector2[] positions)
         {
-            Vector2[] positions = new Vector2[FallingParticleCount];
-            int seedBase = item.type * 397 + 17;
+            int seedBase = itemType * 397 + 17;
 
             for (int i = 0; i < FallingParticleCount; i++)
             {
@@ -426,14 +442,11 @@ namespace TestMod.Content.Rarities
                     -8f + progress * ParticleFallDistance);
             }
 
-            return positions;
         }
 
-        private static Vector2[] CalculateLensPositions(Item item, Vector2 areaSize, float time, out float[] strengths)
+        private static void CalculateLensPositions(int itemType, Vector2 areaSize, float time, Vector2[] positions, float[] strengths)
         {
-            Vector2[] positions = new Vector2[LensSourceCount];
-            strengths = new float[LensSourceCount];
-            int seedBase = item.type * 733 + 91;
+            int seedBase = itemType * 733 + 91;
 
             for (int i = 0; i < LensSourceCount; i++)
             {
@@ -468,7 +481,6 @@ namespace TestMod.Content.Rarities
                 strengths[i] = fade * MathHelper.Lerp(0.55f, 1.15f, Hash01(sourceSeed + 251));
             }
 
-            return positions;
         }
 
         private static Vector2 RandomLensPoint(Vector2 areaSize, int seed)
@@ -487,12 +499,12 @@ namespace TestMod.Content.Rarities
             return progress * progress * (3f - 2f * progress);
         }
 
-        private static void DrawFallingParticles(Item item, SpriteBatch sb, Vector2[] particlePositions, float time)
+        private static void DrawFallingParticles(int itemType, SpriteBatch sb, Vector2[] particlePositions, float time)
         {
             if (textTarget is null || textTarget.IsDisposed)
                 return;
 
-            int seedBase = item.type * 397 + 17;
+            int seedBase = itemType * 397 + 17;
             bool hasParticles = false;
             for (int i = 0; i < FallingParticleCount; i++)
             {
@@ -507,28 +519,31 @@ namespace TestMod.Content.Rarities
                 return;
 
             sb.End();
-
-            for (int i = 0; i < FallingParticleCount; i++)
+            try
             {
-                if (particlePositions[i].X < 0f)
-                    continue;
+                for (int i = 0; i < FallingParticleCount; i++)
+                {
+                    if (particlePositions[i].X < 0f)
+                        continue;
 
-                float phaseOffset = i * (ParticleCycleSeconds / FallingParticleCount);
-                float localTime = PositiveModulo(time + phaseOffset + Hash01(seedBase + i * 31), ParticleCycleSeconds);
-                float progress = MathHelper.Clamp(localTime / ParticleVisibleSeconds, 0f, 1f);
-                float fade = MathF.Sin(progress * MathHelper.Pi) * ParticleOpacity;
-                Vector2 particlePosition = particlePositions[i] + new Vector2(RenderPadding);
+                    float phaseOffset = i * (ParticleCycleSeconds / FallingParticleCount);
+                    float localTime = PositiveModulo(time + phaseOffset + Hash01(seedBase + i * 31), ParticleCycleSeconds);
+                    float progress = MathHelper.Clamp(localTime / ParticleVisibleSeconds, 0f, 1f);
+                    float fade = MathF.Sin(progress * MathHelper.Pi) * ParticleOpacity;
+                    Vector2 particlePosition = particlePositions[i] + new Vector2(RenderPadding);
 
-                DrawPrimitiveCircle(particlePosition, ParticleGlowRadius, AccretionOrange * 0.07f * fade, 14);
-                DrawPrimitiveCircle(particlePosition, ParticleRadius, AccretionGold * fade, 10);
+                    DrawPrimitiveCircle(particlePosition, ParticleGlowRadius, AccretionOrange * 0.07f * fade, 14);
+                    DrawPrimitiveCircle(particlePosition, ParticleRadius, AccretionGold * fade, 10);
+                }
             }
-
-            BeginTooltipTargetBatch(sb);
+            finally
+            {
+                BeginTooltipTargetBatch(sb);
+            }
         }
 
-        private static void DrawNameSparkles(SpriteBatch sb, DynamicSpriteFont font, string text, Vector2 position, Vector2 baseScale, float time)
+        private static void DrawNameSparkles(SpriteBatch sb, string text, Vector2 center, Vector2 textSize, float time)
         {
-            Vector2 textSize = font.MeasureString(text) * baseScale;
             if (sparkleOwnerText != text)
             {
                 nameSparkles.Clear();
@@ -554,29 +569,32 @@ namespace TestMod.Content.Rarities
                     Color.Lerp(new Color(190, 38, 42), AccretionOrange, Main.rand.NextFloat(0.82f))));
             }
 
-            Vector2 center = position + new Vector2(textSize.X * 0.5f, textSize.Y * 0.45f);
             if (nameSparkles.Count <= 0 || textTarget is null || textTarget.IsDisposed)
                 return;
 
             DrawNameSparkleTextures(sb, center);
 
             sb.End();
-
-            for (int i = nameSparkles.Count - 1; i >= 0; i--)
+            try
             {
-                NameSparkle sparkle = nameSparkles[i];
-                sparkle.Update();
-                if (sparkle.Time >= sparkle.Lifetime)
+                for (int i = nameSparkles.Count - 1; i >= 0; i--)
                 {
-                    nameSparkles.RemoveAt(i);
-                    continue;
+                    NameSparkle sparkle = nameSparkles[i];
+                    sparkle.Update();
+                    if (sparkle.Time >= sparkle.Lifetime)
+                    {
+                        nameSparkles.RemoveAt(i);
+                        continue;
+                    }
+
+                    sparkle.Draw(center);
+                    nameSparkles[i] = sparkle;
                 }
-
-                sparkle.Draw(center);
-                nameSparkles[i] = sparkle;
             }
-
-            BeginTooltipTargetBatch(sb);
+            finally
+            {
+                BeginTooltipTargetBatch(sb);
+            }
         }
 
         private static void DrawNameSparkleTextures(SpriteBatch sb, Vector2 center)
@@ -660,7 +678,7 @@ namespace TestMod.Content.Rarities
 
             Vector2 direction = rotation.ToRotationVector2();
             Vector2 normal = new(-direction.Y, direction.X);
-            Vector2[] points = new Vector2[5];
+            Vector2[] points = trailPoints;
             for (int i = 0; i < points.Length; i++)
             {
                 float completion = i / (float)(points.Length - 1);
@@ -700,19 +718,16 @@ namespace TestMod.Content.Rarities
                 sideCount);
         }
 
-        private static Vector2[] CreateWavyLinePoints(Vector2 start, Vector2 end, int pointCount, float waveAmplitude, float phase)
+        private static void FillWavyLinePoints(Vector2[] points, Vector2 start, Vector2 end, float waveAmplitude, float phase)
         {
             Vector2 delta = end - start;
             Vector2 normal = new Vector2(-delta.Y, delta.X).SafeNormalize(Vector2.Zero);
-            Vector2[] points = new Vector2[pointCount];
             for (int i = 0; i < points.Length; i++)
             {
                 float completion = i / (float)(points.Length - 1);
                 float wave = MathF.Sin(completion * MathHelper.Pi + phase) * waveAmplitude;
                 points[i] = Vector2.Lerp(start, end, completion) + normal * wave;
             }
-
-            return points;
         }
 
         private static void AddScreenPosition(Vector2[] points)

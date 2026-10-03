@@ -346,14 +346,14 @@ namespace TestMod.Common.Graphics.DynamicText
 
             Register(new DynamicTextStyle(RarityEventHorizon)
             {
-                PrimaryColor = new Color(92, 30, 118),
+                PrimaryColor = new Color(168, 104, 196),
                 SecondaryColor = new Color(255, 166, 55),
                 Layers =
                 [
-                    new TextGlowLayer(10, 2.25f, 0.34f, 1.3f),
+                    new TextGlowLayer(10, 2.25f, 0.25f, 1.3f),
                     new TextSweepLayer(new Color(255, 118, 42), 56f, 44f, 2.8f, 0.55f),
                     new TextSparkleLayer(4, 4.6f, 0.46f),
-                    new TextShadowLayer(1.52f)
+                    new TextShadowLayer(1f)
                 ]
             });
         }

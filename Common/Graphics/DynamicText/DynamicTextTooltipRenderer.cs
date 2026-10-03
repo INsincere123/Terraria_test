@@ -1,3 +1,4 @@
+using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using ReLogic.Graphics;
@@ -51,8 +52,21 @@ namespace TestMod.Common.Graphics.DynamicText
             float spread = 1f,
             DynamicTextSurface surface = DynamicTextSurface.Tooltip)
         {
+            if (font is null || string.IsNullOrEmpty(text))
+                return;
+
             Color primary = overrideColor ?? style.PrimaryColor;
-            DynamicTextFont resolvedFont = new(font);
+            DynamicTextFont resolvedFont = DynamicTextFontSystem.Resolve(style.FontSpec, font).ForText(text, maxWidth);
+            if (resolvedFont.UsesSystemFont)
+            {
+                Vector2 originalSize = DynamicTextLayout.Get(new DynamicTextFont(font), text).Size;
+                Vector2 resolvedSize = DynamicTextLayout.Get(resolvedFont, text).Size;
+                // tooltip 的下一行位置由原版字体决定，只缩小自定义字体，不突破原有行高和宽度。
+                float fit = MathF.Min(1f, MathF.Min(originalSize.X / MathF.Max(1f, resolvedSize.X), originalSize.Y / MathF.Max(1f, resolvedSize.Y)));
+                fit = MathF.Max(0.01f, fit);
+                scale *= fit;
+                origin /= fit;
+            }
             DynamicTextDrawContext context = new(
                 spriteBatch,
                 resolvedFont,
