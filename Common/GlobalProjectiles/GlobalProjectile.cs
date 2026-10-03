@@ -5,7 +5,7 @@ using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
 using TestMod.Content.Buffs;
-using TestMod.Common.Graphics.DynamicText;
+using TestMod.Common.Compatibility;
 using TestMod.Common.Players;
 using TestMod.Common.Mechanics.AccessoryEffects;
 using TestMod.Content.Items.DamageTypes;
@@ -261,21 +261,21 @@ namespace TestMod.Common.GlobalProjectiles
 
             if (projectile.DamageType == TrueDamageClass.Instance && projectile.owner == Main.myPlayer)
             {
-                DynamicWorldTextSystem.SpawnCombatText(
+                TextRenderingBridge.SpawnCombatText(
                     target.Hitbox,
                     damageDone,
                     hit.Crit,
-                    DynamicTextStyleRegistry.Get(DynamicTextStyleRegistry.DamageTrue).PrimaryColor,
-                    DynamicTextStyleRegistry.DamageTrue);
+                    TextRenderingBridge.GetStyleColor(TestModTextStyles.DamageTrue),
+                    TestModTextStyles.DamageTrue);
             }
             else if (subhandDynamicText && projectile.owner == Main.myPlayer)
             {
-                DynamicWorldTextSystem.SpawnCombatText(
+                TextRenderingBridge.SpawnCombatText(
                     target.Hitbox,
                     damageDone,
                     hit.Crit,
-                    DynamicTextStyleRegistry.Get(DynamicTextStyleRegistry.Subhand).PrimaryColor,
-                    DynamicTextStyleRegistry.Subhand);
+                    TextRenderingBridge.GetStyleColor(TestModTextStyles.Subhand),
+                    TestModTextStyles.Subhand);
             }
 
             // 通过 GlobalProjectile 路径分发副手等追加攻击效果

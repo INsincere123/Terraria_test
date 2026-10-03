@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Terraria.ModLoader;
+using TestMod.Common.Compatibility;
 using TestMod.Common.Mechanics.AccessoryEffects;
 
 namespace TestMod
@@ -19,8 +20,14 @@ namespace TestMod
 
 		public override void Unload()
 		{
+			TextRenderingBridge.Unload();
 			OnHitEffectsPlayer.UnloadRegistry();
 			// ... 其他 Unload 内容
+		}
+
+		public override void PostSetupContent()
+		{
+			TextRenderingBridge.Load();
 		}
 	}
 }

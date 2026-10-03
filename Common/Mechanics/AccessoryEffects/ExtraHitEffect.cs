@@ -3,7 +3,7 @@ using Microsoft.Xna.Framework;
 using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
-using TestMod.Common.Graphics.DynamicText;
+using TestMod.Common.Compatibility;
 
 namespace TestMod.Common.Mechanics.AccessoryEffects
 {
@@ -170,12 +170,12 @@ namespace TestMod.Common.Mechanics.AccessoryEffects
 
             // 仅在本地客户端显示自定义颜色的战斗数字
             if (Main.netMode != NetmodeID.Server)
-                DynamicWorldTextSystem.SpawnCombatText(
+                TextRenderingBridge.SpawnCombatText(
                     target.Hitbox,
                     hitInfo.Damage,
                     hitInfo.Crit,
                     cfg.CombatTextColor ?? DefaultCombatTextColor,
-                    cfg.CombatTextStyleKey ?? DynamicTextStyleRegistry.ExtraHit);
+                    cfg.CombatTextStyleKey ?? TestModTextStyles.ExtraHit);
 
             return result;
         }

@@ -4,7 +4,7 @@ using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
 using Terraria.ModLoader.IO;
-using TestMod.Common.Graphics.DynamicText;
+using TestMod.Common.Compatibility;
 using TestMod.Common.Mechanics.AccessoryEffects;
 
 namespace TestMod.Common.Players
@@ -53,7 +53,7 @@ namespace TestMod.Common.Players
             Knockback           = 0f,
             NoPlayerInteraction = false,
             CombatTextColor     = new Color(180, 50, 255),  // 紫色伤害数字
-            CombatTextStyleKey  = DynamicTextStyleRegistry.Heartsteel,
+            CombatTextStyleKey  = TestModTextStyles.Heartsteel,
         };
 
         public override void ResetEffects()

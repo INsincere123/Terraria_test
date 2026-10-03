@@ -7,7 +7,7 @@ using Terraria.Audio;
 using Terraria.DataStructures;
 using Terraria.ID;
 using Terraria.ModLoader;
-using TestMod.Common.Graphics.DynamicText;
+using TestMod.Common.Compatibility;
 using TestMod.Common.DataStructures;
 using TestMod.Common.Utilities;
 
@@ -276,10 +276,10 @@ namespace TestMod.Common.Players
             if (Main.netMode == NetmodeID.Server || Player.whoAmI != Main.myPlayer)
                 return;
 
-            DynamicWorldTextSystem.Spawn(new DynamicWorldTextRequest(
+            TextRenderingBridge.Spawn(new DynamicWorldTextRequest(
                 $"-{absorbed}",
                 Player.Center + new Vector2(0f, -Player.height * 0.62f),
-                DynamicTextStyleRegistry.EnergyShieldDamage,
+                TestModTextStyles.EnergyShieldDamage,
                 ShieldTextColor,
                 scale: 1f,
                 seed: unchecked((int)Main.GameUpdateCount + absorbed * 31 + Player.whoAmI * 997)));
@@ -290,10 +290,10 @@ namespace TestMod.Common.Players
             if (Main.netMode == NetmodeID.Server || Player.whoAmI != Main.myPlayer)
                 return;
 
-            DynamicWorldTextSystem.Spawn(new DynamicWorldTextRequest(
+            TextRenderingBridge.Spawn(new DynamicWorldTextRequest(
                 "护盾已破碎",
                 Player.Center + new Vector2(0f, -Player.height * 0.95f),
-                DynamicTextStyleRegistry.EnergyShieldBreak,
+                TestModTextStyles.EnergyShieldBreak,
                 ShieldTextColor,
                 scale: 1f,
                 seed: unchecked((int)Main.GameUpdateCount + Player.whoAmI * 1297)));
@@ -304,10 +304,10 @@ namespace TestMod.Common.Players
             if (Main.netMode == NetmodeID.Server || Player.whoAmI != Main.myPlayer)
                 return;
 
-            DynamicWorldTextSystem.Spawn(new DynamicWorldTextRequest(
+            TextRenderingBridge.Spawn(new DynamicWorldTextRequest(
                 "\u62A4\u76FE\u6B63\u5728\u6062\u590D",
                 Player.Center + new Vector2(0f, -Player.height * 0.95f),
-                DynamicTextStyleRegistry.EnergyShieldBreak,
+                TestModTextStyles.EnergyShieldBreak,
                 ShieldTextColor,
                 scale: 0.82f,
                 seed: unchecked((int)Main.GameUpdateCount + Player.whoAmI * 1423)));

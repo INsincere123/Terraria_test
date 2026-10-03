@@ -6,7 +6,7 @@ using Terraria.GameContent;
 using Terraria.ID;
 using Terraria.ModLoader;
 using TestMod.Content.Buffs;
-using TestMod.Common.Graphics.DynamicText;
+using TestMod.Common.Compatibility;
 using TestMod.Common.Players;
 using TestMod.Common.Systems;
 
@@ -451,7 +451,7 @@ namespace TestMod.Content.Projectiles.Minions
                 return;
             }
 
-            DynamicWorldTextSystem.SpawnCombatText(hitbox, damage, true, textColor, DynamicTextStyleRegistry.BlackHoleAbsorb);
+            TextRenderingBridge.SpawnCombatText(hitbox, damage, true, textColor, TestModTextStyles.BlackHoleAbsorb);
         }
 
         private void TryShootQuasarProjectile(NPC target, int index)

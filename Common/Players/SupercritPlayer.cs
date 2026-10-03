@@ -3,7 +3,7 @@ using Microsoft.Xna.Framework;
 using Terraria;
 using Terraria.ModLoader;
 using TestMod.Content.Buffs;
-using TestMod.Common.Graphics.DynamicText;
+using TestMod.Common.Compatibility;
 
 namespace TestMod.Common.Players
 {
@@ -89,10 +89,10 @@ namespace TestMod.Common.Players
                 return;
 
             int bonusPercent = (int)MathF.Round(critOver100 * SupercritBuff.CritOverflowToCritDamageRatio);
-            DynamicWorldTextSystem.Spawn(new DynamicWorldTextRequest(
+            TextRenderingBridge.Spawn(new DynamicWorldTextRequest(
                 $"+{bonusPercent}%暴伤",
                 npc.Center + Vector2.UnitY * 8f,
-                DynamicTextStyleRegistry.Supercrit,
+                TestModTextStyles.Supercrit,
                 new Color(255, 214, 62),
                 crit: true,
                 scale: 0.78f,
@@ -133,10 +133,10 @@ namespace TestMod.Common.Players
                 return;
 
             int bonusPercent = (int)MathF.Round(critOver100 * SupercritBuff.CritOverflowToCritDamageRatio);
-            DynamicWorldTextSystem.Spawn(new DynamicWorldTextRequest(
+            TextRenderingBridge.Spawn(new DynamicWorldTextRequest(
                 $"+{bonusPercent}%暴伤",
                 npc.Center + Vector2.UnitY * 8f,
-                DynamicTextStyleRegistry.Supercrit,
+                TestModTextStyles.Supercrit,
                 new Color(255, 214, 62),
                 crit: true,
                 scale: 0.78f,

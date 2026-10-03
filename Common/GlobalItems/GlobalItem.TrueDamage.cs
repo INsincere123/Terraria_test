@@ -1,6 +1,6 @@
 using Terraria;
 using Terraria.ID;
-using TestMod.Common.Graphics.DynamicText;
+using TestMod.Common.Compatibility;
 using TestMod.Content.Items.DamageTypes;
 
 namespace TestMod.Common.GlobalItems
@@ -21,12 +21,12 @@ namespace TestMod.Common.GlobalItems
             if (!IsTrueDamageItem(item) || Main.netMode == NetmodeID.Server || player.whoAmI != Main.myPlayer)
                 return;
 
-            DynamicWorldTextSystem.SpawnCombatText(
+            TextRenderingBridge.SpawnCombatText(
                 target.Hitbox,
                 damageDone,
                 hit.Crit,
-                DynamicTextStyleRegistry.Get(DynamicTextStyleRegistry.DamageTrue).PrimaryColor,
-                DynamicTextStyleRegistry.DamageTrue);
+                TextRenderingBridge.GetStyleColor(TestModTextStyles.DamageTrue),
+                TestModTextStyles.DamageTrue);
         }
 
         private static bool IsTrueDamageItem(Item item)

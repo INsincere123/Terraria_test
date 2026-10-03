@@ -1,7 +1,7 @@
 using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
-using TestMod.Common.Graphics.DynamicText;
+using TestMod.Common.Compatibility;
 using TestMod.Common.Players;
 using TestMod.Content.Rarities;
 
@@ -43,19 +43,16 @@ namespace TestMod.Common.GlobalItems
             if (line.Name == "ItemName")
             {
                 if (item.rare == ModContent.RarityType<EventHorizonRarity>())
-                    return !EventHorizonRarity.TryDrawName(item, line);
+                    return !TextRenderingBridge.TryDrawTooltipLine(item, line, TestModTextStyles.RarityEventHorizon);
 
                 if (item.rare == ModContent.RarityType<AntaresRarity>())
-                {
-                    AntaresRarity.Draw(item, line);
-                    return false;
-                }
+                    return !TextRenderingBridge.TryDrawTooltipLine(item, line, TestModTextStyles.RarityAntares);
 
                 return true;
             }
 
             if (line.Name == "Damage")
-                return !DynamicTextTooltipRenderer.TryDrawDamageLine(item, line);
+                return !TextRenderingBridge.TryDrawDamageLine(item, line);
 
             return true;
         }

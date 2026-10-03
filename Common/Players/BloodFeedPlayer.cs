@@ -3,7 +3,7 @@ using Microsoft.Xna.Framework;
 using Terraria;
 using Terraria.ModLoader;
 using TestMod.Content.Buffs;
-using TestMod.Common.Graphics.DynamicText;
+using TestMod.Common.Compatibility;
 using TestMod.Common.Utilities;
 
 namespace TestMod.Common.Players
@@ -164,10 +164,10 @@ namespace TestMod.Common.Players
             Player.AddBuff(ModContent.BuffType<CrimsonBerserkBuff>(), BerserkDuration);
             DustUtils.SpawnBloodMistCloud(Player.Hitbox, 24, new Color(150, 18, 32), 1.15f);
             DustUtils.SpawnImpactBurst(Player.Center, 10, new Color(210, 28, 42), 2.4f, 5.6f, 0.82f);
-            DynamicWorldTextSystem.Spawn(new DynamicWorldTextRequest(
+            TextRenderingBridge.Spawn(new DynamicWorldTextRequest(
                 "BLOOD FEED",
                 Player.Top - Vector2.UnitY * 18f,
-                DynamicTextStyleRegistry.BloodFeedBerserk,
+                TestModTextStyles.BloodFeedBerserk,
                 crit: true,
                 scale: 0.72f,
                 seed: Player.whoAmI * 409 + (int)Main.GameUpdateCount));
