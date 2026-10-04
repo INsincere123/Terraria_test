@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using Terraria;
 using Terraria.ID;
@@ -22,9 +23,10 @@ namespace TestMod.Common.Systems
         // ── 灾厄加载状态 ─────────────────────────────────────
         public static bool CalamityLoaded { get; private set; }
 
-        // ── 灾厄真近战伤害类型（反射缓存）───────────────────
-        // 灾厄在 SetDefaults 里把 shoot == 0 的近战武器改为此类型
+        // 内容完成加载后通过公开注册表解析，不依赖灾厄私有 Instance 字段。
         public static DamageClass CalamityTrueMelee { get; private set; }
+        private static DamageClass _calamityTrueMeleeNoSpeed;
+        private static readonly Dictionary<int, bool> MeleeProjectileOverrides = new();
 
         // ── 反射缓存 ─────────────────────────────────────────
         private static FieldInfo _fearmongerSetField;
@@ -40,13 +42,6 @@ namespace TestMod.Common.Systems
             if (ModContent.TryFind<ModRarity>("CalamityMod", ApplyRarity, out var rarity))
                 CalamityRarity = rarity.Type;
 
-            // 缓存灾厄真近战伤害类型（TrueMeleeDamageClass.Instance）
-            // namespace CalamityMod，Instance 是 internal static field
-            var trueMeleeType  = cal.Code.GetType("CalamityMod.TrueMeleeDamageClass");
-            var instanceField  = trueMeleeType?.GetField("Instance",
-                BindingFlags.NonPublic | BindingFlags.Static);
-            CalamityTrueMelee = instanceField?.GetValue(null) as DamageClass;
-
             // 缓存 CalamityPlayer 类型及所需字段
             _calPlayerType      = cal.Code.GetType("CalamityMod.CalPlayer.CalamityPlayer");
             _fearmongerSetField = _calPlayerType?.GetField("fearmongerSet",
@@ -56,6 +51,49 @@ namespace TestMod.Common.Systems
 
             // 向灾厄重铸等级表注入"炼化"前缀
             InjectRefinementPrefixTiers(cal);
+        }
+
+        public override void PostSetupContent()
+        {
+            ClearMeleeCompatibility();
+            if (!CalamityLoaded) return;
+
+            ModContent.TryFind<DamageClass>("CalamityMod", "TrueMeleeDamageClass", out var trueMelee);
+            ModContent.TryFind<DamageClass>("CalamityMod", "TrueMeleeNoSpeedDamageClass", out var trueMeleeNoSpeed);
+            CalamityTrueMelee = trueMelee;
+            _calamityTrueMeleeNoSpeed = trueMeleeNoSpeed;
+
+            // Terratomere 的剑身始终贴着玩家；随后释放的残留斩击、剑气不继承资格。
+            RegisterMeleeProjectile("TerratomereHoldoutProj", true);
+            RegisterMeleeProjectile("TerratomereMeleeSlash", false);
+            RegisterMeleeProjectile("TerratomereSwordBeam", false);
+            RegisterMeleeProjectile("TerratomereSlash", false);
+
+            if (trueMelee == null || trueMeleeNoSpeed == null)
+                Mod.Logger.Warn("[BerserkBlade] 灾厄真近战类型未完整解析；已识别弹幕规则仍可用，其余近战弹幕降效处理。");
+        }
+
+        private void RegisterMeleeProjectile(string name, bool direct)
+        {
+            if (ModContent.TryFind<ModProjectile>("CalamityMod", name, out var projectile))
+                MeleeProjectileOverrides[projectile.Type] = direct;
+            else
+                Mod.Logger.Warn($"[BerserkBlade] 找不到 CalamityMod/{name}，跳过该弹幕规则。");
+        }
+
+        public static bool TryGetMeleeProjectileOverride(Projectile projectile, out bool direct) =>
+            MeleeProjectileOverrides.TryGetValue(projectile.type, out direct);
+
+        private static void ClearMeleeCompatibility()
+        {
+            CalamityTrueMelee = null;
+            _calamityTrueMeleeNoSpeed = null;
+            MeleeProjectileOverrides.Clear();
+        }
+
+        public override void Unload()
+        {
+            ClearMeleeCompatibility();
         }
 
         // ── 快速下落兼容：设置 gSabaton 标志，激活灾厄 Stompers 加速逻辑 ─
@@ -158,51 +196,11 @@ namespace TestMod.Common.Systems
             });
         }
 
-        /// <summary>
-        /// 判断某把武器是否为"真近战"：
-        /// 灾厄已加载时沿用灾厄的 TrueMeleeDamageClass 标记；
-        /// 未加载时回退到 item.shoot == 0 的经典判断。
-        /// </summary>
-        public static bool IsTrueMeleeWeapon(Item item)
-        {
-            if (CalamityLoaded && CalamityTrueMelee != null)
-                return item.DamageType.CountsAsClass(CalamityTrueMelee);
-
-            return item.DamageType.CountsAsClass(DamageClass.Melee) && item.shoot == ProjectileID.None;
-        }
-
-        /// <summary>
-        /// 判断某颗弹幕是否为"真近战弹幕"：
-        /// 灾厄已加载时直接检查弹幕自身的 DamageType；
-        /// 未加载时：
-        ///   1. 来源武器 shoot == 0 → 视为真近战
-        ///   2. proj.type == weapon.shoot 且 aiStyle 属于真近战延伸名单 → 视为真近战（如挥砍弧光）
-        /// </summary>
-        public static bool IsTrueMeleeProj(Projectile proj, Item sourceWeapon)
-        {
-            if (CalamityLoaded && CalamityTrueMelee != null)
-                return proj.DamageType.CountsAsClass(CalamityTrueMelee);
-
-            if (!sourceWeapon.DamageType.CountsAsClass(DamageClass.Melee)) return false;
-
-            // 纯挥动武器（无弹幕），来自 Shoot() 覆写的弹幕也视为真近战
-            if (sourceWeapon.shoot == ProjectileID.None) return true;
-
-            // 弹幕就是 item.shoot 直接创建，且 aiStyle 属于武器延伸类型
-            return proj.type == sourceWeapon.shoot && IsTrueMeleeAIStyle(proj.aiStyle);
-        }
-
-        // 真近战武器延伸 aiStyle 名单：
-        // 15=链球  19=矛  142=向前刺  152=挥砍弧光(BladeOfGrass/Muramasa)
-        // 161=短剑刺  188=暗影之刃弧  190=NightsEdge 挥砍弧光
-        private static bool IsTrueMeleeAIStyle(int aiStyle) =>
-               aiStyle == ProjAIStyleID.Flail         // 15
-            || aiStyle == ProjAIStyleID.Spear         // 19
-            || aiStyle == ProjAIStyleID.ForwardStab   // 142
-            || aiStyle == ProjAIStyleID.SuperStarBeam // 152
-            || aiStyle == ProjAIStyleID.ShortSword    // 161
-            || aiStyle == ProjAIStyleID.LightsBane    // 188
-            || aiStyle == ProjAIStyleID.NightsEdge;   // 190
+        /// <summary>仅检查灾厄明确的真近战标记；通用命中分类由 MeleeHitClassifier 负责。</summary>
+        public static bool IsTrueMeleeProj(Projectile proj) =>
+            CalamityLoaded
+            && ((CalamityTrueMelee != null && proj.DamageType.CountsAsClass(CalamityTrueMelee))
+                || (_calamityTrueMeleeNoSpeed != null && proj.DamageType.CountsAsClass(_calamityTrueMeleeNoSpeed)));
 
         /// <summary>
         /// 向灾厄的某张 int[][] 等级表末尾追加一个新 tier。
