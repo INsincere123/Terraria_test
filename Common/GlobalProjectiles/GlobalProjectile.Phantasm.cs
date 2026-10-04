@@ -65,7 +65,7 @@ namespace TestMod.Common.GlobalProjectiles
             if (toTarget.LengthSquared() <= 1f) return;
 
             float dist = toTarget.Length();
-            toTarget.Normalize();
+            toTarget /= dist;
 
             float desiredSpeed = MathHelper.Clamp(minSpeed + dist / 45f, minSpeed, maxSpeed);
             projectile.velocity  = Vector2.Lerp(projectile.velocity, toTarget * desiredSpeed, lerpAmount);

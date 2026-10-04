@@ -46,8 +46,17 @@ namespace TestMod.Common.Utilities
                     && Main.npc[_targetIndex].type == _targetType
                     && (!requireLineOfSight || HasLineOfSight(origin, Main.npc[_targetIndex]));
                 ulong interval = oldIndex < 0 && retargetFrames > 6 ? 6 : retargetFrames;
+                // 按弹幕槽位错开周期扫描；首轮到下一相位最多等待 interval 帧。
+                // 首次查询、目标失效和指定目标取消仍绕过周期，extraUpdates 不重复扫描。
+                ulong searchDelay = interval;
+                if (interval > 0)
+                {
+                    ulong phase = (ulong)(uint)projectile.whoAmI % interval;
+                    ulong lastPhase = _lastSearchFrame % interval;
+                    searchDelay = phase > lastPhase ? phase - lastPhase : interval - (lastPhase - phase);
+                }
                 bool canReuse = _hasSearched && _preferredIndex < 0 && (oldIndex < 0 || valid)
-                    && Main.GameUpdateCount - _lastSearchFrame < interval;
+                    && Main.GameUpdateCount - _lastSearchFrame < searchDelay;
                 if (!canReuse)
                 {
                     _targetIndex = -1;

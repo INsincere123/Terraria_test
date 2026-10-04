@@ -76,6 +76,15 @@ namespace TestMod.Common.GlobalProjectiles
 
             PrepareStardustDragonFlight(projectile);
 
+            if (projectile.type == ProjectileID.AbigailMinion)
+            {
+                if (projectile.owner < 0 || projectile.owner >= Main.maxPlayers) return false;
+                Player owner = Main.player[projectile.owner];
+                if (!owner.active) return false;
+                ApplyAbigailAI(projectile, owner);
+                return false;
+            }
+
             if (projectile.type != ProjectileID.Raven) return true;
             if (projectile.owner < 0 || projectile.owner >= Main.maxPlayers) return true;
 
@@ -127,6 +136,10 @@ namespace TestMod.Common.GlobalProjectiles
             if (VanillaMinionExclusions.Contains(projectile.type))
             {
                 // 保持原版本体 AI；GodMode 等伤害强化由命中路径独立处理。
+            }
+            else if (projectile.type == ProjectileID.AbigailMinion)
+            {
+                // PreAI 已完整处理攻击运动，保留末尾公共处理与同步。
             }
             // 🐉 星尘龙（仅龙头；追踪不依赖 GodMode，GodMode 保留伤害强化）
             else if (ProjectileID.Sets.StardustDragon[projectile.type])

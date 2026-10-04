@@ -16,23 +16,8 @@ namespace TestMod.Common.GlobalItems
         {
             if (item.type == ItemID.AmethystHook)
                 item.shootSpeed = 25f;
-
-            if (item.type == ItemID.StormTigerStaff)
-            {
-                item.damage = 51;
-                item.knockBack = 10;
-                item.useTime = 20;
-                item.useAnimation = 20;
-            }
-
-            if (item.type == ItemID.AbigailsFlower)
-            {
-                item.damage = 14;
-                item.knockBack = 2;
-                item.mana = 0;
-                item.useTime = 20;
-                item.useAnimation = 20;
-            }
+            if (item.type == ItemID.DiamondHook)
+                item.shootSpeed = 27f;
         }
 
         public override bool PreDrawTooltipLine(Item item, DrawableTooltipLine line, ref int yOffset)
