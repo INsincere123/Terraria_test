@@ -22,6 +22,7 @@ namespace TestMod.Common.Mechanics.AccessoryEffects
     {
         // ===== 启用标志 (饰品每帧重新设置) =====
         public bool GrantOmniWings;            // OmniGuardianAccessory 已装备 → PostUpdateEquips 覆写 wingsLogic
+        public bool ShowOmniWings;             // 外观独立控制，不影响飞行能力
         public bool EnableFastFall;            // 启用快速下落
         public bool EnableTripleDodgeExtra;    // 启用自定义额外闪避 (神圣套/黑带闪避不需要标志, vanilla 自动管理)
         public bool EnablePerfectHover;        // 启用完美悬浮
@@ -74,6 +75,9 @@ namespace TestMod.Common.Mechanics.AccessoryEffects
         public float FastFall_MaxFallSpeed;
         public float FastFall_GravityBoost;
 
+        internal float DefensiveLifeMultiplier = 1f;
+        internal float DefensiveManaMultiplier = 1f;
+
         public int ExtraDodge_ChanceDenominator;
         public int ExtraDodge_CooldownTicks;
 
@@ -91,6 +95,9 @@ namespace TestMod.Common.Mechanics.AccessoryEffects
         public override void ResetEffects()
         {
             GrantOmniWings = false;
+            ShowOmniWings = false;
+            DefensiveLifeMultiplier = 1f;
+            DefensiveManaMultiplier = 1f;
             EnableFastFall = false;
             EnableTripleDodgeExtra = false;
             EnablePerfectHover = false;
@@ -137,17 +144,39 @@ namespace TestMod.Common.Mechanics.AccessoryEffects
 
         // ===== 钩子分发 ===================================================
 
+        public override void UpdateDead()
+        {
+            GrappleEffect.ClearDamageReduction(this);
+        }
+
+        public override void OnEnterWorld()
+        {
+            GrappleEffect.ClearDamageReduction(this);
+        }
+
         public override void PostUpdateEquips()
         {
+            // 装备和词缀固定加值已完成，百分比加成每帧只应用一次。
+            if (DefensiveLifeMultiplier != 1f)
+                Player.statLifeMax2 += (int)(Player.statLifeMax2 * (DefensiveLifeMultiplier - 1f));
+            if (DefensiveManaMultiplier != 1f)
+                Player.statManaMax2 += (int)(Player.statManaMax2 * (DefensiveManaMultiplier - 1f));
+
             // 翅膀覆写：在所有 UpdateAccessory 结束后最后写入，确保胜过同帧已装备的真实翅膀
             if (GrantOmniWings)
             {
                 int slot = OmniGuardianWingProxy.WingSlot;
-                Player.wings      = slot;   // 视觉：显示 Proxy 的翅膀贴图和动画
                 Player.wingsLogic = slot;   // 物理：调用 Proxy 的 HorizontalWingSpeeds / VerticalWingSpeeds
                 Player.empressBrooch  = true;  // 飞行不消耗时间
                 Player.wingTimeMax    = 3600;  // 备用（empressBrooch 已开，实际不消耗）
             }
+        }
+
+        public override void UpdateVisibleAccessories()
+        {
+            // 功能饰品外观阶段写入；隐藏时保留其它翅膀外观，后续时装翅膀仍可覆盖。
+            if (GrantOmniWings && ShowOmniWings)
+                Player.wings = OmniGuardianWingProxy.WingSlot;
         }
 
         public override void PostUpdateRunSpeeds()

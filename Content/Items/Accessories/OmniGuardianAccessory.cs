@@ -54,7 +54,7 @@ namespace TestMod.Content.Items.Accessories
         public const int   ArmorPenetration  = 24;    // 穿甲值 (直接抵消怪物的对应防御)
 
         // ---------- 防御属性 ----------
-        // MaxLife / MaxMana 基于 statLifeMax2 计算, 与其它 +最大生命 饰品按百分比正确叠加
+        // MaxLife / MaxMana 在装备结算后统一应用，包含饰品和词缀的固定加值
         public const float MaxLifeBonus         = 1f;     // 最大生命加成 (1f = +100% 翻倍, 0.1f = +10%)
         public const float MaxManaBonus         = 1f;     // 最大法力加成 (同上)
         public const float DamageReductionBonus = 0.15f;  // 免伤百分比 (0.15f = -15% 受伤; vanilla 上限约 0.5)
@@ -111,7 +111,9 @@ namespace TestMod.Content.Items.Accessories
         {
             // [0] 标记本饰品已装备 → OmniEffectsPlayer.PostUpdateEquips 最后写入 wingsLogic
             //     这样与真实翅膀装备在同一帧时，本饰品的翅膀参数在所有 UpdateAccessory 结束后再覆写，确保胜出
-            player.GetModPlayer<OmniEffectsPlayer>().GrantOmniWings = true;
+            var omniPlayer = player.GetModPlayer<OmniEffectsPlayer>();
+            omniPlayer.GrantOmniWings = true;
+            omniPlayer.ShowOmniWings |= !hideVisual;
             // 完美悬浮（按下键 + 跳跃键时 velocity.Y = -0.0001f，防止虚空跑步 bug）
             PerfectHoverEffect.Apply(player);
 

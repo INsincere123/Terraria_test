@@ -18,7 +18,7 @@ namespace TestMod.Common.Mechanics.AccessoryEffects
     //
     //  注意:
     //   - LifeRegenPerSec 单位是 HP/秒 (内部会自动 ×2 转换为 vanilla 的 1/2 HP/s)
-    //   - MaxLifeBonus 基于 statLifeMax2 计算, 与其它 +最大生命 饰品正确叠加
+    //   - 百分比生命/法力加成由 PostUpdateEquips 统一应用，不依赖饰品槽位顺序
     // ============================================================================
 
     public struct DefensiveStatsConfig
@@ -35,11 +35,13 @@ namespace TestMod.Common.Mechanics.AccessoryEffects
     {
         public static void Apply(Player player, DefensiveStatsConfig cfg)
         {
-            if (cfg.MaxLifeBonus != 0f)
-                player.statLifeMax2 += (int)(player.statLifeMax2 * cfg.MaxLifeBonus);
-
-            if (cfg.MaxManaBonus != 0f)
-                player.statManaMax2 += (int)(player.statManaMax2 * cfg.MaxManaBonus);
+            if (cfg.MaxLifeBonus != 0f || cfg.MaxManaBonus != 0f)
+            {
+                var mp = player.GetModPlayer<OmniEffectsPlayer>();
+                // 保留多来源的乘法叠加，只延后到所有装备和词缀的固定加值结算后。
+                mp.DefensiveLifeMultiplier *= 1f + cfg.MaxLifeBonus;
+                mp.DefensiveManaMultiplier *= 1f + cfg.MaxManaBonus;
+            }
 
             if (cfg.DamageReduction != 0f)
                 player.endurance += cfg.DamageReduction;

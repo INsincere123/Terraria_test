@@ -20,7 +20,11 @@ namespace TestMod.Common.Mechanics.AccessoryEffects
         // ── 由 OmniEffectsPlayer.PostUpdateMiscEffects 每帧调用 ────────
         public static void UpdateMiscEffects(Player player, OmniEffectsPlayer mp)
         {
-            if (!mp.EnableGrapple) return;
+            if (!mp.EnableGrapple)
+            {
+                ClearDamageReduction(mp);
+                return;
+            }
 
             if (player.grapCount > 0)
             {
@@ -38,6 +42,13 @@ namespace TestMod.Common.Mechanics.AccessoryEffects
 
             if (mp.GrappleDRActive)
                 player.endurance += 0.1f; // 10% 伤害减免
+        }
+
+        // 卸装、死亡和进入世界时清理，避免重新装备恢复旧的减伤窗口。
+        internal static void ClearDamageReduction(OmniEffectsPlayer mp)
+        {
+            mp.GrappleDRActive = false;
+            mp.GrappleDRTimer = 0;
         }
 
         // ── 由 GlobalProjectile.PreAI 调用：飞行阶段速度 ×2 ────────

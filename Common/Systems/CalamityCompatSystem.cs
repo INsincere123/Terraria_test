@@ -32,6 +32,7 @@ namespace TestMod.Common.Systems
         private static FieldInfo _fearmongerSetField;
         private static FieldInfo _gSabatonField;          // CalamityPlayer.gSabaton
         private static Type      _calPlayerType;
+        private static ModPlayer _calPlayerTemplate;
 
         public override void OnModLoad()
         {
@@ -57,6 +58,20 @@ namespace TestMod.Common.Systems
         {
             ClearMeleeCompatibility();
             if (!CalamityLoaded) return;
+
+            // 只在内容加载完成时解析一次模板；运行时通过其 Index 获取各玩家自己的实例。
+            // 不缓存玩家实例，避免切世界、玩家替换或克隆后引用旧的 ModPlayer。
+            if (ModLoader.TryGetMod("CalamityMod", out Mod cal))
+            {
+                foreach (var modPlayer in cal.GetContent<ModPlayer>())
+                {
+                    if (modPlayer.GetType() == _calPlayerType)
+                    {
+                        _calPlayerTemplate = modPlayer;
+                        break;
+                    }
+                }
+            }
 
             ModContent.TryFind<DamageClass>("CalamityMod", "TrueMeleeDamageClass", out var trueMelee);
             ModContent.TryFind<DamageClass>("CalamityMod", "TrueMeleeNoSpeedDamageClass", out var trueMeleeNoSpeed);
@@ -94,6 +109,12 @@ namespace TestMod.Common.Systems
         public override void Unload()
         {
             ClearMeleeCompatibility();
+            _calPlayerTemplate = null;
+            _calPlayerType = null;
+            _gSabatonField = null;
+            _fearmongerSetField = null;
+            CalamityLoaded = false;
+            CalamityRarity = -2;
         }
 
         // ── 快速下落兼容：设置 gSabaton 标志，激活灾厄 Stompers 加速逻辑 ─
@@ -102,21 +123,10 @@ namespace TestMod.Common.Systems
         // 这给出自然加速的手感，无需我们自己管理重力加速度。
         public static void ActivateFastFall(Player player)
         {
-            if (!CalamityLoaded || _gSabatonField == null || _calPlayerType == null) return;
+            if (!CalamityLoaded || _gSabatonField == null) return;
 
-            var modPlayers = typeof(Player)
-                .GetField("modPlayers", BindingFlags.NonPublic | BindingFlags.Instance)
-                ?.GetValue(player) as ModPlayer[];
-            if (modPlayers == null) return;
-
-            foreach (var mp in modPlayers)
-            {
-                if (mp?.GetType() == _calPlayerType)
-                {
-                    _gSabatonField.SetValue(mp, true);
-                    return;
-                }
-            }
+            if (player.TryGetModPlayer(_calPlayerTemplate, out var modPlayer))
+                _gSabatonField.SetValue(modPlayer, true);
         }
 
         // ── 套装兼容：免疫跨职业召唤伤害惩罚 ─────────────────
@@ -124,21 +134,8 @@ namespace TestMod.Common.Systems
         {
             if (!CalamityLoaded || _fearmongerSetField == null) return;
 
-            var modPlayers = typeof(Player)
-                .GetField("modPlayers", BindingFlags.NonPublic | BindingFlags.Instance)
-                ?.GetValue(player) as ModPlayer[];
-
-            if (modPlayers == null) return;
-
-            var declaringType = _fearmongerSetField.DeclaringType;
-            foreach (var mp in modPlayers)
-            {
-                if (mp?.GetType() == declaringType)
-                {
-                    _fearmongerSetField.SetValue(mp, true);
-                    return;
-                }
-            }
+            if (player.TryGetModPlayer(_calPlayerTemplate, out var modPlayer))
+                _fearmongerSetField.SetValue(modPlayer, true);
         }
 
         // ── 向灾厄重铸等级表追加"炼化"作为最高 tier ───────────
