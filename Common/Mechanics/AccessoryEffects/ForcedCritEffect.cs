@@ -7,8 +7,8 @@ namespace TestMod.Common.Mechanics.AccessoryEffects
     //  ForcedCritEffect  ——  强制暴击 + 强制追踪通用模块
     // ----------------------------------------------------------------------------
     //  效果：
-    //   · 接下来 ForcedCritCount 次命中必定暴击（对所有伤害类型施加 +CritBoost 暴击率）
-    //   · 接下来 ForcedHomingCount 次弹幕发射自带追踪（按弹幕生成次数计）
+    //   · 接下来 ForcedCritCount 次命中直接强制暴击（不改变玩家暴击率）
+    //   · 接下来 ForcedHomingCount 颗符合条件的新弹幕自带追踪（不含仆从本体）
     //   · 若命中时本该暴击（自然暴击率独立判定），额外触发 ExtraHit
     //
     //  使用示例（主动技能触发时调用）：
@@ -16,7 +16,6 @@ namespace TestMod.Common.Mechanics.AccessoryEffects
     //    {
     //        ForcedCritCount   = 6,
     //        ForcedHomingCount = 6,
-    //        CritBoost         = 100f,
     //        ExtraHit          = new ExtraHitConfig { HitDamageRatio = 0.40f, ... },
     //    });
     //
@@ -27,18 +26,11 @@ namespace TestMod.Common.Mechanics.AccessoryEffects
     public struct ForcedCritConfig
     {
         // ── 强制暴击 ──────────────────────────────────────────────────
-        /// <summary>强制暴击的命中次数（物品命中和弹幕命中各自独立计数）。</summary>
+        /// <summary>强制暴击的命中次数（物品命中和弹幕命中共用计数）。</summary>
         public int ForcedCritCount;
 
-        /// <summary>
-        /// 施加给玩家的额外暴击率（用于保证必定暴击）。
-        /// 计算自然暴击率时会减去此值：naturalCrit = GetCritChance() - CritBoost。
-        /// 推荐设置为 100，对所有普通装备配置均可保证暴击。
-        /// </summary>
-        public float CritBoost;
-
         // ── 强制追踪 ──────────────────────────────────────────────────
-        /// <summary>接下来几次弹幕发射自带追踪（按生成次数计，仅物品直接生成的弹幕）。</summary>
+        /// <summary>接下来几颗符合条件的新弹幕自带追踪（仅物品直接生成，排除仆从本体、钩爪和鞭子）。</summary>
         public int ForcedHomingCount;
 
         // ── 本该暴击时的额外伤害 ──────────────────────────────────────
@@ -59,7 +51,6 @@ namespace TestMod.Common.Mechanics.AccessoryEffects
             var mp = player.GetModPlayer<OmniEffectsPlayer>();
             mp.ForcedCritRemaining   = config.ForcedCritCount;
             mp.ForcedHomingRemaining = config.ForcedHomingCount;
-            mp.ForcedCritBoost       = config.CritBoost;
             mp.ForcedCritExtraHit    = config.ExtraHit;
         }
     }

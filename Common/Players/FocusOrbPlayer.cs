@@ -14,9 +14,8 @@ namespace TestMod.Common.Players
     public class FocusOrbPlayer : ModPlayer
     {
         // ── 数值调节区 ────────────────────────────────────────────────
-        private const int   ForcedCritCount   = 7;        // 强制暴击次数
-        private const int   ForcedHomingCount = 7;        // 强制追踪弹幕次数
-        private const float CritBoost         = 100f;     // 施加的暴击率加成
+        private const int   ForcedCritCount   = 7;        // 物品与弹幕共用的强制暴击命中次数
+        private const int   ForcedHomingCount = 7;        // 符合条件的新弹幕追踪次数，与命中额度独立
         private const float ExtraHitRatio     = 2f;   // 本该暴击时：触发伤害的 200% 真实伤害
         private const int   CooldownDuration  = 60 * 30; // 冷却时间：30 秒（buff 计时）
 
@@ -43,7 +42,6 @@ namespace TestMod.Common.Players
             if (mp.ForcedCritRemaining <= 0)
                 return;
 
-            SummonCritPlayer.Enable(Player);
             SpawnFocusChargeParticles();
         }
 
@@ -127,7 +125,6 @@ namespace TestMod.Common.Players
             {
                 ForcedCritCount = ForcedCritCount,
                 ForcedHomingCount = ForcedHomingCount,
-                CritBoost = CritBoost,
                 ExtraHit = new ExtraHitConfig
                 {
                     HitDamageRatio = ExtraHitRatio,

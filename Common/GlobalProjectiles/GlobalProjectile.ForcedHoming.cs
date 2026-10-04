@@ -20,13 +20,10 @@ namespace TestMod.Common.GlobalProjectiles
 
         public override void OnSpawn(Projectile projectile, IEntitySource source)
         {
-            // 只对玩家直接使用物品生成的弹幕打标记，排除召唤物/衍生弹幕
+            // 只对玩家直接使用物品生成的弹幕打标记；衍生弹幕不消耗追踪次数。
             if (source is not EntitySource_ItemUse) return;
             if (projectile.owner < 0 || projectile.owner >= Main.maxPlayers) return;
-            
-            if (projectile.aiStyle == ProjAIStyleID.Hook) return;   // 大多数原版钩爪使用 aiStyle == 7，因此先检查样式以覆盖所有钩爪实例
-            if (ProjectileID.Sets.IsAWhip[projectile.type]) return;     // 排除鞭子弹幕（避免影响鞭子连锁/特殊行为）
-            
+            if (IsForcedHomingExcluded(projectile)) return;
 
             Player player = Main.player[projectile.owner];
             if (!player.active) return;
@@ -40,6 +37,17 @@ namespace TestMod.Common.GlobalProjectiles
             }
         }
 
+        private static bool IsForcedHomingExcluded(Projectile projectile)
+        {
+            // 法杖直接生成的仆从同样使用 ItemUse 来源，需按本体标志排除，保留其原有 AI。
+            return projectile.minion
+                || projectile.sentry
+                || projectile.minionSlots > 0f
+                || ProjectileID.Sets.MinionSacrificable[projectile.type]
+                || projectile.aiStyle == ProjAIStyleID.Hook
+                || ProjectileID.Sets.IsAWhip[projectile.type];
+        }
+
         /// <summary>
         /// 强制追踪逻辑，由 GlobalProjectile.PostAI 末尾调用。
         /// 每帧将弹幕速度平滑转向最近目标，保持原速大小。
@@ -47,6 +55,7 @@ namespace TestMod.Common.GlobalProjectiles
         internal void ForcedHoming_Update(Projectile projectile)
         {
             if (!IsHomingTagged) return;
+            if (IsForcedHomingExcluded(projectile)) return;
             if (projectile.velocity == Vector2.Zero) return;
 
             int targetIdx = TargetUtils.FindNearest(projectile.Center, HomingRange);

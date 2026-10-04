@@ -60,11 +60,10 @@ namespace TestMod.Common.Mechanics.AccessoryEffects
         public int             LifestealCooldown;      // 两次触发间冷却（即使卸下装备也继续倒数）
         public int             LifestealPendingRegen;  // LifeRegen 模式的挂起治疗量（平滑释放）
 
-        // ===== 强制暴击/追踪状态（由 ForcedCritEffect.Apply 写入，按命中次数消耗）=====
+        // ===== 强制暴击/追踪状态（命中与符合条件的新弹幕分别消耗计数）=====
         // 不在 ResetEffects 中重置——这些是跨帧持久计数，仅在激活时覆盖
-        public int            ForcedCritRemaining;    // 剩余强制暴击次数
+        public int            ForcedCritRemaining;    // 剩余强制暴击命中次数（物品与弹幕共用）
         public int            ForcedHomingRemaining;  // 剩余强制追踪弹幕次数（由弹幕 OnSpawn 消耗）
-        public float          ForcedCritBoost;        // 施加的暴击率加成（用于还原自然暴击率）
         public ExtraHitConfig ForcedCritExtraHit;     // 本该暴击时触发的额外伤害配置
 
         // ===== 配置参数 (由饰品在 UpdateAccessory 时写入, 让模块知道用什么数值) =====
@@ -136,10 +135,6 @@ namespace TestMod.Common.Mechanics.AccessoryEffects
 
         public override void PostUpdateEquips()
         {
-            // 强制暴击：有剩余计数时施加暴击率加成，使下一次命中必然暴击
-            if (ForcedCritRemaining > 0)
-                Player.GetCritChance(DamageClass.Generic) += ForcedCritBoost;
-
             // 翅膀覆写：在所有 UpdateAccessory 结束后最后写入，确保胜过同帧已装备的真实翅膀
             if (GrantOmniWings)
             {
@@ -177,6 +172,24 @@ namespace TestMod.Common.Mechanics.AccessoryEffects
             PlayerSizeEffect.UpdateHitbox(Player, this);
         }
 
+        public override void ModifyHitNPCWithItem(Item item, NPC target, ref NPC.HitModifiers modifiers)
+        {
+            ApplyForcedCrit(ref modifiers);
+        }
+
+        public override void ModifyHitNPCWithProj(Projectile proj, NPC target, ref NPC.HitModifiers modifiers)
+        {
+            ApplyForcedCrit(ref modifiers);
+        }
+
+        private void ApplyForcedCrit(ref NPC.HitModifiers modifiers)
+        {
+            // 在命中时判断共享额度，不改玩家属性或弹幕快照；召唤伤害也走此路径。
+            // 计数由实际命中后的 OnHit 消耗，同帧额度耗尽后不再强化后续命中。
+            if (ForcedCritRemaining > 0)
+                modifiers.SetCrit();
+        }
+
         public override void OnHitNPCWithItem(Item item, NPC target, NPC.HitInfo hit, int damageDone)
         {
             LifestealEffect.TryHeal(Player, this, hit, damageDone, fromProjectile: false);
@@ -202,13 +215,11 @@ namespace TestMod.Common.Mechanics.AccessoryEffects
         // 独立判定"本该暴击"概率，满足时触发额外伤害
         private void TryForcedCritExtraHit(DamageClass dmgType, NPC target, int damageDone)
         {
-            // GetCritChance 只返回该职业自身的 stat，不含父类。
-            // 有效暴击率 = GetCritChance(dmgType) + GetCritChance(Generic)（父类继承叠加）
-            // 自然暴击率 = 有效暴击率 - ForcedCritBoost（减去我们加在 Generic 上的强制量）
-            float naturalCrit = MathF.Max(0f,
-                Player.GetCritChance(dmgType) + Player.GetCritChance(DamageClass.Generic) - ForcedCritBoost);
+            // 按伤害类型的实际继承规则读取当前装备暴击率，Generic 不重复叠加。
+            // 强制暴击不再注入属性，因此无需减去临时加成。
+            float naturalCrit = MathF.Max(0f, Player.GetTotalCritChance(dmgType));
 
-            // 自然暴击率超 100% 时 rand*100 始终 <= naturalCrit，触发概率 100%（正确行为）
+            // 自然暴击率达到 100% 时必定触发；每次额度内的实际命中独立判定一次。
             if (naturalCrit <= Main.rand.NextFloat() * 100f) return;
 
             ExtraHitEffect.Strike(Player, target, ForcedCritExtraHit, damageDone);
