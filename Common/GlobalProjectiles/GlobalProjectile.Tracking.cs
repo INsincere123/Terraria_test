@@ -24,6 +24,7 @@ namespace TestMod.Common.GlobalProjectiles
         public override void SendExtraAI(Projectile projectile, BitWriter bitWriter, BinaryWriter binaryWriter)
         {
             bitWriter.WriteBit(IsHomingTagged);
+            if (projectile.type == ProjectileID.EmpressBlade) WriteTerraprismaAI(binaryWriter);
             if (projectile.type == ProjectileID.AbigailMinion) WriteAbigailAI(projectile, binaryWriter);
             // 乌鸦用 localAI 保存冲刺周期，随 owner 的位置/速度同步供远端预测。
             if (projectile.type == ProjectileID.Raven) binaryWriter.Write(projectile.localAI[0]);
@@ -37,6 +38,7 @@ namespace TestMod.Common.GlobalProjectiles
         public override void ReceiveExtraAI(Projectile projectile, BitReader bitReader, BinaryReader binaryReader)
         {
             IsHomingTagged = bitReader.ReadBit();
+            if (projectile.type == ProjectileID.EmpressBlade) ReadTerraprismaAI(projectile, binaryReader);
             if (projectile.type == ProjectileID.AbigailMinion) ReadAbigailAI(projectile, binaryReader);
             if (projectile.type == ProjectileID.Raven) projectile.localAI[0] = binaryReader.ReadSingle();
             if (projectile.type == ProjectileID.StardustDragon1)

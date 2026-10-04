@@ -17,7 +17,7 @@ namespace TestMod.Common.Mechanics.Minions
     ///   ① 冲撞型（ContactMinion）    — 靠身体撞击，应用扩范围追踪 + 弹开
     ///   ② 射击型本体（ShootingBody） — 保持距离发射子弹，不干预
     ///   ③ 召唤物射弹（MinionShot）   — 由 GlobalProjectile 通用追踪处理
-    ///   专属处理                      — 星尘龙/乌鸦/阿比盖尔/沙漠虎/蜘蛛
+    ///   专属处理                      — 星尘龙/乌鸦/阿比盖尔/泰拉棱镜/沙漠虎/蜘蛛
     /// </summary>
     public static class MinionSystem
     {
@@ -65,7 +65,6 @@ namespace TestMod.Common.Mechanics.Minions
             ProjectileID.UFOMinion,            // 423 UFO（发 UFOLaser 433）
             ProjectileID.OneEyedPirate,        //     海盗法杖
             ProjectileID.SoulscourgePirate,
-            ProjectileID.EmpressBlade,         //     泰拉棱镜
         };
 
         // ══════════════════════════════════════════════════════════════
@@ -85,6 +84,7 @@ namespace TestMod.Common.Mechanics.Minions
             if (ProjectileID.Sets.StardustDragon[type]) return true;
             if (type == ProjectileID.Raven)             return true;
             if (type == ProjectileID.AbigailMinion)     return true;
+            if (type == ProjectileID.EmpressBlade)      return true;
             if (type == ProjectileID.StormTigerTier1)  return true;
             if (type == ProjectileID.StormTigerTier2)  return true;
             if (type == ProjectileID.StormTigerTier3)  return true;

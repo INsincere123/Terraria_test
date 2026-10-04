@@ -76,6 +76,15 @@ namespace TestMod.Common.GlobalProjectiles
 
             PrepareStardustDragonFlight(projectile);
 
+            if (projectile.type == ProjectileID.EmpressBlade)
+            {
+                if (projectile.owner < 0 || projectile.owner >= Main.maxPlayers) return false;
+                Player owner = Main.player[projectile.owner];
+                if (!owner.active) return false;
+                ApplyTerraprismaAI(projectile, owner);
+                return false;
+            }
+
             if (projectile.type == ProjectileID.AbigailMinion)
             {
                 if (projectile.owner < 0 || projectile.owner >= Main.maxPlayers) return false;
@@ -114,6 +123,7 @@ namespace TestMod.Common.GlobalProjectiles
         {
             ApplySpiderSetDefaults(projectile);
             ApplyContactMinionSetDefaults(projectile);   // ① 冲撞型:独立无敌帧
+            ApplyTerraprismaDefaults(projectile);
         }
 
         // ══════════════════════════════════════════════════════════════
@@ -137,7 +147,7 @@ namespace TestMod.Common.GlobalProjectiles
             {
                 // 保持原版本体 AI；GodMode 等伤害强化由命中路径独立处理。
             }
-            else if (projectile.type == ProjectileID.AbigailMinion)
+            else if (projectile.type == ProjectileID.AbigailMinion || projectile.type == ProjectileID.EmpressBlade)
             {
                 // PreAI 已完整处理攻击运动，保留末尾公共处理与同步。
             }
