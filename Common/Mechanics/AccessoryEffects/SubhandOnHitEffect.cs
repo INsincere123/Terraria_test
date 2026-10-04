@@ -10,7 +10,7 @@ namespace TestMod.Common.Mechanics.AccessoryEffects
     /// "副手"饰品的追加攻击效果。
     /// 触发时：在玩家头顶生成（或复用）炮台弹幕 <see cref="SubhandCannon"/>，
     /// 并从炮台位置向目标发射一颗 MagnetSphereBolt。
-    /// 伤害数值通过 ExtraHitEffect.Compute 计算，投送仍由弹幕负责。
+    /// 通过 ExtraHitEffect.SpawnProjectile 统一计算并投送，比例伤害不再次增伤或暴击。
     /// </summary>
     public class SubhandOnHitEffect : OnHitEffect
     {
@@ -32,6 +32,8 @@ namespace TestMod.Common.Mechanics.AccessoryEffects
         {
             HitDamageRatio = DAMAGE_RATIO,
             StatType       = PlayerStatType.None,
+            FixedClass     = DamageClass.Magic,
+            Knockback      = 2f,
         };
 
         // ======================================================
@@ -57,7 +59,7 @@ namespace TestMod.Common.Mechanics.AccessoryEffects
                 return;
 
             SubhandCannon cannon = FindOrSpawnCannon(player);
-            cannon?.FireAt(target, ExtraHitEffect.Compute(player, DamageConfig, damageDone));
+            cannon?.FireAt(target, DamageConfig, damageDone);
         }
 
         // ======================================================

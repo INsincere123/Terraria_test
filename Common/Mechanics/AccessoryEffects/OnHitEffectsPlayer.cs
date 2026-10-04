@@ -154,6 +154,9 @@ namespace TestMod.Common.Mechanics.AccessoryEffects
         // ModPlayer.OnHitNPCWithProj 对自定义 DamageClass 存在兼容性问题，改用 GlobalProjectile 路径
         public void DispatchProjectileHit(Projectile proj, NPC target, NPC.HitInfo hit, int damageDone)
         {
+            if (ExtraHitEffect.IsExtraHitProjectile(proj))
+                return;
+
             if (target.friendly || target.type == NPCID.TargetDummy)
                 return;
 

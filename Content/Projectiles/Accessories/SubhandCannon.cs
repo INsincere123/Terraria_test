@@ -2,6 +2,7 @@ using Microsoft.Xna.Framework;
 using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
+using TestMod.Common.Mechanics.AccessoryEffects;
 
 namespace TestMod.Content.Projectiles.Accessories
 {
@@ -115,24 +116,23 @@ namespace TestMod.Content.Projectiles.Accessories
 
         /// <summary>
         /// 设置新目标并立即从炮台位置向目标发射一颗 MagnetSphereBolt。
-        /// 仅在服务端/单机端调用（Projectile.owner == Main.myPlayer 已由调用方保证）。
-        /// 想用别的弹幕: cannon?.FireAt(target, (int)(damageDone * DAMAGE_RATIO), ProjectileID.xxx);
+        /// 仅在本地 owner 端调用（单机或拥有此炮台的客户端）。
         /// </summary>
-        public void FireAt(NPC target, int damage, int boltType = ProjectileID.MagnetSphereBolt)
+        public void FireAt(NPC target, in ExtraHitConfig config, int hitDamage, int boltType = ProjectileID.MagnetSphereBolt)
         {
             TargetIndex = target.whoAmI;
             Projectile.netUpdate = true;
 
             Vector2 velocity = (target.Center - Projectile.Center).SafeNormalize(Vector2.UnitY) * BoltSpeed;
 
-            int projectileIndex = Projectile.NewProjectile(
+            int projectileIndex = ExtraHitEffect.SpawnProjectile(
+                Owner,
                 Projectile.GetSource_FromThis(),
                 Projectile.Center,
                 velocity,
                 boltType,
-                damage,
-                2f,
-                Projectile.owner
+                config,
+                hitDamage
             );
 
             if (projectileIndex >= 0 && projectileIndex < Main.maxProjectiles)

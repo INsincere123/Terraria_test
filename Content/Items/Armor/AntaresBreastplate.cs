@@ -7,8 +7,10 @@ using TestMod.Common.Systems;
 namespace TestMod.Content.Items.Armor
 {
     [AutoloadEquip(EquipType.Body)]
-    public class AntaresBreastplate : ModItem
+    public class AntaresBreastplate : ToggleableArmorItem
     {
+        protected override string ToggleEffectNameKey => "Mods.TestMod.Items.AntaresBreastplate.ToggleEffectName";
+
         // ╔══════════════════════════════════════════════════════╗
         // ║              胸甲数值调整区域                        ║
         // ╠══════════════════════════════════════════════════════╣
@@ -91,7 +93,9 @@ namespace TestMod.Content.Items.Armor
             //player.moveSpeed  += MoveSpeedBonus;
 
             // 标记供 AntaresArmorPlayer 处理百分比生命/法力加成
-            player.GetModPlayer<AntaresArmorPlayer>().wearingBreastplate = true;
+            AntaresArmorPlayer armorPlayer = player.GetModPlayer<AntaresArmorPlayer>();
+            armorPlayer.wearingBreastplate = true;
+            armorPlayer.phantasmalDragonEnabled = EffectEnabled;
         }
 
         public override void AddRecipes()

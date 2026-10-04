@@ -2,6 +2,7 @@ using Terraria;
 using Terraria.ID;
 using Microsoft.Xna.Framework;
 using System;
+using TestMod.Common.Mechanics.AccessoryEffects;
 
 namespace TestMod.Common.GlobalProjectiles
 {
@@ -55,7 +56,7 @@ namespace TestMod.Common.GlobalProjectiles
         // ══════════════════════════════════════════════════════════════
         //   破晓之光太阳爆发：范围溅射 + 三层粒子特效
         // ══════════════════════════════════════════════════════════════
-        private void HandleDaybreakBurst(NPC target, int damageDone)
+        private void HandleDaybreakBurst(Player player, NPC target, int damageDone)
         {
             // 范围溅射：300f 内其他敌人，50% 伤害
             if (Main.netMode != NetmodeID.MultiplayerClient)
@@ -66,7 +67,7 @@ namespace TestMod.Common.GlobalProjectiles
                     if (!npc.active || npc.friendly || npc.whoAmI == target.whoAmI) continue;
                     if (Vector2.Distance(target.Center, npc.Center) > 300f) continue;
 
-                    npc.SimpleStrikeNPC((int)(damageDone * 0.5f), 0);
+                    ExtraHitEffect.StrikeRatio(player, npc, damageDone, 0.5f);
                 }
             }
 

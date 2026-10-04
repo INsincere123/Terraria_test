@@ -1,6 +1,7 @@
 using Terraria;
 using Terraria.ID;
 using Microsoft.Xna.Framework;
+using TestMod.Common.Mechanics.AccessoryEffects;
 
 namespace TestMod.Common.GlobalProjectiles
 {
@@ -9,7 +10,7 @@ namespace TestMod.Common.GlobalProjectiles
         // ══════════════════════════════════════════════════════════════
         //   幻影弓命中效果：链式跳跃 + 范围爆炸 + 粒子特效
         // ══════════════════════════════════════════════════════════════
-        private void HandlePhantasmArrowHit(NPC target, int damageDone)
+        private void HandlePhantasmArrowHit(Player player, NPC target, int damageDone)
         {
             if (Main.netMode != NetmodeID.MultiplayerClient)
             {
@@ -21,7 +22,7 @@ namespace TestMod.Common.GlobalProjectiles
                     if (!npc.active || npc.friendly || npc.whoAmI == target.whoAmI) continue;
                     if (Vector2.Distance(target.Center, npc.Center) > 400f) continue;
 
-                    npc.SimpleStrikeNPC((int)(damageDone * 0.6f), 0, false, 0, null, false, 0);
+                    ExtraHitEffect.StrikeRatio(player, npc, damageDone, 0.6f);
                     SpawnSplitVisual(target.Center, npc.Center);
                     if (++chainCount >= 3) break;
                 }
@@ -33,7 +34,7 @@ namespace TestMod.Common.GlobalProjectiles
                     if (!npc.active || npc.friendly || npc.whoAmI == target.whoAmI) continue;
                     if (Vector2.Distance(target.Center, npc.Center) > 300f) continue;
 
-                    npc.SimpleStrikeNPC((int)(damageDone * 0.4f), 0, false, 0, null, false, 0);
+                    ExtraHitEffect.StrikeRatio(player, npc, damageDone, 0.4f);
                 }
             }
 

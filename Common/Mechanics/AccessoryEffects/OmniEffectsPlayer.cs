@@ -183,6 +183,7 @@ namespace TestMod.Common.Mechanics.AccessoryEffects
 
         public override void ModifyHitNPCWithProj(Projectile proj, NPC target, ref NPC.HitModifiers modifiers)
         {
+            if (ExtraHitEffect.IsExtraHitProjectile(proj)) return;
             ApplyForcedCrit(ref modifiers);
         }
 
@@ -208,6 +209,9 @@ namespace TestMod.Common.Mechanics.AccessoryEffects
         public override void OnHitNPCWithProj(Projectile proj, NPC target, NPC.HitInfo hit, int damageDone)
         {
             LifestealEffect.TryHeal(Player, this, hit, damageDone, fromProjectile: true);
+
+            // 追加弹幕不消耗强制暴击次数，也不再次触发专注额外伤害。
+            if (ExtraHitEffect.IsExtraHitProjectile(proj)) return;
 
             if (ForcedCritRemaining > 0)
             {

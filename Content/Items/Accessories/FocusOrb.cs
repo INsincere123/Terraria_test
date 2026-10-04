@@ -1,5 +1,6 @@
 using Terraria;
 using Terraria.ID;
+using Terraria.Localization;
 using Terraria.ModLoader;
 using TestMod.Common.Players;
 using TestMod.Common.Systems;
@@ -46,6 +47,7 @@ namespace TestMod.Content.Items.Accessories
             var line = new TooltipLine(Mod, "FocusOrbAbility",
                 $"按 [{keyStr}] 激活：接下来 7 次命中必定暴击且弹幕自带追踪\n" +
                 $"  本该暴击时，额外造成[c/FF4500:200% ]的真实伤害\n" +
+                $"  {Language.GetTextValue("Mods.TestMod.Items.FocusOrb.ExtraHitRule")}\n" +
                 $"  [c/AAAAAA:冷却30秒]");
 
             int idx = tooltips.FindIndex(t => t.Name == "Tooltip0");

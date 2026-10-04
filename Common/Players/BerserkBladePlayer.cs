@@ -21,7 +21,7 @@ namespace TestMod.Common.Players
         private const int   ProjHitsPerTrigger = 5;     // 满层后近战弹幕每 N 次命中触发一次额外伤害
         // ────────────────────────────────────────────────────────────────────────
 
-        // 满层额外伤害配置（真实伤害，触发伤害的 17% + 固定 100，不暴击）
+        // 固定 100 吃一次真实伤害完整增伤，实际命中伤害的 17% 不重复增伤；整次不暴击。
         private static readonly ExtraHitConfig MaxStackHitConfig = new()
         {
             FlatDamage          = BonusFlat,
@@ -31,7 +31,7 @@ namespace TestMod.Common.Players
             FixedClass          = TrueDamageClass.Instance,
             UseCrit             = false,
             Knockback           = 0f,
-            NoPlayerInteraction = false, // 同步网络包；_extraHitActive 防递归
+            NoPlayerInteraction = false, // 保留玩家击杀归属；伤害包由统一入口同步
             CombatTextColor     = new Color(255, 255, 255),
             CombatTextStyleKey  = TestModTextStyles.DamageTrue,
         };
@@ -90,6 +90,7 @@ namespace TestMod.Common.Players
         // 其余近战弹幕效率降低：10次叠1层，满层后5次触发
         public override void OnHitNPCWithProj(Projectile proj, NPC target, NPC.HitInfo hit, int damageDone)
         {
+            if (ExtraHitEffect.IsExtraHitProjectile(proj)) return;
             if (!HasBerserkBlade || _extraHitActive) return;
             if (!proj.DamageType.CountsAsClass(DamageClass.Melee)) return;
 

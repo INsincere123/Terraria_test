@@ -4,6 +4,7 @@ using Terraria.ModLoader;
 using TestMod.Content.Buffs;
 using TestMod.Common.Systems;
 using TestMod.Content.Projectiles.Summon;
+using TestMod.Common.Mechanics.AccessoryEffects;
 
 namespace TestMod.Common.GlobalProjectiles
 {
@@ -55,14 +56,20 @@ namespace TestMod.Common.GlobalProjectiles
                 // 如需多鞭子各自独立冷却，可为每个 tag 单独创建冷却 buff
                 if (target.HasBuff(ModContent.BuffType<TestWhipCooldownBuff>())) continue;
 
-                Projectile.NewProjectile(
+                // 按实际命中伤害取比例，统一禁止再次增伤、暴击与追加触发。
+                ExtraHitConfig damageConfig = new()
+                {
+                    HitDamageRatio = data.ExplosionDamageRatio,
+                    FixedClass = DamageClass.Summon,
+                };
+                ExtraHitEffect.SpawnProjectile(
+                    Main.player[projectile.owner],
                     projectile.GetSource_FromThis(),
                     target.Center,
                     Microsoft.Xna.Framework.Vector2.Zero,
                     ModContent.ProjectileType<TestWhipExplosionProj>(),
-                    (int)(damageDone * data.ExplosionDamageRatio),
-                    0f,
-                    projectile.owner
+                    damageConfig,
+                    damageDone
                 );
 
                 target.AddBuff(ModContent.BuffType<TestWhipCooldownBuff>(), data.CooldownFrames);

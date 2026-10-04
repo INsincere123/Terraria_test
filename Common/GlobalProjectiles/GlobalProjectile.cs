@@ -30,6 +30,11 @@ namespace TestMod.Common.GlobalProjectiles
         // Subhand 自己发出的原版 MagnetSphereBolt 用这个标记接管伤害数字，避免影响原版磁球武器。
         public bool subhandDynamicText;
 
+        // 额外伤害弹幕的结算规则（每实体保存，随 ExtraAI 同步）。
+        public bool IsExtraHit;
+        public bool ExtraHitUseCrit;
+        public bool ExtraHitIgnoreDefense;
+
         // ── 星尘龙追踪冷却 ──
         private int _dragonTrackingCooldown = 0;
 
@@ -240,6 +245,12 @@ namespace TestMod.Common.GlobalProjectiles
             if (subhandDynamicText)
                 modifiers.HideCombatText();
 
+            if (IsExtraHit)
+            {
+                ExtraHitEffect.ApplyHitRules(player, projectile.DamageType, ExtraHitUseCrit, ExtraHitIgnoreDefense, ref modifiers);
+                return;
+            }
+
             // 暴走期间：弹幕无视防御
             if (player.active && player.GetModPlayer<BloodFeedPlayer>().IsBerserk)
                 modifiers.ScalingArmorPenetration += 1f;
@@ -306,6 +317,9 @@ namespace TestMod.Common.GlobalProjectiles
                     TestModTextStyles.Subhand);
             }
 
+            // 额外伤害只完成投送和数字显示，不再次触发追加攻击、鞭爆炸或收割。
+            if (IsExtraHit) return;
+
             // 通过 GlobalProjectile 路径分发副手等追加攻击效果
             // 不走 ModPlayer.OnHitNPCWithProj 是因为自定义 DamageClass 对该钩子存在兼容性问题
             if (projectile.friendly && !projectile.hostile)
@@ -330,19 +344,19 @@ namespace TestMod.Common.GlobalProjectiles
 
             // 🏹 幻影弓强化箭：链式跳跃 + 范围爆炸（绕过无敌帧）
             if (projectile.type == ModContent.ProjectileType<PhantasmSpecialArrowProj>())
-                HandlePhantasmArrowHit(target, damageDone);
+                HandlePhantasmArrowHit(player, target, damageDone);
 
             // ☀️ 破晓之光矛：太阳爆发特效（每根矛只触发一次）
             if (projectile.type == ProjectileID.Daybreak && !_daybreakBurstFiredSet.Contains(projectile.whoAmI))
             {
                 _daybreakBurstFiredSet.Add(projectile.whoAmI);
-                HandleDaybreakBurst(target, damageDone);
+                HandleDaybreakBurst(player, target, damageDone);
             }
 
             // 🐉 星尘龙命中：两轮链式溅射
             if (ProjectileID.Sets.StardustDragon[projectile.type])
             {
-                HandleStardustDragonHit(target, damageDone);
+                HandleStardustDragonHit(player, target, damageDone);
             }
 
             // 🪢 鞭子命中：打暗印 + 重置衰减 

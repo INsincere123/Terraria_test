@@ -1,6 +1,7 @@
 using System;
 using Microsoft.Xna.Framework;
 using Terraria;
+using Terraria.DataStructures;
 using Terraria.ID;
 using Terraria.ModLoader;
 using TestMod.Common.Compatibility;
@@ -11,7 +12,8 @@ namespace TestMod.Common.Mechanics.AccessoryEffects
     //  ExtraHitEffect  ——  额外伤害通用系统
     // ----------------------------------------------------------------------------
     //  用途：计算并打出一次"额外伤害"，供饰品、武器、盔甲套装调用。
-    //  支持直接打出（SimpleStrikeNPC）或仅计算数值（供弹幕/投射物使用）。
+    //  固定/属性部分吃一次完整玩家增伤；实际命中比例部分不再吃玩家增伤。
+    //  Strike 与 SpawnProjectile 共用 Compute，分别负责直接打出和弹幕投送。
     //
     //  使用示例（直接打出）：
     //    int dealt = ExtraHitEffect.Strike(player, target, new ExtraHitConfig
@@ -74,7 +76,7 @@ namespace TestMod.Common.Mechanics.AccessoryEffects
     /// <summary>额外伤害配置，所有字段默认值均等于"不生效"（0 / false / None）。</summary>
     public struct ExtraHitConfig
     {
-        // ── 伤害组成（三项相加为最终基础伤害）────────────────────────
+        // ── 伤害组成（固定/属性部分先增伤，再加实际命中比例部分）──────
         /// <summary>固定伤害部分。</summary>
         public float FlatDamage;
 
@@ -84,7 +86,7 @@ namespace TestMod.Common.Mechanics.AccessoryEffects
         /// <summary>参与计算的玩家属性，默认 None（PlayerStatRatio 不生效）。</summary>
         public PlayerStatType StatType;
 
-        /// <summary>触发伤害 × 此比例加入伤害（传入 hitDamage 时生效）。</summary>
+        /// <summary>已结算的实际命中伤害 × 此比例；不再次应用玩家增伤。</summary>
         public float HitDamageRatio;
 
         // ── 伤害类型 ──────────────────────────────────────────────
@@ -95,24 +97,33 @@ namespace TestMod.Common.Mechanics.AccessoryEffects
         public DamageClass FixedClass;
 
         // ── 暴击 ──────────────────────────────────────────────────
-        /// <summary>true = 使用玩家对应伤害类型的暴击率独立判定。</summary>
+        /// <summary>
+        /// true = 使用玩家对应类型的完整暴击率独立判定，默认 false。
+        /// 比例型/混合型效果保持 false，避免原命中暴击再次放大。
+        /// </summary>
         public bool UseCrit;
 
         // ── 物理 ──────────────────────────────────────────────────
         /// <summary>击退力度，0 = 无击退。</summary>
         public float Knockback;
 
+        /// <summary>额外无视防御。真实伤害类型也会由 NPC 通用钩子穿透防御；抗性仍正常结算。</summary>
+        public bool IgnoreDefense;
+
+        /// <summary>指定击退方向；null = 根据玩家与目标位置决定。</summary>
+        public int? HitDirection;
+
         // ── 多人模式 ──────────────────────────────────────────────
         /// <summary>
-        /// true = 不触发 OnHit 系列玩家钩子，适合防递归场景。
-        /// false = 完整触发所有钩子并自动同步网络包（推荐默认值）。
+        /// true = 不登记单机玩家击杀归属。不是 OnHit 回调开关，也不是同步开关。
+        /// 直接 StrikeNPC 不分发物品/弹幕的玩家 OnHit 钩子；联机伤害包始终单独同步。
         /// </summary>
         public bool NoPlayerInteraction;
 
         // ── 战斗数字颜色 ──────────────────────────────────────────
         /// <summary>
         /// 自定义战斗数字颜色。null = 使用额外伤害默认紫色。
-        /// 始终隐藏原版文字，改为显示动态浮字。
+        /// 默认隐藏原版文字，改为显示动态浮字；UseVanillaCombatText 可保留原版数字。
         /// 注意：多人模式下自定义浮字仍以本地显示为主。
         /// </summary>
         public Color? CombatTextColor;
@@ -121,6 +132,9 @@ namespace TestMod.Common.Mechanics.AccessoryEffects
         /// 自定义动态战斗文字样式。留空时使用通用额外伤害样式。
         /// </summary>
         public string CombatTextStyleKey;
+
+        /// <summary>直接打出时保留原版战斗数字，供既有溅射效果使用。</summary>
+        public bool UseVanillaCombatText;
     }
 
     public static class ExtraHitEffect
@@ -131,8 +145,8 @@ namespace TestMod.Common.Mechanics.AccessoryEffects
 
         /// <summary>
         /// 仅计算伤害数值，不打出。
-        /// 返回值为基础伤害（FlatDamage + 属性比例 + 触发伤害比例），
-        /// 不含玩家伤害加成（由调用方或弹幕自行应用）。
+        /// 返回固定/属性部分的一次完整玩家增伤，加上未再次增伤的实际命中比例部分。
+        /// 尚未结算目标防御、抗性或独立暴击；调用方不能再次乘玩家增伤。
         /// </summary>
         public static int Compute(Player player, in ExtraHitConfig cfg, int hitDamage = 0)
         {
@@ -141,35 +155,39 @@ namespace TestMod.Common.Mechanics.AccessoryEffects
             if (cfg.StatType != PlayerStatType.None && cfg.PlayerStatRatio != 0f)
                 dmg += GetStatValue(player, cfg.StatType) * cfg.PlayerStatRatio;
 
-            if (cfg.HitDamageRatio != 0f)
-                dmg += hitDamage * cfg.HitDamageRatio;
+            // 纯比例伤害不调用 ApplyTo(0)，避免玩家的平伤加成凭空加入这一部分。
+            if (dmg > 0f)
+                dmg = player.GetTotalDamage(ResolveDamageClass(player, cfg)).ApplyTo(dmg);
+
+            dmg += hitDamage * cfg.HitDamageRatio;
 
             return Math.Max(1, (int)dmg);
         }
 
         /// <summary>
-        /// 计算伤害并通过 SimpleStrikeNPC 直接打出。
-        /// 会自动应用玩家伤害加成与暴击判定。
+        /// 按统一规则计算，再通过 NPC 的防御/抗性路径直接打出。
+        /// 不分发普通攻击的 OnHit 钩子，避免额外伤害再次触发追加攻击。
         /// 返回 NPC 实际损失的生命值（已扣除 NPC 防御）。
         /// </summary>
         public static int Strike(Player player, NPC target, in ExtraHitConfig cfg, int hitDamage = 0)
         {
-            DamageClass dmgClass   = ResolveDamageClass(player, cfg);
-            int         baseDamage = Compute(player, cfg, hitDamage);
-            int  scaledDamage = (int)player.GetDamage(dmgClass).ApplyTo(baseDamage);
-            bool crit         = cfg.UseCrit && player.GetCritChance(dmgClass) > Main.rand.NextFloat() * 100f;
-            int  direction    = target.Center.X > player.Center.X ? 1 : -1;
+            if (!target.active || target.life <= 0)
+                return 0;
 
-            // 统一隐藏原版数字，改走动态浮字。颜色仍可由配置覆盖。
-            NPC.HitInfo hitInfo        = target.CalculateHitInfo(scaledDamage, direction, crit, cfg.Knockback, dmgClass);
-            hitInfo.HideCombatText     = true;
+            DamageClass dmgClass   = ResolveDamageClass(player, cfg);
+            int damage = Compute(player, cfg, hitDamage);
+            int direction = cfg.HitDirection ?? (target.Center.X > player.Center.X ? 1 : -1);
+            NPC.HitModifiers modifiers = target.GetIncomingStrikeModifiers(dmgClass, direction);
+            ApplyHitRules(player, dmgClass, cfg.UseCrit, cfg.IgnoreDefense, ref modifiers);
+            NPC.HitInfo hitInfo = modifiers.ToHitInfo(damage, false, cfg.Knockback);
+            hitInfo.HideCombatText = !cfg.UseVanillaCombatText;
             int result = target.StrikeNPC(hitInfo, fromNet: false, cfg.NoPlayerInteraction);
 
-            if (!cfg.NoPlayerInteraction)
-                NetMessage.SendStrikeNPC(target, in hitInfo);  // 同步伤害包（含 HideCombatText=true）
+            if (Main.netMode != NetmodeID.SinglePlayer)
+                NetMessage.SendStrikeNPC(target, in hitInfo);
 
             // 仅在本地客户端显示自定义颜色的战斗数字
-            if (Main.netMode != NetmodeID.Server)
+            if (!cfg.UseVanillaCombatText && Main.netMode != NetmodeID.Server)
                 TextRenderingBridge.SpawnCombatText(
                     target.Hitbox,
                     hitInfo.Damage,
@@ -178,6 +196,64 @@ namespace TestMod.Common.Mechanics.AccessoryEffects
                     cfg.CombatTextStyleKey ?? TestModTextStyles.ExtraHit);
 
             return result;
+        }
+
+        /// <summary>既有比例溅射共用入口，保留其伤害类型、零击退方向和原版数字。</summary>
+        public static int StrikeRatio(Player player, NPC target, int hitDamage, float ratio)
+        {
+            ExtraHitConfig cfg = new()
+            {
+                HitDamageRatio = ratio,
+                FixedClass = DamageClass.Default,
+                HitDirection = 0,
+                UseVanillaCombatText = true,
+            };
+            return Strike(player, target, cfg, hitDamage);
+        }
+
+        /// <summary>
+        /// 由 owner 端生成一次追加弹幕。伤害在生成时计算一次，暴击按命中时的玩家属性判定。
+        /// 标记随弹幕同步；不继承父弹幕的暴击，也不允许再次触发本模组的追加攻击。
+        /// </summary>
+        public static int SpawnProjectile(Player player, IEntitySource source, Vector2 position, Vector2 velocity,
+            int projectileType, in ExtraHitConfig cfg, int hitDamage = 0)
+        {
+            if (player.whoAmI != Main.myPlayer)
+                return Main.maxProjectiles;
+
+            int index = Projectile.NewProjectile(source, position, velocity, projectileType,
+                Compute(player, cfg, hitDamage), cfg.Knockback, player.whoAmI);
+            if (index < 0 || index >= Main.maxProjectiles)
+                return index;
+
+            Projectile projectile = Main.projectile[index];
+            projectile.DamageType = ResolveDamageClass(player, cfg);
+            projectile.CritChance = 0;
+            var state = projectile.GetGlobalProjectile<global::TestMod.Common.GlobalProjectiles.GlobalProjectile>();
+            state.IsExtraHit = true;
+            state.ExtraHitUseCrit = cfg.UseCrit;
+            state.ExtraHitIgnoreDefense = cfg.IgnoreDefense;
+            projectile.netUpdate = true;
+            return index;
+        }
+
+        public static bool IsExtraHitProjectile(Projectile projectile)
+            => projectile.GetGlobalProjectile<global::TestMod.Common.GlobalProjectiles.GlobalProjectile>().IsExtraHit;
+
+        /// <summary>直接伤害和追加弹幕共用暴击/防御规则；DisableCrit 优先于后续强制暴击。</summary>
+        internal static void ApplyHitRules(Player player, DamageClass damageClass, bool useCrit, bool ignoreDefense,
+            ref NPC.HitModifiers modifiers)
+        {
+            // 额外伤害已经按指定比例计算，不再叠加一次弹幕的随机伤害浮动。
+            modifiers.DamageVariationScale *= 0f;
+
+            if (useCrit && player.GetTotalCritChance(damageClass) > Main.rand.NextFloat() * 100f)
+                modifiers.SetCrit();
+            else
+                modifiers.DisableCrit();
+
+            if (ignoreDefense)
+                modifiers.ScalingArmorPenetration += 1f;
         }
 
         /// <summary>将 PlayerStatType 枚举转换为对应的玩家属性数值。</summary>
@@ -193,11 +269,11 @@ namespace TestMod.Common.Mechanics.AccessoryEffects
                 PlayerStatType.CurrentMana      => player.statMana,
                 PlayerStatType.MissingMana      => player.statManaMax2 - player.statMana,
                 PlayerStatType.Defense          => player.statDefense,
-                PlayerStatType.MeleeDamageMult  => player.GetDamage(DamageClass.Melee).ApplyTo(1f),
-                PlayerStatType.RangedDamageMult => player.GetDamage(DamageClass.Ranged).ApplyTo(1f),
-                PlayerStatType.MagicDamageMult  => player.GetDamage(DamageClass.Magic).ApplyTo(1f),
-                PlayerStatType.SummonDamageMult => player.GetDamage(DamageClass.Summon).ApplyTo(1f),
-                PlayerStatType.GenericDamageMult=> player.GetDamage(DamageClass.Generic).ApplyTo(1f),
+                PlayerStatType.MeleeDamageMult  => player.GetTotalDamage(DamageClass.Melee).ApplyTo(1f),
+                PlayerStatType.RangedDamageMult => player.GetTotalDamage(DamageClass.Ranged).ApplyTo(1f),
+                PlayerStatType.MagicDamageMult  => player.GetTotalDamage(DamageClass.Magic).ApplyTo(1f),
+                PlayerStatType.SummonDamageMult => player.GetTotalDamage(DamageClass.Summon).ApplyTo(1f),
+                PlayerStatType.GenericDamageMult=> player.GetTotalDamage(DamageClass.Generic).ApplyTo(1f),
                 PlayerStatType.MoveSpeed        => player.moveSpeed,
                 PlayerStatType.MaxMinions       => player.maxMinions,
                 PlayerStatType.Luck             => player.luck,

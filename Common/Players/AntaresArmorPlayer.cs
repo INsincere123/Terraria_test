@@ -53,6 +53,7 @@ namespace TestMod.Common.Players
         public bool wearingBreastplate = false;
         public bool wearingLeggings    = false;
         public bool wearingFullSet     = false;
+        public bool phantasmalDragonEnabled = false;
 
         public override void ResetEffects()
         {
@@ -60,6 +61,7 @@ namespace TestMod.Common.Players
             wearingBreastplate = false;
             wearingLeggings    = false;
             wearingFullSet     = false;
+            phantasmalDragonEnabled = false;
         }
 
         // ── 百分比生命/法力加成 ───────────────────────────────
@@ -100,7 +102,8 @@ namespace TestMod.Common.Players
                 PullNearbyEnemies();
 
             // ── 幻影龙：一行调用搞定 ──
-            PhantasmalDragonSummoner.MaintainFor(Player, DragonDamage, DragonKnockback);
+            if (phantasmalDragonEnabled)
+                PhantasmalDragonSummoner.MaintainFor(Player, DragonDamage, DragonKnockback);
         }
 
         // ══════════════════════════════════════════════════════════════

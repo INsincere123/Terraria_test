@@ -3,6 +3,7 @@ using System.IO;
 using Microsoft.Xna.Framework;
 using Terraria;
 using Terraria.ID;
+using Terraria.ModLoader;
 using Terraria.ModLoader.IO;
 using TestMod.Common.Utilities;
 
@@ -24,6 +25,11 @@ namespace TestMod.Common.GlobalProjectiles
         public override void SendExtraAI(Projectile projectile, BitWriter bitWriter, BinaryWriter binaryWriter)
         {
             bitWriter.WriteBit(IsHomingTagged);
+            bitWriter.WriteBit(IsExtraHit);
+            bitWriter.WriteBit(ExtraHitUseCrit);
+            bitWriter.WriteBit(ExtraHitIgnoreDefense);
+            bitWriter.WriteBit(subhandDynamicText);
+            if (IsExtraHit) binaryWriter.Write(projectile.DamageType.Type);
             if (projectile.type == ProjectileID.EmpressBlade) WriteTerraprismaAI(binaryWriter);
             if (projectile.type == ProjectileID.AbigailMinion) WriteAbigailAI(projectile, binaryWriter);
             // 乌鸦用 localAI 保存冲刺周期，随 owner 的位置/速度同步供远端预测。
@@ -38,6 +44,15 @@ namespace TestMod.Common.GlobalProjectiles
         public override void ReceiveExtraAI(Projectile projectile, BitReader bitReader, BinaryReader binaryReader)
         {
             IsHomingTagged = bitReader.ReadBit();
+            IsExtraHit = bitReader.ReadBit();
+            ExtraHitUseCrit = bitReader.ReadBit();
+            ExtraHitIgnoreDefense = bitReader.ReadBit();
+            subhandDynamicText = bitReader.ReadBit();
+            if (IsExtraHit)
+            {
+                projectile.DamageType = DamageClassLoader.GetDamageClass(binaryReader.ReadInt32()) ?? projectile.DamageType;
+                projectile.CritChance = 0;
+            }
             if (projectile.type == ProjectileID.EmpressBlade) ReadTerraprismaAI(projectile, binaryReader);
             if (projectile.type == ProjectileID.AbigailMinion) ReadAbigailAI(projectile, binaryReader);
             if (projectile.type == ProjectileID.Raven) projectile.localAI[0] = binaryReader.ReadSingle();

@@ -34,6 +34,14 @@ Configs: {
 	}
 }
 
+ArmorToggle: {
+	Enabled: 已开启
+	Disabled: 已关闭
+	State: "{0}：{1}"
+	Hint: 在背包中按住 Shift 并右键切换
+	RequiresFullSet: 仅穿齐 Antares 套装时生效
+}
+
 Keybinds: {
 	"Omniguardian Dash.DisplayName": 长冲刺
 	"Antares Gravity Well.DisplayName": 引力井
@@ -132,6 +140,7 @@ Items: {
 
 	AntaresBreastplate: {
 		DisplayName: Antares Breastplate
+		ToggleEffectName: 幻影龙随行
 		Tooltip:
 			'''
 			+33%所有伤害 +12%暴击率 +12%攻速 +8护甲穿透
@@ -142,6 +151,8 @@ Items: {
 
 	AntaresHelmet: {
 		DisplayName: Antares Helmet
+		DragonState: 幻影龙随行：{0}（胸甲开关）
+		CannonState: 套装炮台：{0}（腿甲开关；命中时追加实际伤害的19%，不重复增伤或暴击）
 		Tooltip:
 			'''
 			+33%所有伤害 +12%暴击率 +12%攻速 +8护甲穿透
@@ -152,6 +163,7 @@ Items: {
 
 	AntaresLeggings: {
 		DisplayName: Antares Leggings
+		ToggleEffectName: 套装炮台
 		Tooltip:
 			'''
 			+34%所有伤害 +11%暴击率 +11%攻速 +8护甲穿透
@@ -188,6 +200,7 @@ Items: {
 			耐药性降低25%，获得蜂蜜效果
 			靠近 Boss [c/FFD700:2秒]后，下一次命中触发：
 			  造成 [c/FF8C00:240 + 88% 最大生命] 的额外伤害
+			  受当前武器类型的伤害加成影响，并按玩家暴击率独立暴击
 			  获得该伤害 [c/6495ED:0.8%] 的永久最大生命值（上限 [c/6495ED:+666]）
 			每有 [c/FF8C00:100 点最大生命]，体型变大 [c/FF4500:5%]（上限 +100%）
 			[c/AAAAAA:叠层在卸下装备后保留，重新装备时继续生效]
@@ -198,6 +211,7 @@ Items: {
 	FocusOrb: {
 		DisplayName: 专注宝珠
 		Tooltip: "[c/6495ED:+8%] 全属性伤害  [c/6495ED:+6%] 暴击率  [c/6495ED:+4] 护甲穿透"
+		ExtraHitRule: "[c/AAAAAA:按实际命中伤害取比例，不重复增伤或暴击]"
 	}
 
 	BerserkBlade: {
@@ -208,6 +222,7 @@ Items: {
 			近战命中提供 [c/FF8C00:狂暴] 叠层，持续 [c/FFD700:2 秒]
 			每层：近战攻速 [c/6495ED:+4%]（上限 [c/6495ED:+40%]）
 			[c/FF4500:满 10 层]时，额外造成 [c/FF4500:100 + 17% 触发伤害] 的真实伤害
+			[c/AAAAAA:固定部分受伤害加成影响；比例部分不重复增伤，额外伤害不暴击]
 			[c/AAAAAA:近战本体及已识别的真近战弹幕：每次叠 1 层]
 			[c/AAAAAA:上述命中达到满层时及满层后，每次触发额外伤害]
 			[c/AAAAAA:其他近战弹幕：每 10 次叠 1 层；满层后每 5 次触发一次]
@@ -226,7 +241,7 @@ Items: {
 
 	Offhand: {
 		DisplayName: 磁球
-		Tooltip: 召唤磁球，命中敌人时发射追加弹幕，造成19%额外伤害
+		Tooltip: 召唤磁球，命中敌人时发射追加弹幕，造成实际命中伤害19%的额外伤害，不重复增伤或暴击
 	}
 
 	TestWhip: {

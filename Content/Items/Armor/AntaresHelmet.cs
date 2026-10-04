@@ -1,5 +1,6 @@
 using Terraria;
 using Terraria.ID;
+using Terraria.Localization;
 using Terraria.ModLoader;
 using TestMod.Common.Players;
 using TestMod.Common.Systems;
@@ -95,13 +96,24 @@ namespace TestMod.Content.Items.Armor
                 ? "\n灾厄：移除跨职业召唤伤害惩罚"
                 : "";
 
-            player.setBonus = $"致命伤害后复活，恢复50%生命值，无敌3秒\n免疫秒杀，若单次伤害大于你的最大生命值，则此伤害为1\n按下 [{key}] 激活引力井，持续拉取周围敌人\n命中敌人时发射追加弹幕，造成19%额外伤害{calamityBonus}";
+            // 从实际功能盔甲槽读取物品实例状态，外观槽或背包内的其他副本不参与。
+            bool dragonEnabled = player.armor[1].ModItem is AntaresBreastplate { EffectEnabled: true };
+            bool cannonEnabled = player.armor[2].ModItem is AntaresLeggings { EffectEnabled: true };
+            string dragonStatus = Language.GetTextValue("Mods.TestMod.Items.AntaresHelmet.DragonState",
+                ToggleableArmorItem.GetEffectStateText(dragonEnabled));
+            string cannonStatus = Language.GetTextValue("Mods.TestMod.Items.AntaresHelmet.CannonState",
+                ToggleableArmorItem.GetEffectStateText(cannonEnabled));
+
+            player.setBonus = $"致命伤害后复活，恢复50%生命值，无敌3秒\n免疫秒杀，若单次伤害大于你的最大生命值，则此伤害为1\n按下 [{key}] 激活引力井，持续拉取周围敌人{calamityBonus}\n{dragonStatus}\n{cannonStatus}";
             player.GetModPlayer<AntaresArmorPlayer>().wearingFullSet = true;
             CalamityCompatSystem.DisableSummonPenalty(player);
 
-            // 激活追加攻击
-            OnHitEffectsPlayer.Activate<SubhandOnHitEffect>(player);
-            SubhandOnHitEffect.KeepCannonAlive(player);
+            // 腿甲仅控制套装来源；副手饰品仍可以独立激活并维持同一个炮台。
+            if (cannonEnabled)
+            {
+                OnHitEffectsPlayer.Activate<SubhandOnHitEffect>(player);
+                SubhandOnHitEffect.KeepCannonAlive(player);
+            }
         }
 
         public override void UpdateEquip(Player player)

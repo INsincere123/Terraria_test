@@ -3,6 +3,7 @@ using Terraria.ModLoader;
 using Microsoft.Xna.Framework;
 using TestMod.Content.Buffs;
 using TestMod.Common.Utilities;
+using TestMod.Common.Mechanics.AccessoryEffects;
 
 namespace TestMod.Common.GlobalProjectiles
 {
@@ -25,11 +26,18 @@ namespace TestMod.Common.GlobalProjectiles
         // ══════════════════════════════════════════════════════════════
 
         /// <summary>
-        /// 以 center 为圆心，400f 内最多 6 个敌人各受 66 伤害，
+        /// 以 center 为圆心，400f 内最多 6 个敌人各受基础 66 伤害（吃一次通用增伤），
         /// 玩家获得 HarvestTimeBuff（3 秒）。
         /// </summary>
         private static void DoHarvest(NPC center, Player player)
         {
+            ExtraHitConfig damageConfig = new()
+            {
+                FlatDamage = 66f,
+                FixedClass = DamageClass.Generic,
+                HitDirection = 0,
+                UseVanillaCombatText = true,
+            };
             int count = 0;
             for (int i = 0; i < Main.npc.Length; i++)
             {
@@ -37,7 +45,7 @@ namespace TestMod.Common.GlobalProjectiles
                 if (!npc.active || npc.friendly) continue;
                 if (Vector2.Distance(center.Center, npc.Center) < 400f)
                 {
-                    npc.SimpleStrikeNPC(66, 50);
+                    ExtraHitEffect.Strike(player, npc, damageConfig);
                     if (++count >= 6) break;
                 }
             }

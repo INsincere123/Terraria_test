@@ -7,8 +7,10 @@ using TestMod.Common.Systems;
 namespace TestMod.Content.Items.Armor
 {
     [AutoloadEquip(EquipType.Legs)]
-    public class AntaresLeggings : ModItem
+    public class AntaresLeggings : ToggleableArmorItem
     {
+        protected override string ToggleEffectNameKey => "Mods.TestMod.Items.AntaresLeggings.ToggleEffectName";
+
         // ╔══════════════════════════════════════════════════════╗
         // ║              腿甲数值调整区域                        ║
         // ╠══════════════════════════════════════════════════════╣

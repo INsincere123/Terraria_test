@@ -39,10 +39,10 @@ namespace TestMod.Common.Players
         public bool IsCharged;
         public bool HasHeartsteel;
 
-        // 防止 SimpleStrikeNPC 触发 OnHitNPC 时递归进入 TryTriggerProc
+        // 防止同一触发尚未完成时重入。
         private bool _procActive;
 
-        // 额外伤害配置：固定 240 + 88% 最大生命，跟随武器类型，独立暴击
+        // 固定 240 + 88% 最大生命吃一次完整增伤，跟随手持武器类型的完整玩家暴击率。
         private static readonly ExtraHitConfig ProcHitConfig = new()
         {
             FlatDamage          = BonusDmgFlat,
@@ -105,7 +105,7 @@ namespace TestMod.Common.Players
         }
 
         // 物品直接命中
-        public override void OnHitNPC(NPC target, NPC.HitInfo hit, int damageDone)
+        public override void OnHitNPCWithItem(Item item, NPC target, NPC.HitInfo hit, int damageDone)
         {
             TryTriggerProc(target);
         }
@@ -113,12 +113,13 @@ namespace TestMod.Common.Players
         // 弹射物命中
         public override void OnHitNPCWithProj(Projectile proj, NPC target, NPC.HitInfo hit, int damageDone)
         {
+            if (ExtraHitEffect.IsExtraHitProjectile(proj)) return;
             TryTriggerProc(target);
         }
 
         private void TryTriggerProc(NPC target)
         {
-            // _procActive 防止 SimpleStrikeNPC(noPlayerInteraction:false) 触发的 OnHitNPC 递归进来
+            // 使用物品/弹幕专用入口，追加弹幕不会在通用 OnHitNPC 中提前触发。
             if (_procActive || !HasHeartsteel || !IsCharged) return;
             if (!target.active || !target.boss || target.life <= 0) return;
 
