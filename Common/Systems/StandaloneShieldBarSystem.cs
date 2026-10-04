@@ -1,118 +1,56 @@
 using System;
+using System.Collections.Generic;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 using Terraria;
-using Terraria.GameContent;
 using Terraria.ModLoader;
+using Terraria.UI;
 using TestMod.Common.Configs;
-using TestMod.Common.Players;
+using TestMod.Common.UI.ResourceOverlays;
 
 namespace TestMod.Common.Systems
 {
     [Autoload(Side = ModSide.Client)]
     public class StandaloneShieldBarSystem : ModSystem
     {
-        private const int BarWidth = 92;
-        private const int BarHeight = 14;
-        private const int Border = 2;
-        private const int CornerRadius = 5;
         private const int GapFromLifeBar = 12;
+        private readonly LegacyGameInterfaceLayer layer = new("TestMod: Shield Bar", DrawShieldBar, InterfaceScaleType.UI);
 
-        public override void PostDrawInterface(SpriteBatch spriteBatch)
+        public override void ModifyInterfaceLayers(List<GameInterfaceLayer> layers)
         {
-            if (Main.dedServ)
-                return;
+            // 每次实际绘制重新捕获锚点，避免布局切换或跳过生命条后使用旧位置。
+            ShieldBarVisualSystem.LifeBarBounds = null;
+            int index = layers.FindIndex(item => item.Name == "Vanilla: Resource Bars");
+            if (index >= 0) layers.Insert(index + 1, layer);
+        }
 
+        private static bool DrawShieldBar()
+        {
+            if (Main.dedServ || Main.gameMenu || Main.mapFullscreen || Main.LocalPlayer.dead)
+                return true;
             TestModClientConfig config = TestModClientConfig.Instance;
-            if (config is null || !config.ShowStandaloneShieldBar)
-                return;
+            ShieldBarVisualState state = ShieldBarVisualSystem.State;
+            if (config is null || !config.ShowStandaloneShieldBar || !state.Sample.Visible)
+                return true;
 
-            Player player = Main.LocalPlayer;
-            if (player is null || !player.active)
-                return;
-
-            EnergyShieldPlayer shieldPlayer = player.GetModPlayer<EnergyShieldPlayer>();
-            if (shieldPlayer.MaxShield <= 0f)
-                return;
-
-            float shieldRatio = MathHelper.Clamp(shieldPlayer.DisplayShield / shieldPlayer.MaxShield, 0f, 1f);
-            Vector2 position = GetDefaultPosition() + new Vector2(
-                config.StandaloneShieldBarOffsetX,
-                config.StandaloneShieldBarOffsetY);
-
-            DrawShieldBar(spriteBatch, position, shieldRatio, shieldPlayer);
-        }
-
-        private static Vector2 GetDefaultPosition()
-        {
-            // Match the vanilla HorizontalBars life anchor closely, then place this bar to its left.
-            int lifeBarX = Main.screenWidth - 300 - 22 + 16;
-            int lifeBarY = 18 + 6;
-            return new Vector2(lifeBarX - BarWidth - GapFromLifeBar, lifeBarY);
-        }
-
-        private static void DrawShieldBar(SpriteBatch spriteBatch, Vector2 position, float shieldRatio, EnergyShieldPlayer shieldPlayer)
-        {
-            Texture2D pixel = TextureAssets.MagicPixel.Value;
-            int x = (int)MathF.Round(position.X);
-            int y = (int)MathF.Round(position.Y);
-
-            Rectangle outer = new(x, y, BarWidth, BarHeight);
-            Rectangle inner = new(x + Border, y + Border, BarWidth - Border * 2, BarHeight - Border * 2);
-            int fillWidth = (int)MathF.Round(inner.Width * shieldRatio);
-            Rectangle fill = new(inner.X, inner.Y, fillWidth, inner.Height);
-
-            Color shieldColor = new Color(39, 211, 245);
-            Color edgeColor = new Color(0, 210, 255);
-
-            DrawRoundedRectangle(spriteBatch, pixel, outer, CornerRadius, edgeColor * 0.96f);
-            DrawRoundedRectangle(spriteBatch, pixel, new Rectangle(outer.X + 1, outer.Y + 1, outer.Width - 2, outer.Height - 2), CornerRadius - 1, new Color(3, 10, 24, 220));
-
-            DrawRoundedRectangle(spriteBatch, pixel, inner, CornerRadius - Border, shieldColor * 0.25f);
-            if (fill.Width <= 0)
-                return;
-
-            int fillRadius = Math.Min(CornerRadius - Border, Math.Max(1, fill.Width / 2));
-            DrawRoundedRectangle(spriteBatch, pixel, fill, fillRadius, shieldColor * 0.96f);
-            DrawRoundedRectangle(spriteBatch, pixel, new Rectangle(fill.X, fill.Y, fill.Width, Math.Max(1, fill.Height / 3)), Math.Min(fillRadius, 2), edgeColor * 0.78f);
-            spriteBatch.Draw(pixel, new Rectangle(fill.Right - 1, fill.Y, 1, fill.Height), Color.White * 0.78f);
-        }
-
-        private static void DrawRoundedRectangle(SpriteBatch spriteBatch, Texture2D pixel, Rectangle rect, int radius, Color color)
-        {
-            if (rect.Width <= 0 || rect.Height <= 0)
-                return;
-
-            radius = Math.Clamp(radius, 0, Math.Min(rect.Width, rect.Height) / 2);
-            if (radius <= 0)
-            {
-                spriteBatch.Draw(pixel, rect, color);
-                return;
-            }
-
-            for (int row = 0; row < rect.Height; row++)
-            {
-                int leftInset = 0;
-                int rightInset = 0;
-
-                if (row < radius)
-                {
-                    float dy = radius - row - 0.5f;
-                    leftInset = radius - (int)MathF.Sqrt(Math.Max(0f, radius * radius - dy * dy));
-                    rightInset = leftInset;
-                }
-                else if (row >= rect.Height - radius)
-                {
-                    float dy = row - (rect.Height - radius) + 0.5f;
-                    leftInset = radius - (int)MathF.Sqrt(Math.Max(0f, radius * radius - dy * dy));
-                    rightInset = leftInset;
-                }
-
-                int lineX = rect.X + leftInset;
-                int lineWidth = rect.Width - leftInset - rightInset;
-                if (lineWidth > 0)
-                    spriteBatch.Draw(pixel, new Rectangle(lineX, rect.Y + row, lineWidth, 1), color);
-            }
+            float scale = Math.Max(0.01f, Main.UIScale);
+            float uiWidth = Main.graphics.GraphicsDevice.Viewport.Width / scale;
+            float uiHeight = Main.graphics.GraphicsDevice.Viewport.Height / scale;
+            Rectangle? life = ShieldBarVisualSystem.LifeBarBounds;
+            Vector2 position = life.HasValue
+                ? new Vector2(life.Value.Left - ShieldBarRenderer.Width - GapFromLifeBar, life.Value.Y - 2)
+                : new Vector2(uiWidth - 306 - ShieldBarRenderer.Width - GapFromLifeBar, 24);
+            position += new Vector2(config.StandaloneShieldBarOffsetX, config.StandaloneShieldBarOffsetY);
+            position.X = Math.Clamp(position.X, 8f, Math.Max(8f, uiWidth - ShieldBarRenderer.Width - 8f));
+            position.Y = Math.Clamp(position.Y, 21f, Math.Max(21f, uiHeight - ShieldBarRenderer.Height - 22f));
+            Rectangle bounds = new((int)Math.Round(position.X), (int)Math.Round(position.Y), ShieldBarRenderer.Width, ShieldBarRenderer.Height);
+            ShieldBarRenderer.DrawStandalone(Main.spriteBatch, bounds, state);
+            ShieldBarRenderer.DrawCenteredText(Main.spriteBatch, ShieldBarVisualSystem.NumberText,
+                new Vector2(bounds.Center.X, bounds.Y - 19), new Color(221, 236, 247), 0.58f);
+            Color stageColor = state.Sample.Fragile ? ShieldBarRenderer.FragileColor :
+                state.Sample.Stage == ShieldBarStage.Ready ? ShieldBarRenderer.NormalColor : new Color(174, 194, 210);
+            ShieldBarRenderer.DrawCenteredText(Main.spriteBatch, ShieldBarVisualSystem.StageText,
+                new Vector2(bounds.Center.X, bounds.Bottom + 2), stageColor, 0.56f);
+            return true;
         }
     }
 }

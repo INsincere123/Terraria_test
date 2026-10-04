@@ -1,11 +1,10 @@
 using System;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 using Terraria;
 using Terraria.GameContent;
 using Terraria.GameContent.UI.ResourceSets;
 using Terraria.ModLoader;
-using TestMod.Common.Players;
+using TestMod.Common.Systems;
 
 namespace TestMod.Common.UI.ResourceOverlays
 {
@@ -16,19 +15,30 @@ namespace TestMod.Common.UI.ResourceOverlays
     [Autoload(Side = ModSide.Client)]
     public class ShieldResourceOverlay : ModResourceOverlay
     {
-        private static readonly Color BarFill = new(150, 210, 255, 254);
-        private static readonly Color BarBorder = new(150, 210, 255, 210);
-
-        private const int BorderSize = 4;
         private const int BarPanelInset = 6;
 
         private Rectangle? _horizontalLifePanelBounds;
         private Rectangle? _horizontalLifeFillBounds;
         private int _horizontalLifeFillSegmentWidth;
 
+        private bool capturingLife;
+
+        public override bool PreDrawResourceDisplay(PlayerStatsSnapshot snapshot,
+            IPlayerResourcesDisplaySet displaySet, bool drawingLife, ref Color textColor, out bool drawText)
+        {
+            capturingLife = drawingLife;
+            if (drawingLife)
+            {
+                ResetHorizontalCapture();
+                ShieldBarVisualSystem.LifeBarBounds = null;
+            }
+            drawText = true;
+            return true;
+        }
+
         public override void PostDrawResource(ResourceOverlayDrawContext context)
         {
-            if (context.DisplaySet is HorizontalBarsPlayerResourcesDisplaySet)
+            if (capturingLife && context.DisplaySet is HorizontalBarsPlayerResourcesDisplaySet)
                 CaptureHorizontalLifeBarBounds(context);
         }
 
@@ -62,47 +72,19 @@ namespace TestMod.Common.UI.ResourceOverlays
             if (displaySet is not HorizontalBarsPlayerResourcesDisplaySet)
                 return;
 
-            Player player = Main.LocalPlayer;
-            EnergyShieldPlayer shieldPlayer = player.GetModPlayer<EnergyShieldPlayer>();
-            if (shieldPlayer.CurrentShield <= 0f)
-            {
-                ResetHorizontalCapture();
-                return;
-            }
-
             if (!_horizontalLifePanelBounds.HasValue)
             {
                 ResetHorizontalCapture();
                 return;
             }
-
             Rectangle panelBounds = _horizontalLifePanelBounds.Value;
             Rectangle barBounds = ResolveHorizontalLifeBarBounds(panelBounds, snapshot);
+            ShieldBarVisualSystem.LifeBarBounds = barBounds;
             ResetHorizontalCapture();
-
-            float shieldRatio = MathHelper.Clamp(shieldPlayer.DisplayShield / snapshot.LifeMax, 0f, 1f);
-            if (shieldRatio <= 0f)
-                return;
-
-            int x = barBounds.X;
-            int right = barBounds.X + (int)MathF.Round(barBounds.Width * shieldRatio);
-            int w = Math.Max(0, right - x);
-            int h = barBounds.Height;
-            int y = barBounds.Y;
-            int b = Math.Min(BorderSize, Math.Max(1, h / 2));
-            if (w < b * 2)
-                return;
-
-            SpriteBatch spriteBatch = Main.spriteBatch;
-            Texture2D pixel = TextureAssets.MagicPixel.Value;
-
-            for (int lineX = x + b + 1; lineX < x + w - b; lineX += 3)
-                spriteBatch.Draw(pixel, new Rectangle(lineX, y + b, 1, h - b * 2), BarFill);
-
-            spriteBatch.Draw(pixel, new Rectangle(x, y, w, b), BarBorder);
-            spriteBatch.Draw(pixel, new Rectangle(x, y + h - b, w, b), BarBorder);
-            spriteBatch.Draw(pixel, new Rectangle(x, y, b, h), BarBorder);
-            spriteBatch.Draw(pixel, new Rectangle(x + w - b, y, b, h), BarBorder);
+            // 即使护盾为空也捕获位置；独立条仍须显示等待倒计时。
+            if (!Main.LocalPlayer.dead)
+                ShieldBarRenderer.DrawLifeOverlay(Main.spriteBatch, barBounds, snapshot.LifeMax,
+                    ShieldBarVisualSystem.State);
         }
 
         private Rectangle ResolveHorizontalLifeBarBounds(Rectangle panelBounds, PlayerStatsSnapshot snapshot)

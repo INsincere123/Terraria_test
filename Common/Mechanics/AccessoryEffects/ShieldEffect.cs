@@ -19,8 +19,6 @@ namespace TestMod.Common.Mechanics.AccessoryEffects
     ///       {
     ///           GetMaxShield        = p => 20f + p.statDefense * 0.10f,
     ///           DecayPerSecond      = 0f,
-    ///           RechargeDelayFrames = 5 * 60,
-    ///           RechargePerSecond   = float.MaxValue,
     ///           OnActive            = p => p.statDefense += 5,
     ///           ShieldColor         = new Color(80, 160, 255),
     ///           ShieldEdgeColor     = new Color(160, 220, 255),
