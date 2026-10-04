@@ -2,6 +2,8 @@ using Microsoft.Xna.Framework;
 using Terraria;
 using Terraria.ModLoader;
 using TestMod.Content.Projectiles.Accessories;
+using TestMod.Common.Systems;
+using System;
 
 namespace TestMod.Common.Mechanics.AccessoryEffects
 {
@@ -68,11 +70,13 @@ namespace TestMod.Common.Mechanics.AccessoryEffects
             int count   = mp.DRShieldConfig.OrbCount;
 
             // 找出哪些索引槽已被占用
-            bool[] occupied = new bool[count];
-            for (int i = 0; i < Main.maxProjectiles; i++)
+            bool[] occupied = mp.DRShieldOccupied;
+            if (occupied.Length != count)
+                occupied = mp.DRShieldOccupied = new bool[count];
+            else
+                Array.Clear(occupied, 0, occupied.Length);
+            foreach (Projectile p in ProjectileLookup.Owned(player.whoAmI, orbType))
             {
-                Projectile p = Main.projectile[i];
-                if (!p.active || p.type != orbType || p.owner != player.whoAmI) continue;
                 int idx = (int)p.ai[1];
                 if (idx >= 0 && idx < count)
                     occupied[idx] = true;

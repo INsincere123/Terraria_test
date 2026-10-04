@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Terraria;
 using Terraria.ID;
-using TestMod.Common.Utilities;
+using ProjectileTracking = TestMod.Common.GlobalProjectiles.GlobalProjectile;
 
 namespace TestMod.Common.Mechanics.Minions
 {
@@ -17,7 +17,7 @@ namespace TestMod.Common.Mechanics.Minions
     ///   ① 冲撞型（ContactMinion）    — 靠身体撞击，应用扩范围追踪 + 弹开
     ///   ② 射击型本体（ShootingBody） — 保持距离发射子弹，不干预
     ///   ③ 召唤物射弹（MinionShot）   — 由 GlobalProjectile 通用追踪处理
-    ///   专属处理                      — 星尘龙/乌鸦/沙漠虎/蜘蛛/泰拉棱镜
+    ///   专属处理                      — 星尘龙/乌鸦/沙漠虎/蜘蛛
     /// </summary>
     public static class MinionSystem
     {
@@ -65,18 +65,20 @@ namespace TestMod.Common.Mechanics.Minions
             ProjectileID.UFOMinion,            // 423 UFO（发 UFOLaser 433）
             ProjectileID.OneEyedPirate,        //     海盗法杖
             ProjectileID.SoulscourgePirate,
+            ProjectileID.EmpressBlade,         //     泰拉棱镜
+            ProjectileID.AbigailMinion,        //     阿比盖尔之花本体
         };
 
         // ══════════════════════════════════════════════════════════════
         //   分类判定
         // ══════════════════════════════════════════════════════════════
 
-        /// <summary>蜘蛛法杖的三种蜘蛛 + 阿比盖尔之花。</summary>
+        /// <summary>蜘蛛法杖的三种蜘蛛；排除名单优先。</summary>
         public static bool IsSpiderMinion(int type)
-            => type == ProjectileID.VenomSpider
+            => !VanillaMinionExclusions.Contains(type)
+            && (type == ProjectileID.VenomSpider
             || type == ProjectileID.JumperSpider
-            || type == ProjectileID.DangerousSpider
-            || type == ProjectileID.AbigailMinion;
+            || type == ProjectileID.DangerousSpider);
 
         /// <summary>已有专属追踪逻辑的召唤物（不走通用分类）。</summary>
         public static bool IsSpeciallyHandledMinion(int type)
@@ -86,7 +88,6 @@ namespace TestMod.Common.Mechanics.Minions
             if (type == ProjectileID.StormTigerTier1)  return true;
             if (type == ProjectileID.StormTigerTier2)  return true;
             if (type == ProjectileID.StormTigerTier3)  return true;
-            if (type == ProjectileID.EmpressBlade)     return true;
             if (IsSpiderMinion(type))                  return true;
             return false;
         }
@@ -137,21 +138,25 @@ namespace TestMod.Common.Mechanics.Minions
         // ══════════════════════════════════════════════════════════════
         public static void ApplyContactMinionTracking(Projectile projectile, Player player)
         {
-            float distToPlayer = Vector2.Distance(projectile.Center, player.Center);
+            float distToPlayerSq = Vector2.DistanceSquared(projectile.Center, player.Center);
 
             // ── 超出返回阈值：传送回玩家 ──
-            if (distToPlayer > ContactReturnDist)
+            if (distToPlayerSq > ContactReturnDist * ContactReturnDist)
             {
-                projectile.position = player.Center
-                    + new Vector2(Main.rand.NextFloat(-80f, 80f), -60f)
-                    - projectile.Size * 0.5f;
-                projectile.velocity = Vector2.Zero;
-                projectile.netUpdate = true;
+                if (projectile.owner == Main.myPlayer)
+                {
+                    projectile.position = player.Center
+                        + new Vector2(Main.rand.NextFloat(-80f, 80f), -60f)
+                        - projectile.Size * 0.5f;
+                    projectile.velocity = Vector2.Zero;
+                    projectile.netUpdate = true;
+                }
                 return;
             }
 
             // ── 扩展瞄准 ──
-            int targetIdx = TargetUtils.FindNearest(projectile.Center, ContactTargetRange);
+            int targetIdx = ProjectileTracking.FindTrackingTarget(projectile, projectile.Center,
+                ContactTargetRange, prioritizeMinionTarget: true);
             if (targetIdx < 0) return; // 无目标，交给 vanilla 处理回归
 
             NPC target = Main.npc[targetIdx];
@@ -210,21 +215,25 @@ namespace TestMod.Common.Mechanics.Minions
         {
             if (!IsSpiderMinion(projectile.type)) return;
 
-            float distToPlayer = Vector2.Distance(projectile.Center, player.Center);
+            float distToPlayerSq = Vector2.DistanceSquared(projectile.Center, player.Center);
 
             // ── 超出 4× 阈值：传送回玩家 ──
-            if (distToPlayer > SpiderReturnDist)
+            if (distToPlayerSq > SpiderReturnDist * SpiderReturnDist)
             {
-                projectile.position = player.Center
-                    + new Vector2(Main.rand.NextFloat(-80f, 80f), -60f)
-                    - projectile.Size * 0.5f;
-                projectile.velocity = Vector2.Zero;
-                projectile.netUpdate = true;
+                if (projectile.owner == Main.myPlayer)
+                {
+                    projectile.position = player.Center
+                        + new Vector2(Main.rand.NextFloat(-80f, 80f), -60f)
+                        - projectile.Size * 0.5f;
+                    projectile.velocity = Vector2.Zero;
+                    projectile.netUpdate = true;
+                }
                 return;
             }
 
             // ── 扩展瞄准 ──
-            int targetIdx = TargetUtils.FindNearest(projectile.Center, SpiderTargetRange);
+            int targetIdx = ProjectileTracking.FindTrackingTarget(projectile, projectile.Center,
+                SpiderTargetRange, prioritizeMinionTarget: true);
 
             if (targetIdx >= 0)
             {
@@ -243,7 +252,7 @@ namespace TestMod.Common.Mechanics.Minions
                 }
                 // 近距离（<60px）交给 vanilla 处理接触伤害手感
             }
-            else if (distToPlayer > SpiderVanillaReturn)
+            else if (distToPlayerSq > SpiderVanillaReturn * SpiderVanillaReturn)
             {
                 // 无目标但已超出原版返回阈值：阻止 vanilla 拉回，让蜘蛛在扩展区域悬停
                 projectile.velocity *= 0.9f;

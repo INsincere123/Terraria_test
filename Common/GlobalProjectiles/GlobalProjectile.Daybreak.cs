@@ -12,7 +12,7 @@ namespace TestMod.Common.GlobalProjectiles
         // ══════════════════════════════════════════════════════════════
         private void ApplyDaybreakTracking(Projectile projectile)
         {
-            // 发射后前35帧保持原方向，不追踪
+            // 发射后前 35 次 AI 更新保持原方向；沿用既有起飞时长。
             if (_daybreakTrackDelay < 35)
             {
                 _daybreakTrackDelay++;
@@ -20,12 +20,13 @@ namespace TestMod.Common.GlobalProjectiles
             }
 
             const float trackRange      = 1000f;
-            const float minSpeed        = 36f;
-            const float maxSpeed        = 60f;
-            const float lerpAmount      = 0.1f;
-            const float correctionForce = 0.32f;
+            const float minSpeed        = 41.4f;
+            const float maxSpeed        = 69f;
+            const float lerpAmount      = 0.125f;
+            const float correctionForce = 0.40f;
+            const float finalSpeedLimit = 74.75f;
 
-            int targetIndex = AcquireNearestTarget(projectile.Center, trackRange);
+            int targetIndex = FindTrackingTarget(projectile, projectile.Center, trackRange);
             if (targetIndex < 0) return;
 
             NPC target = Main.npc[targetIndex];
@@ -45,11 +46,10 @@ namespace TestMod.Common.GlobalProjectiles
             projectile.velocity += toPredicted * correctionForce;
 
             float finalSpeed = projectile.velocity.Length();
-            if (finalSpeed > maxSpeed + 5f)
-                projectile.velocity = projectile.velocity / finalSpeed * (maxSpeed + 5f);
+            if (finalSpeed > finalSpeedLimit)
+                projectile.velocity = projectile.velocity / finalSpeed * finalSpeedLimit;
 
             projectile.velocity.Y -= 0.3f; // 抵消重力
-            projectile.netUpdate = true;
         }
 
         // ══════════════════════════════════════════════════════════════

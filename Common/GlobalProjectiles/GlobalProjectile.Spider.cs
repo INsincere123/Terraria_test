@@ -8,7 +8,7 @@ namespace TestMod.Common.GlobalProjectiles
     /// 蜘蛛法杖召唤物强化 — 薄包装层。
     ///
     /// 涉及弹射物：
-    ///   390 VenomSpider / 391 JumperSpider / 392 DangerousSpider / AbigailMinion
+    ///   390 VenomSpider / 391 JumperSpider / 392 DangerousSpider
     ///
     /// 所有逻辑已迁移至 MinionSystem（Common/Mechanics/Minions/）。
     /// 本文件仅作 GlobalProjectile 公共 API 的桥接。

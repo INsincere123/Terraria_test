@@ -1,10 +1,12 @@
 using System;
+using System.IO;
 using Microsoft.Xna.Framework;
 using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
 using TestMod.Common.Systems;
 using TestMod.Common.Utilities;
+using ProjectileTracking = TestMod.Common.GlobalProjectiles.GlobalProjectile;
 
 namespace TestMod.Content.Projectiles.Minions
 {
@@ -36,14 +38,8 @@ namespace TestMod.Content.Projectiles.Minions
     // ║  【头节点 - 攻击】                                   ║
     // ║    SearchRange        索敌范围（玩家中心，50格）     ║
     // ║    BreakRange         脱战距离（玩家中心，70格）     ║
-    // ║    AttackBaseAccel    基础角速度（弧度/帧）          ║
-    // ║    AttackAccelLerp    加速度自身的平滑系数           ║
-    // ║    AttackMinSpeed     攻击时最小速度                 ║
-    // ║    AttackMaxSpeed     攻击时最大速度                 ║
-    // ║    AttackSwerveDist   远距离开始绕弧的阈值           ║
-    // ║    AttackSwerveRadius 绕弧偏移半径                   ║
-    // ║    StuckTimeoutFrames 卡死保险阈值                   ║
-    // ║    EngageDist         小于此距离时不再加速           ║
+    // ║    运动参数见 DragonFlightSettings.Phantom          ║
+    // ║    攻击分为追击、穿行和回转；速度与方向分开平滑     ║
     // ╚══════════════════════════════════════════════════════╝
 
     public class DragonSegment : ModProjectile
@@ -81,6 +77,8 @@ namespace TestMod.Content.Projectiles.Minions
         // ── 攻击 ──
         public const float SearchRange        = 16f * 70;
         public const float BreakRange         = 16f * 100;
+        // 旧公开常量保留源级兼容；新的攻击运动读取 DragonFlightSettings.Phantom。
+        // AttackMaxSpeed 仍用于原闲置悬浮限速。
         public const float AttackBaseAccel    = 0.22f;
         public const float AttackAccelLerp    = 0.3f;
         // 追击速度
@@ -93,12 +91,8 @@ namespace TestMod.Content.Projectiles.Minions
 
         // ──────────────────────────────────────────────────────────
         //   Projectile.ai[0] : 前节点 whoAmI（头=-1）
-        //   Projectile.ai[1] : 段索引 0=头 1=身 2=尾
-        //
-        //   头节点 localAI：
-        //   localAI[0] : swerve 周期帧计数
-        //   localAI[1] : 当前角速度（lerp 平滑）
-        //   localAI[2] : 卡死计时器
+        //   Projectile.ai[1] : 段索引 0=头，1..11=身，12=尾
+        //   攻击阶段保存在每头独立的 _flight 中，通过 ExtraAI 同步。
         // ──────────────────────────────────────────────────────────
 
         public const int HeadSegmentKind = 0;
@@ -106,6 +100,8 @@ namespace TestMod.Content.Projectiles.Minions
         public const int TailSegmentKind = 2;
 
         private int PrevWhoAmI => (int)Projectile.ai[0];
+        private ProjectileTargetCache _targetCache;
+        private DragonFlightController _flight;
         internal int SegmentIndex => (int)Projectile.ai[1];
         internal int SegmentKind
         {
@@ -164,6 +160,7 @@ namespace TestMod.Content.Projectiles.Minions
             Player owner = Main.player[Projectile.owner];
             if (!owner.active || owner.dead)
             {
+                _flight.Reset();
                 Projectile.Kill();
                 return;
             }
@@ -185,24 +182,31 @@ namespace TestMod.Content.Projectiles.Minions
             {
                 Projectile.Center    = owner.Center;
                 Projectile.netUpdate = true;
+                ProjectileTracking.MarkTrackingActivity(Projectile, false, _flight.Reset());
+                _targetCache = default;
+                distFromIdeal = Vector2.Distance(Projectile.Center, idealPos);
             }
 
-            // swerve 周期计数器
-            Projectile.localAI[0] += 1f;
-
-            // 索敌
-            int targetIdx = FindTarget(owner.Center, SearchRange);
-
-            if (targetIdx >= 0
-                && Vector2.Distance(Projectile.Center, owner.Center) <= BreakRange)
+            // owner 选择目标，远端使用收到的目标预测，不独立重选另一只敌人。
+            bool authority = Projectile.owner == Main.myPlayer;
+            bool changed = false;
+            bool canAttack = Vector2.DistanceSquared(Projectile.Center, owner.Center) <= BreakRange * BreakRange;
+            if (authority && canAttack)
             {
-                AttackTarget(Main.npc[targetIdx]);
+                int targetIdx = _targetCache.FindNearest(Projectile, owner.Center, SearchRange, out bool replaced);
+                changed = targetIdx >= 0 ? _flight.SetTarget(targetIdx, Main.npc[targetIdx].type, replaced) : _flight.Reset();
+            }
+            NPC target = canAttack ? _flight.ResolveTarget(Projectile, owner.Center, SearchRange) : null;
+            if (target != null)
+            {
+                changed |= AttackTarget(target, authority);
             }
             else
             {
+                changed |= _flight.Reset();
                 IdleHover(owner, distFromIdeal, idealPos);
-                Projectile.localAI[2] = 0f;
             }
+            ProjectileTracking.MarkTrackingActivity(Projectile, target != null, changed);
 
             // 旋转跟随实际速度
             if (Projectile.velocity.LengthSquared() > 0.01f)
@@ -241,85 +245,23 @@ namespace TestMod.Content.Projectiles.Minions
                 Projectile.velocity = Vector2.Normalize(Projectile.velocity) * AttackMaxSpeed;
         }
 
-        // ── 攻击：远距离 swerve、视线对齐调速、角速度跟踪、卡死保险 ──
-        private void AttackTarget(NPC target)
+        // ── 攻击：近距离仍连续转向，穿行后让整条龙沿弧线回转 ──
+        private bool AttackTarget(NPC target, bool authority)
         {
-            float idealAccel = AttackBaseAccel;
-            Vector2 destination = target.Center;
-            float distToDest = Vector2.Distance(Projectile.Center, destination);
-
-            // 远距离：给目标位置加绕圈偏移，让接近成弧线
-            if (distToDest > AttackSwerveDist)
-            {
-                Projectile.localAI[2] = 0f;
-                float swerveAngle = Projectile.localAI[0] % 30f / 30f * MathHelper.TwoPi;
-                destination += swerveAngle.ToRotationVector2() * AttackSwerveRadius;
-                distToDest = Vector2.Distance(Projectile.Center, destination);
-                idealAccel *= 2.5f;
-            }
-
-            // 加速度自身平滑（让加速度有惯性）
-            Projectile.localAI[1] = MathHelper.Lerp(Projectile.localAI[1], idealAccel, AttackAccelLerp);
-
-            // 视线对齐度
-            Vector2 dirToTarget = (destination - Projectile.Center).SafeNormalize(Vector2.Zero);
-            Vector2 velDir      = Projectile.velocity.SafeNormalize(Vector2.Zero);
-            float orth          = Vector2.Dot(velDir, dirToTarget);
-
-            if (distToDest > EngageDist)
-            {
-                float speed = Projectile.velocity.Length();
-
-                // 速度漂移
-                if (speed < AttackMinSpeed + 7f) speed += 0.08f;
-                if (speed > AttackMaxSpeed + 2f) speed -= 0.08f;
-
-                // 接近对齐：加速猛冲
-                if (orth < 0.85f && orth > 0.5f)  speed += 16f;
-                // 偏离严重：减速调头
-                if (orth < 0.5f && orth > -0.7f)  speed -= 16f;
-
-                speed = MathHelper.Clamp(speed, AttackMinSpeed, AttackMaxSpeed + 4f);
-
-                // 受限角速度逐步转向目标
-                float curRot = Projectile.velocity.ToRotation();
-                float toRot  = (destination - Projectile.Center).ToRotation();
-                float newRot = curRot.AngleTowards(toRot, Projectile.localAI[1]);
-                Projectile.velocity = newRot.ToRotationVector2() * speed;
-
-                // 卡死保险
-                Projectile.localAI[2] += 1f;
-                if (Projectile.localAI[2] >= StuckTimeoutFrames)
-                {
-                    Projectile.velocity = (destination - Projectile.Center).SafeNormalize(Vector2.Zero) * (AttackMaxSpeed + 4f);
-                    Projectile.localAI[2] = 0f;
-                }
-            }
-            else
-            {
-                Projectile.localAI[2] = 0f;
-            }
+            Projectile.velocity = _flight.Update(Projectile.Center, Projectile.Size, target.Hitbox,
+                target.velocity, Projectile.velocity, SegmentDist * (PhantasmalDragonSummoner.SegmentCount - 1),
+                1f / Projectile.MaxUpdates, DragonFlightSettings.Phantom, authority, false, out bool changed);
+            return changed;
         }
 
-        // ── 索敌 ──
-        private int FindTarget(Vector2 ownerCenter, float range)
+        public override void SendExtraAI(BinaryWriter writer)
         {
-            int best = -1;
-            float bestDistSq = range * range;
-            for (int i = 0; i < Main.maxNPCs; i++)
-            {
-                NPC npc = Main.npc[i];
-                if (!npc.active || npc.friendly || npc.dontTakeDamage) continue;
-                if (!npc.CanBeChasedBy()) continue;
+            if (IsHeadSegment) _flight.Write(writer);
+        }
 
-                float dSq = Vector2.DistanceSquared(ownerCenter, npc.Center);
-                if (dSq < bestDistSq)
-                {
-                    bestDistSq = dSq;
-                    best = i;
-                }
-            }
-            return best;
+        public override void ReceiveExtraAI(BinaryReader reader)
+        {
+            if (IsHeadSegment) _flight.Read(reader);
         }
 
         // ══════════════════════════════════════════════════════════════
@@ -328,25 +270,12 @@ namespace TestMod.Content.Projectiles.Minions
         // ══════════════════════════════════════════════════════════════
         private void DriveFollowers()
         {
-            DragonSegment[] segments = new DragonSegment[PhantasmalDragonSummoner.SegmentCount];
-            segments[0] = this;
-
-            for (int i = 0; i < Main.maxProjectiles; i++)
-            {
-                Projectile p = Main.projectile[i];
-                if (!p.active || p.owner != Projectile.owner) continue;
-                if (p.type != Projectile.type) continue;
-                if (p.whoAmI == Projectile.whoAmI) continue;
-
-                int idx = (int)p.ai[1];
-                if (idx >= 1 && idx < segments.Length && segments[idx] == null)
-                    segments[idx] = (DragonSegment)p.ModProjectile;
-            }
+            Projectile[] segments = PhantasmalDragonSummoner.GetSegments(Projectile.owner);
+            segments[0] = Projectile;
 
             for (int idx = 1; idx < segments.Length; idx++)
             {
-                DragonSegment seg = segments[idx];
-                if (seg == null) continue;
+                if (segments[idx]?.ModProjectile is not DragonSegment seg) continue;
 
                 Projectile prev;
                 if (idx == 1)
@@ -355,9 +284,8 @@ namespace TestMod.Content.Projectiles.Minions
                 }
                 else
                 {
-                    DragonSegment prevSeg = segments[idx - 1];
-                    if (prevSeg == null) continue;
-                    prev = prevSeg.Projectile;
+                    prev = segments[idx - 1];
+                    if (prev == null) continue;
                 }
 
                 // 身体用 velocity 前瞻让跟随更紧贴；尾巴不用，避免超前

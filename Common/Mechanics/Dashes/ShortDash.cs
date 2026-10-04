@@ -162,18 +162,11 @@ namespace TestMod.Common.Mechanics.Dashes
 
 				bool crit = ContactCritDenom > 0 && Main.rand.Next(ContactCritDenom) == 0;
 
-				int finalDamage = (int)(ContactDamage
-					* player.GetDamage(DamageClass.Melee).Multiplicative
-					+ player.GetDamage(DamageClass.Melee).Additive);
-
-				NPC.HitInfo hitInfo = new NPC.HitInfo
-				{
-					Damage       = finalDamage,
-					Knockback    = ContactKnockback,
-					HitDirection = dirX != 0 ? dirX : (Main.rand.NextBool() ? 1 : -1),
-					Crit         = crit,
-					InstantKill  = false,
-				};
+				// ApplyTo 包含继承的伤害属性；最终防御与暴击由 NPC 统一结算一次。
+				int scaledDamage = (int)player.GetTotalDamage(DamageClass.Melee).ApplyTo(ContactDamage);
+				int hitDirection = dirX != 0 ? dirX : (Main.rand.NextBool() ? 1 : -1);
+				NPC.HitInfo hitInfo = npc.CalculateHitInfo(
+					scaledDamage, hitDirection, crit, ContactKnockback, DamageClass.Melee);
 
 				npc.StrikeNPC(hitInfo);
 

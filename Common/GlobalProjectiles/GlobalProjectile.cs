@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using TestMod.Content.Buffs;
 using TestMod.Common.Compatibility;
 using TestMod.Common.Players;
+using TestMod.Common.Systems;
 using TestMod.Common.Mechanics.AccessoryEffects;
 using TestMod.Content.Items.DamageTypes;
 using TestMod.Content.Projectiles.Melee;
@@ -32,11 +33,6 @@ namespace TestMod.Common.GlobalProjectiles
         // ── 星尘龙追踪冷却 ──
         private int _dragonTrackingCooldown = 0;
 
-        // 星尘龙龙头目标锁定
-        private int _lockedTargetIndex = -1;
-        private int _lockedTargetTimer = 0;
-        private const int LOCK_DURATION = 45;
-
         // 破晓之光太阳爆发触发记录，防止每帧重复触发
         private static readonly HashSet<int> _daybreakBurstFiredSet = new HashSet<int>();
         // 破晓之光追踪延迟计时器
@@ -58,6 +54,9 @@ namespace TestMod.Common.GlobalProjectiles
         // ══════════════════════════════════════════════════════════════
         public override bool PreAI(Projectile projectile)
         {
+            ProjectileLookup.Observe(projectile, this);
+            ResetTrackingUpdate();
+            _dragonFlightPrepared = false;
             // 减速力场：在 AI 跑之前恢复上帧保存的自然速度，防止衰减
             SlowField_RestoreVelocity(projectile);
 
@@ -74,6 +73,8 @@ namespace TestMod.Common.GlobalProjectiles
 
             // 红木魔石效果：钩爪飞行阶段速度 ×2
             GrappleEffect.TryBoostLaunchSpeed(projectile);
+
+            PrepareStardustDragonFlight(projectile);
 
             if (projectile.type != ProjectileID.Raven) return true;
             if (projectile.owner < 0 || projectile.owner >= Main.maxPlayers) return true;
@@ -122,16 +123,16 @@ namespace TestMod.Common.GlobalProjectiles
 
             // ─────────────── 专属处理分支 (优先级最高) ───────────────
 
-            // 🐉 星尘龙（仅龙头，godMode 开启时生效）
-            if (ProjectileID.Sets.StardustDragon[projectile.type])
+            // 排除名单优先于所有专属和通用追踪，仍保留末尾公共处理。
+            if (VanillaMinionExclusions.Contains(projectile.type))
             {
-                if (!godMode || projectile.type != ProjectileID.StardustDragon1) return;
-                ApplyStardustDragonTracking(projectile);
+                // 保持原版本体 AI；GodMode 等伤害强化由命中路径独立处理。
             }
-            // ✨ 泰拉棱镜
-            else if (projectile.type == ProjectileID.EmpressBlade)
+            // 🐉 星尘龙（仅龙头；追踪不依赖 GodMode，GodMode 保留伤害强化）
+            else if (ProjectileID.Sets.StardustDragon[projectile.type])
             {
-                ApplyHighTierTracking(projectile, 18f, 90f, 0.32f, 0.45f);
+                if (projectile.type == ProjectileID.StardustDragon1)
+                    ApplyStardustDragonTracking(projectile);
             }
             // 🐦‍⬛ 乌鸦(317) 由 PreAI 接管，此处不重复处理
             // 🐯 沙漠虎三形态(833=幼崽 / 834=成年 / 835=装甲)：龙头级别追踪
@@ -139,20 +140,22 @@ namespace TestMod.Common.GlobalProjectiles
                      projectile.type == ProjectileID.StormTigerTier2 ||
                      projectile.type == ProjectileID.StormTigerTier3)
             {
-                ApplyStardustDragonTracking(projectile);
+                ApplyLegacyTigerTracking(projectile);
             }
-            // 🌌 星云烈焰普通弹(3541) + Ex弹(3542)：环射 + 追踪扩大到 800px
+            // 🌌 星云烈焰普通弹 + Ex弹：环射 + 2400px 通用追踪范围
             else if (projectile.type == ProjectileID.NebulaBlaze1 || projectile.type == ProjectileID.NebulaBlaze2)
             {
-                if (!godMode) return;
-                TrySpawnNebulaBlazeRing(projectile);
-                ApplyNebulaBlazeBoostedTracking(projectile);
+                if (godMode)
+                {
+                    TrySpawnNebulaBlazeRing(projectile);
+                    ApplyNebulaBlazeBoostedTracking(projectile);
+                }
             }
             // ☀️ 破晓之光矛（仅飞行中追踪，插入敌人后不再干预）
             else if (projectile.type == ProjectileID.Daybreak)
             {
-                if (!godMode || projectile.ai[0] != 0) return;
-                ApplyDaybreakTracking(projectile);
+                if (godMode && projectile.ai[0] == 0)
+                    ApplyDaybreakTracking(projectile);
             }
             // 🕷️ 蜘蛛法杖：独立无敌帧 + 扩展瞄准/返回范围
             else if (IsSpiderMinion(projectile.type))
@@ -162,15 +165,16 @@ namespace TestMod.Common.GlobalProjectiles
 
             // ─────────────── 通用分类分支 ───────────────
 
+            // 专用 AI 自行管理停追冷却、起飞延迟和指定目标，不再叠加通用追踪。
+            else if (projectile.ModProjectile is AntaresBeam or QuasarJetBurstShard)
+            {
+                // 保留后续时缓与显式强制追踪的处理入口。
+            }
             // 🔫 ③ 召唤物射弹 (MinionShot)：通用高阶追踪
             //    覆盖星尘细胞子弹/大黄蜂尖刺/UFO激光/双子激光/迷你鲨鱼等
-            else if (projectile.type == ModContent.ProjectileType<QuasarJetBurstShard>())
-            {
-                ApplyHighTierTracking(projectile, 24f, 140f, 0.4f, 0.2f);
-            }
             else if (ProjectileID.Sets.MinionShot[projectile.type])     // 官方集合，包含所有标记为 MinionShot 的弹射物，要排除的话必须排除射弹，不能排除召唤物
             {
-                ApplyHighTierTracking(projectile, 14f, 60f, 0.08f, 0.18f);
+                ApplyHighTierTracking(projectile, 16.1f, 69f, 0.10f, 0.225f, prioritizeMinionTarget: true);
             }
             // 🚫 ② 射击型本体：保持 vanilla AI，不干预
             //    (贴敌会让它们不发射射弹,必须放弃追踪强化)
@@ -191,6 +195,7 @@ namespace TestMod.Common.GlobalProjectiles
 
             // 强制追踪：最后应用，覆盖其他速度修改
             ForcedHoming_Update(projectile);
+            RequestTrackingSync(projectile);
         }
 
         // ══════════════════════════════════════════════════════════════
@@ -293,6 +298,10 @@ namespace TestMod.Common.GlobalProjectiles
             // 🪢 鞭子 tag 效果：不依赖 godMode
             WhipTag_OnHitNPC(projectile, target, hit, damageDone);
 
+            // 星尘龙命中后的 3 次 AI 更新停追属于运动规则，不受 GodMode 开关影响。
+            if (ProjectileID.Sets.StardustDragon[projectile.type])
+                _dragonTrackingCooldown = 3;
+
             // ─────────────── 以下为 godMode 专属效果 ───────────────
             if (!player.GetModPlayer<GodModePlayer>().GodModeBuff) return;
 
@@ -311,8 +320,6 @@ namespace TestMod.Common.GlobalProjectiles
             if (ProjectileID.Sets.StardustDragon[projectile.type])
             {
                 HandleStardustDragonHit(target, damageDone);
-                // 命中后设置3帧冷却
-                _dragonTrackingCooldown = 3;
             }
 
             // 🪢 鞭子命中：打暗印 + 重置衰减 

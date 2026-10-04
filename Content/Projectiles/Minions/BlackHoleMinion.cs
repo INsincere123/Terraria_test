@@ -9,6 +9,7 @@ using TestMod.Content.Buffs;
 using TestMod.Common.Compatibility;
 using TestMod.Common.Players;
 using TestMod.Common.Systems;
+using TestMod.Common.Utilities;
 
 namespace TestMod.Content.Projectiles.Minions
 {
@@ -118,13 +119,14 @@ namespace TestMod.Content.Projectiles.Minions
 
         // 单发碎片射弹参数。
         private const float QuasarBurstShardDamageFactor = 13f;
-        private const float QuasarBurstShardSpeed = 86f;
+        private const float QuasarBurstShardSpeed = 98.9f;
         private const float QuasarBurstShardSpread = 0.32f;
 
         // 蓄力点沿吸积盘高速旋转，制造狂暴活动感。
         private const float QuasarDiskSpinSpeed = 0.22f;
 
         private Vector2 orbitCenter;
+        private ProjectileTargetCache _targetCache;
         private int quasarProjectileTimer;
         private bool quasarProjectileTimerInitialized;
 
@@ -162,7 +164,7 @@ namespace TestMod.Content.Projectiles.Minions
 
             orbitCenter = UpdateSharedWanderingOrbitCenter();
 
-            if (Projectile.Distance(Owner.Center) > ReturnDistance)
+            if (Vector2.DistanceSquared(Projectile.Center, Owner.Center) > ReturnDistance * ReturnDistance)
             {
                 Projectile.Center = orbitCenter + GetOrbitOffset(index, Math.Max(total, 1));
                 Projectile.velocity = Vector2.Zero;
@@ -213,33 +215,13 @@ namespace TestMod.Content.Projectiles.Minions
             }
         }
 
-        private NPC FindTarget()
+        internal NPC FindTarget()
         {
-            if (Owner.HasMinionAttackTargetNPC)
-            {
-                NPC forced = Main.npc[Owner.MinionAttackTargetNPC];
-                if (forced.CanBeChasedBy(Projectile) && Projectile.Distance(forced.Center) <= TargetSearchRange * 1.5f)
-                    return forced;
-            }
-
-            NPC best = null;
-            float bestDistanceSq = TargetSearchRange * TargetSearchRange;
-
-            for (int i = 0; i < Main.maxNPCs; i++)
-            {
-                NPC npc = Main.npc[i];
-                if (!npc.CanBeChasedBy(Projectile))
-                    continue;
-
-                float distanceSq = Vector2.DistanceSquared(npc.Center, Projectile.Center);
-                if (distanceSq >= bestDistanceSq)
-                    continue;
-
-                bestDistanceSq = distanceSq;
-                best = npc;
-            }
-
-            return best;
+            // 本体和两侧喷流复用父实体缓存，每次仍实时核对距离和可追踪性。
+            int targetIndex = _targetCache.FindNearest(Projectile, Projectile.Center, TargetSearchRange, out _,
+                prioritizeMinionTarget: true, preferredRange: TargetSearchRange * 1.5f,
+                includePreferredBoundary: true);
+            return targetIndex >= 0 ? Main.npc[targetIndex] : null;
         }
 
         private Vector2 UpdateSharedWanderingOrbitCenter()
@@ -298,11 +280,8 @@ namespace TestMod.Content.Projectiles.Minions
             index = 0;
             total = 0;
 
-            for (int i = 0; i < Main.maxProjectiles; i++)
+            foreach (Projectile other in ProjectileLookup.Owned(Projectile.owner, Projectile.type))
             {
-                Projectile other = Main.projectile[i];
-                if (!other.active || other.owner != Projectile.owner || other.type != Projectile.type)
-                    continue;
 
                 if (other.whoAmI == Projectile.whoAmI)
                     index = total;
@@ -331,7 +310,7 @@ namespace TestMod.Content.Projectiles.Minions
         {
             Vector2 desiredVelocity = (targetPosition - Projectile.Center) * OrbitFollowStrength;
 
-            if (desiredVelocity.Length() > MaxOrbitSpeed)
+            if (desiredVelocity.LengthSquared() > MaxOrbitSpeed * MaxOrbitSpeed)
                 desiredVelocity = desiredVelocity.SafeNormalize(Vector2.Zero) * MaxOrbitSpeed;
 
             Projectile.velocity = Vector2.Lerp(Projectile.velocity, desiredVelocity, OrbitVelocityLerp);
@@ -343,10 +322,9 @@ namespace TestMod.Content.Projectiles.Minions
             float pullRadiusSq = ProjectilePullRadius * ProjectilePullRadius;
             float absorbRadiusSq = ProjectileAbsorbRadius * ProjectileAbsorbRadius;
 
-            for (int i = 0; i < Main.maxProjectiles; i++)
+            foreach (Projectile hostile in ProjectileLookup.Hostile())
             {
-                Projectile hostile = Main.projectile[i];
-                if (!hostile.active || !hostile.hostile || hostile.friendly || hostile.damage <= 0)
+                if (hostile.friendly)
                     continue;
 
                 var globalProjectile = hostile.GetGlobalProjectile<global::TestMod.Common.GlobalProjectiles.GlobalProjectile>();

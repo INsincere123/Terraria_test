@@ -83,15 +83,6 @@ namespace TestMod.Common.Players
             }
         }
 
-        public override void ModifyHitNPCWithProj(Projectile proj, NPC target, ref NPC.HitModifiers modifiers)
-        {
-            if (GodModeBuff2)
-            {
-                modifiers.ScalingArmorPenetration += 1f;
-                modifiers.CritDamage += 1f;
-            }
-        }
-
         public override void PostUpdate()
         {
             if (NPC.downedMoonlord && !_godModeUnlocked)

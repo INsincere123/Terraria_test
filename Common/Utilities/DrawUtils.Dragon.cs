@@ -17,19 +17,9 @@ namespace TestMod.Common.Utilities
         public static void DrawPhantasmalDragonChain(DragonSegment head, Color lightColor)
         {
             Projectile headProjectile = head.Projectile;
-            Projectile[] segments = new Projectile[PhantasmalDragonSummoner.SegmentCount];
-            segments[0] = headProjectile;
-
-            for (int i = 0; i < Main.maxProjectiles; i++)
-            {
-                Projectile projectile = Main.projectile[i];
-                if (!projectile.active || projectile.owner != headProjectile.owner || projectile.type != headProjectile.type)
-                    continue;
-
-                int segmentIndex = (int)projectile.ai[1];
-                if (segmentIndex >= 0 && segmentIndex < segments.Length)
-                    segments[segmentIndex] = projectile;
-            }
+            // 与原绘制扫描一致：重复段索引时取最后一颗，维持/AI 则取第一颗。
+            Projectile[] segments = PhantasmalDragonSummoner.GetSegments(headProjectile.owner, preferLast: true);
+            segments[0] ??= headProjectile;
 
             Texture2D texture = ModContent.Request<Texture2D>(head.Texture).Value;
 

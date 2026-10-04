@@ -5,7 +5,6 @@ using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
 using TestMod.Content.Buffs;
-using TestMod.Content.Tiles;
 
 namespace TestMod.Common.Systems
 {
@@ -14,7 +13,7 @@ namespace TestMod.Common.Systems
     /// 职责：祭坛扫描、Boss 激活判定、黄泉 Buff 刷新、
     ///       队友死亡检测（→ 汲命 buff）、周期性脉冲伤害。
     /// </summary>
-    public class ArenaAltarSystem : ModSystem
+    public partial class ArenaAltarSystem : ModSystem
     {
         // ── 数值调节区 ────────────────────────────────────────────────
         public const float AltarRangeTiles     = 160f;       // 祭坛作用范围（格）
@@ -28,7 +27,7 @@ namespace TestMod.Common.Systems
         public const float LifestealDuration   = 1.5f;      // 汲命 buff 持续（秒）
         // ─────────────────────────────────────────────────────────────
 
-        // 已发现的祭坛左上角格坐标（每秒重扫刷新）
+        // 当前在线玩家附近的祭坛左上角坐标（每秒从区域缓存刷新）。
         private static readonly HashSet<Point> _altarPositions       = new();
         // 当前激活的祭坛（范围内存在存活 Boss）
         private static readonly HashSet<Point> _activeAltarPositions = new();
@@ -58,11 +57,11 @@ namespace TestMod.Common.Systems
         // ═══════════════════════════════════════════════════════════════
         public override void PostUpdateEverything()
         {
-            // 每 60 帧（1 秒）重新扫描祭坛位置（成本低，避免漏检移除/新增的祭坛）
+            // 每秒更新玩家附近的候选区域，只扫描未发现过或未完整加载的区域。
             if (++_altarScanTimer >= 60)
             {
                 _altarScanTimer = 0;
-                ReScanAltarPositions();
+                RefreshNearbyAltarPositions();
             }
 
             UpdateActiveAltars();   // 更新哪些祭坛当前被 Boss 激活
@@ -72,41 +71,8 @@ namespace TestMod.Common.Systems
         }
 
         // ═══════════════════════════════════════════════════════════════
-        //   祭坛扫描 — 在所有在线玩家周围 170 格范围内搜索 Tile
+        //   祭坛发现逻辑见 ArenaAltarSystem.Discovery.cs（64 格区域缓存）。
         // ═══════════════════════════════════════════════════════════════
-        private void ReScanAltarPositions()
-        {
-            _altarPositions.Clear();
-            int altarType  = ModContent.TileType<HuangQuanAltarTile>();
-            int scanRadius = (int)AltarRangeTiles + 10; // 略大于作用范围，确保不遗漏
-
-            for (int p = 0; p < Main.maxPlayers; p++)
-            {
-                Player player = Main.player[p];
-                if (!player.active) continue;
-
-                int cx = (int)(player.Center.X / 16);
-                int cy = (int)(player.Center.Y / 16);
-
-                int minX = Math.Max(0, cx - scanRadius);
-                int maxX = Math.Min(Main.maxTilesX - 1, cx + scanRadius);
-                int minY = Math.Max(0, cy - scanRadius);
-                int maxY = Math.Min(Main.maxTilesY - 1, cy + scanRadius);
-
-                for (int tx = minX; tx <= maxX; tx++)
-                for (int ty = minY; ty <= maxY; ty++)
-                {
-                    Tile tile = Main.tile[tx, ty];
-                    // 只登记左上角格（FrameX=0, FrameY=0），避免同一祭坛的其余格重复注册
-                    if (tile.HasTile && tile.TileType == altarType
-                        && tile.TileFrameX == 0 && tile.TileFrameY == 0)
-                    {
-                        _altarPositions.Add(new Point(tx, ty));
-                    }
-                }
-            }
-        }
-
         // ═══════════════════════════════════════════════════════════════
         //   激活判定 — 祭坛范围内有存活的 Boss NPC 才算激活
         // ═══════════════════════════════════════════════════════════════
@@ -264,10 +230,18 @@ namespace TestMod.Common.Systems
         // ═══════════════════════════════════════════════════════════════
         //   世界卸载时清理静态状态（防止跨存档污染）
         // ═══════════════════════════════════════════════════════════════
-        public override void OnWorldUnload()
+        public override void OnWorldLoad() => ClearWorldState();
+
+        public override void OnWorldUnload() => ClearWorldState();
+
+        public override void Unload() => ClearWorldState();
+
+        private void ClearWorldState()
         {
             _altarPositions.Clear();
             _activeAltarPositions.Clear();
+            ClearDiscoveryCache();
+            Array.Clear(_prevPlayerAlive, 0, _prevPlayerAlive.Length);
             _pulseTimer     = 0;
             _altarScanTimer = 0;
         }

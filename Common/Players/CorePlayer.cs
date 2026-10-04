@@ -39,12 +39,6 @@ namespace TestMod.Common.Players
                 modifiers.CritDamage += critDamageBonus;
         }
 
-        public override void ModifyHitNPCWithProj(Projectile proj, NPC target, ref NPC.HitModifiers modifiers)
-        {
-            if (critDamageBonus > 0f)
-                modifiers.CritDamage += critDamageBonus;
-        }
-
         public override void ModifyHitByProjectile(Projectile proj, ref Player.HurtModifiers modifiers)
         {
             if (projDamageMultiplier != 1f)

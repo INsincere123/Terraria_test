@@ -111,7 +111,7 @@ namespace TestMod.Common.Utilities
         }
 
         /// <summary>
-        /// 兼容旧代码的别名。等同于 FindNearest，但过滤条件略宽松（不含 CanBeChasedBy 的 lifeMax 检查）。
+        /// 兼容旧代码的别名。完全等同于 FindNearest，不检查命中冷却或视线。
         /// 新代码请直接使用 FindNearest。
         /// </summary>
         public static int FindNearestTargetNotOnCooldown(Vector2 center, float maxDistance)

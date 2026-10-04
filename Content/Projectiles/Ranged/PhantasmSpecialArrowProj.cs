@@ -2,8 +2,7 @@ using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
 using Microsoft.Xna.Framework;
-using TestMod.Common.GlobalProjectiles;
-using TestMod.Common.Utilities;
+using ProjectileTracking = TestMod.Common.GlobalProjectiles.GlobalProjectile;
 using TestMod.Common.Mechanics.ArmorShred;
 using TestMod.Content.Buffs;
 
@@ -18,8 +17,8 @@ namespace TestMod.Content.Projectiles.Ranged
     {
         public override string Texture => "Terraria/Images/Projectile_935"; // 借用夜明箭贴图
 
-        public const int TimeLeft = (int)(60 * 5.4f);   // 存活时间（帧）
-        public const int TrackingDelay = 6;              // 生成后多少帧开始追踪
+        public const int TimeLeft = (int)(60 * 5.4f);   // 存活更新次数（每游戏帧两次，约 2.7 秒）
+        public const int TrackingDelay = 6;              // 起飞延迟阈值（AI 更新次数）
 
         public override void SetStaticDefaults()
         {
@@ -51,8 +50,8 @@ namespace TestMod.Content.Projectiles.Ranged
         public override void AI()
         {
             // 速度上限：防止 shootSpeedMult 词缀倍率过大时初速失控
-            // 保持略高于追踪稳定速度（22f），保留初速的"冲劲"感
-            const float maxSpeed = 27f;
+            // 保持略高于追踪稳定速度（25.3f），保留初速的"冲劲"感
+            const float maxSpeed = 31.05f;
             float curSpeed = Projectile.velocity.Length();
             if (curSpeed > maxSpeed)
                 Projectile.velocity = Projectile.velocity / curSpeed * maxSpeed;
@@ -68,12 +67,9 @@ namespace TestMod.Content.Projectiles.Ranged
             {
                 Projectile.ai[0]--;
             }
-            else if (Projectile.timeLeft < TimeLeft - TrackingDelay) // 生成后6帧才开始追踪，保留散射方向
+            else if (Projectile.timeLeft < TimeLeft - TrackingDelay) // 沿用原起飞阈值，保留散射方向
             {
-                int targetIndex =
-                    TargetUtils.FindNearestTargetNotOnCooldown(
-                        Projectile.Center,
-                        3000f);
+                int targetIndex = ProjectileTracking.FindTrackingTarget(Projectile, Projectile.Center, 3000f);
                 if (targetIndex >= 0)
                 {
                     NPC target = Main.npc[targetIndex];
@@ -84,8 +80,8 @@ namespace TestMod.Content.Projectiles.Ranged
                     {
                         toTarget.Normalize();
 
-                        const float desiredSpeed = 22f;
-                        const float lerpAmount   = 0.12f; // 平滑转向，不急转
+                        const float desiredSpeed = 25.3f;
+                        const float lerpAmount   = 0.15f; // 平滑转向，不急转
 
                         Projectile.velocity = Vector2.Lerp(
                             Projectile.velocity,
@@ -93,9 +89,8 @@ namespace TestMod.Content.Projectiles.Ranged
                             lerpAmount);
 
                         // 速度保底，防止 Lerp 后速度被拉低
-                        float speed = Projectile.velocity.Length();
-                        if (speed < desiredSpeed * 0.8f)
-                            Projectile.velocity = Projectile.velocity / speed * (desiredSpeed * 0.8f);
+                        if (Projectile.velocity.LengthSquared() < desiredSpeed * desiredSpeed * 0.64f)
+                            Projectile.velocity = Projectile.velocity.SafeNormalize(toTarget) * (desiredSpeed * 0.8f);
                     }
                 }
             }
@@ -109,8 +104,9 @@ namespace TestMod.Content.Projectiles.Ranged
         // ══════════════════════════════════════════════════════════════
         public override void OnHitNPC(NPC target, NPC.HitInfo hit, int damageDone)
         {
-            // 命中后10帧不追踪，让箭矢自然穿过去
+            // 命中后 10 次 AI 更新不追踪，让箭矢自然穿过去。
             Projectile.ai[0] = 10f;
+            Projectile.netUpdate = true;
 
             // 破甲debuff叠加（最多10层）
             if (ArmorShredSystem.GetStacks(target.whoAmI) < ArmorShredSystem.MaxStacks)

@@ -2,6 +2,7 @@ using Terraria;
 using Terraria.ID;
 using Microsoft.Xna.Framework;
 using System;
+using TestMod.Common.Systems;
 
 namespace TestMod.Common.GlobalProjectiles
 {
@@ -29,6 +30,7 @@ namespace TestMod.Common.GlobalProjectiles
 
         private void ApplyCorvidRavenAI(Projectile projectile, Player player)
         {
+            bool isOwner = projectile.owner == Main.myPlayer;
             // ── 首帧初始化 ───────────────────────────────────────────
             if (projectile.localAI[1] == 0f)
                 projectile.localAI[1] = 1f;
@@ -37,18 +39,18 @@ namespace TestMod.Common.GlobalProjectiles
             projectile.timeLeft = Math.Max(projectile.timeLeft, 10);
 
             // ── 防聚堆（模拟 MinionAntiClump）────────────────────────
-            for (int i = 0; i < Main.maxProjectiles; i++)
+            foreach (Projectile other in ProjectileLookup.Owned(projectile.owner, projectile.type))
             {
-                Projectile other = Main.projectile[i];
-                if (i == projectile.whoAmI || !other.active) continue;
-                if (other.type != projectile.type || other.owner != projectile.owner) continue;
-                float sep = Vector2.Distance(projectile.Center, other.Center);
-                if (sep < 40f && sep > 0f)
-                    projectile.velocity += (projectile.Center - other.Center) / sep * 0.5f;
+                if (other.whoAmI == projectile.whoAmI) continue;
+                Vector2 separation = projectile.Center - other.Center;
+                float separationSq = separation.LengthSquared();
+                if (separationSq < 40f * 40f && separationSq > 0f)
+                    projectile.velocity += separation / (float)Math.Sqrt(separationSq) * 0.5f;
             }
 
             // ── 寻找最近目标 ─────────────────────────────────────────
-            int targetIdx = AcquireNearestTarget(player.Center, CORVID_DIST_CHECK);
+            int targetIdx = FindTrackingTarget(projectile, player.Center, CORVID_DIST_CHECK,
+                prioritizeMinionTarget: true);
             NPC  target   = targetIdx >= 0 ? Main.npc[targetIdx] : null;
 
             if (target != null)
@@ -58,10 +60,13 @@ namespace TestMod.Common.GlobalProjectiles
                 // 超出传送距离 → 直接传送到目标旁
                 if (projectile.Distance(target.Center) > CORVID_TELEPORT_DIST)
                 {
-                    projectile.Center = target.Center +
-                        Main.rand.NextFloat(MathHelper.TwoPi).ToRotationVector2()
-                        * target.Size * 1.3f;
-                    projectile.netUpdate = true;
+                    if (isOwner)
+                    {
+                        projectile.Center = target.Center +
+                            Main.rand.NextFloat(MathHelper.TwoPi).ToRotationVector2()
+                            * target.Size * 1.3f;
+                        projectile.netUpdate = true;
+                    }
                 }
                 else
                 {
@@ -74,7 +79,7 @@ namespace TestMod.Common.GlobalProjectiles
                         // 之后 17 帧不减速，维持高速直接撞敌
                         if (phase == CORVID_DASH_START || projectile.Distance(target.Center) > 450f)
                         {
-                            if (Main.rand.NextBool(6))
+                            if (isOwner && Main.rand.NextBool(6))
                             {
                                 // 1/6 概率传送 + 粒子爆散
                                 projectile.Center = target.Center +
@@ -155,9 +160,12 @@ namespace TestMod.Common.GlobalProjectiles
 
                 if (projectile.Distance(player.Center) > CORVID_SEPARATION)
                 {
-                    projectile.Center    = player.Center;
-                    projectile.velocity  = Main.rand.NextFloat(MathHelper.TwoPi).ToRotationVector2() * 12f;
-                    projectile.netUpdate = true;
+                    if (isOwner)
+                    {
+                        projectile.Center    = player.Center;
+                        projectile.velocity  = Main.rand.NextFloat(MathHelper.TwoPi).ToRotationVector2() * 12f;
+                        projectile.netUpdate = true;
+                    }
                 }
                 else if (!projectile.WithinRange(player.Center, 90f))
                 {

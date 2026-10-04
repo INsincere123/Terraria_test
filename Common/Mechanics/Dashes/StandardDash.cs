@@ -182,17 +182,10 @@ namespace TestMod.Common.Mechanics.Dashes
 
 				bool crit = cfg.CritChance > 0f && Main.rand.NextFloat() < cfg.CritChance;
 
-				int finalDamage = (int)(ctx.BaseDamage
-					* player.GetDamage(ctx.DmgClass).Multiplicative
-					+ player.GetDamage(ctx.DmgClass).Additive);
-
-				NPC.HitInfo hitInfo = new NPC.HitInfo
-				{
-					Damage       = finalDamage,
-					Knockback    = ctx.Knockback,
-					HitDirection = ctx.HitDirection,
-					Crit         = crit,
-				};
+				// ApplyTo 包含继承的伤害属性；最终防御与暴击由 NPC 统一结算一次。
+				int scaledDamage = (int)player.GetTotalDamage(ctx.DmgClass).ApplyTo(ctx.BaseDamage);
+				NPC.HitInfo hitInfo = npc.CalculateHitInfo(
+					scaledDamage, ctx.HitDirection, crit, ctx.Knockback, ctx.DmgClass);
 
 				npc.StrikeNPC(hitInfo);
 

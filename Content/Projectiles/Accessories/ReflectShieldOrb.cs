@@ -3,6 +3,7 @@ using Terraria;
 using Terraria.ModLoader;
 using TestMod.Common.GlobalProjectiles;
 using TestMod.Common.Mechanics.AccessoryEffects;
+using TestMod.Common.Systems;
 
 namespace TestMod.Content.Projectiles.Accessories
 {
@@ -79,10 +80,8 @@ namespace TestMod.Content.Projectiles.Accessories
         {
             Rectangle orbHitbox = Projectile.Hitbox;
 
-            for (int i = 0; i < Main.maxProjectiles; i++)
+            foreach (Projectile proj in ProjectileLookup.Hostile())
             {
-                Projectile proj = Main.projectile[i];
-                if (!proj.active || !proj.hostile || proj.damage <= 0) continue;
 
                 var gp = proj.GetGlobalProjectile<global::TestMod.Common.GlobalProjectiles.GlobalProjectile>();
                 if (gp.AlreadyReflected) continue;

@@ -3,6 +3,7 @@ using Terraria;
 using Terraria.ModLoader;
 using TestMod.Common.GlobalProjectiles;
 using TestMod.Common.Mechanics.AccessoryEffects;
+using TestMod.Common.Systems;
 
 namespace TestMod.Content.Projectiles.Accessories
 {
@@ -80,10 +81,8 @@ namespace TestMod.Content.Projectiles.Accessories
         {
             float r = mp.DRShieldConfig.DetectionRadius;
 
-            for (int i = 0; i < Main.maxProjectiles; i++)
+            foreach (Projectile proj in ProjectileLookup.Hostile())
             {
-                Projectile proj = Main.projectile[i];
-                if (!proj.active || !proj.hostile || proj.damage <= 0) continue;
 
                 var gp = proj.GetGlobalProjectile<global::TestMod.Common.GlobalProjectiles.GlobalProjectile>();
                 if (gp.MarkedForDRShield) continue; // 已被本帧或之前标记过

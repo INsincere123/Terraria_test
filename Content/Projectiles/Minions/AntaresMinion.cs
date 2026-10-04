@@ -43,6 +43,7 @@ namespace TestMod.Content.Projectiles.Minions
         public ref float AscensionPulseTimer => ref Projectile.localAI[0];
 
         private bool spawnEffectPlayed;
+        private ProjectileTargetCache _targetCache;
         private readonly StarMote[] starMotes = new StarMote[MaxStarMotes];
 
         private readonly struct ConstellationStar
@@ -349,28 +350,10 @@ namespace TestMod.Content.Projectiles.Minions
 
         private NPC FindTarget(float range)
         {
-            if (Owner.HasMinionAttackTargetNPC)
-            {
-                NPC forced = Main.npc[Owner.MinionAttackTargetNPC];
-                if (forced.CanBeChasedBy() && Vector2.Distance(forced.Center, Projectile.Center) <= range)
-                    return forced;
-            }
-
-            NPC result = null;
-            float minDist = range;
-            for (int i = 0; i < Main.maxNPCs; i++)
-            {
-                NPC npc = Main.npc[i];
-                if (!npc.CanBeChasedBy())
-                    continue;
-                float d = Vector2.Distance(npc.Center, Projectile.Center);
-                if (d < minDist && Collision.CanHit(Projectile.Center, 0, 0, npc.Center, 0, 0))
-                {
-                    minDist = d;
-                    result = npc;
-                }
-            }
-            return result;
+            // 普通目标保持 CanHit 视线要求；右键指定目标沿用原有穿墙与包含边界的规则。
+            int targetIndex = _targetCache.FindNearest(Projectile, Projectile.Center, range, out _,
+                prioritizeMinionTarget: true, requireLineOfSight: true, includePreferredBoundary: true);
+            return targetIndex >= 0 ? Main.npc[targetIndex] : null;
         }
 
         private void CheckMinionExistence()

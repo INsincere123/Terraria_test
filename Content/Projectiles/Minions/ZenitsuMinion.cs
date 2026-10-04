@@ -10,6 +10,8 @@ using Terraria.ID;
 using Terraria.ModLoader;
 using TestMod.Content.Buffs;
 using TestMod.Common.Players;
+using TestMod.Common.Systems;
+using TestMod.Common.Utilities;
 
 namespace TestMod.Content.Projectiles.Minions
 {
@@ -46,6 +48,7 @@ namespace TestMod.Content.Projectiles.Minions
         private const int RECOVER_DURATION = 30;       // 恢复持续帧数
         private const float DASH_SPEED = 32f;          // 冲刺速度(像素/帧)
         private const int MULTI_HIT_CD = 2;            // 冲刺多段命中间隔(帧)
+        private ProjectileTargetCache _targetCache;
 
         // ==================== 便捷属性 ====================
         public Player Owner => Main.player[Projectile.owner];
@@ -87,11 +90,12 @@ namespace TestMod.Content.Projectiles.Minions
         public override void AI()
         {
             CheckActive();                              // 存活检查
-            NPC target = FindTarget();                  // 统一寻敌
 
             switch ((int)State)
             {
                 case STATE_FOLLOW:
+                    // 冲刺使用 ai[2] 中的既定目标，恢复不使用目标，只在跟随阶段索敌。
+                    NPC target = FindTarget();
                     FollowBehavior(target);
                     ChargeUp(target);
                     break;
@@ -134,30 +138,9 @@ namespace TestMod.Content.Projectiles.Minions
         // ==================== 寻敌 ====================
         private NPC FindTarget()
         {
-            // 优先: 玩家右键标记的目标
-            if (Owner.HasMinionAttackTargetNPC)
-            {
-                NPC t = Main.npc[Owner.MinionAttackTargetNPC];
-                if (t.CanBeChasedBy(Projectile) && Projectile.Distance(t.Center) < DETECT_RANGE * 2f)
-                    return t;
-            }
-
-            // 否则寻找范围内最近的敌人
-            NPC best = null;
-            float closest = DETECT_RANGE;
-            for (int i = 0; i < Main.maxNPCs; i++)
-            {
-                NPC npc = Main.npc[i];
-                if (!npc.active || !npc.CanBeChasedBy(Projectile))
-                    continue;
-                float d = Projectile.Distance(npc.Center);
-                if (d < closest)
-                {
-                    closest = d;
-                    best = npc;
-                }
-            }
-            return best;
+            int targetIndex = _targetCache.FindNearest(Projectile, Projectile.Center, DETECT_RANGE, out _,
+                prioritizeMinionTarget: true, preferredRange: DETECT_RANGE * 2f);
+            return targetIndex >= 0 ? Main.npc[targetIndex] : null;
         }
 
         // ==================== 状态 0: 跟随 ====================
@@ -165,14 +148,10 @@ namespace TestMod.Content.Projectiles.Minions
         {
             // 给每个同类仆从分配一个环绕位置(防止重叠)
             int myIndex = 0, totalCount = 0;
-            for (int i = 0; i < Main.maxProjectiles; i++)
+            foreach (Projectile p in ProjectileLookup.Owned(Projectile.owner, Type))
             {
-                Projectile p = Main.projectile[i];
-                if (p.active && p.owner == Projectile.owner && p.type == Type)
-                {
-                    if (p.whoAmI == Projectile.whoAmI) myIndex = totalCount;
-                    totalCount++;
-                }
+                if (p.whoAmI == Projectile.whoAmI) myIndex = totalCount;
+                totalCount++;
             }
 
             // 默认环绕玩家的待命位置
@@ -184,7 +163,7 @@ namespace TestMod.Content.Projectiles.Minions
             Vector2 desiredPos = Owner.Center + idleOffset;
 
             // 有目标时: 略微向目标方向偏移(保持骚扰感, 不直接冲进敌人)
-            if (target != null && Projectile.Distance(target.Center) < CHARGE_RANGE)
+            if (target != null && Vector2.DistanceSquared(Projectile.Center, target.Center) < CHARGE_RANGE * CHARGE_RANGE)
             {
                 Vector2 harassPos = target.Center
                     + (Projectile.Center - target.Center).SafeNormalize(Vector2.UnitY) * 160f;
@@ -218,7 +197,7 @@ namespace TestMod.Content.Projectiles.Minions
             if (target != null)
             {
                 // 靠近敌人蓄力更快；远距离慢速蓄力(避免完全停滞)
-                float rate = Projectile.Distance(target.Center) < CHARGE_RANGE
+                float rate = Vector2.DistanceSquared(Projectile.Center, target.Center) < CHARGE_RANGE * CHARGE_RANGE
                     ? CHARGE_RATE_NEAR
                     : CHARGE_RATE_IDLE;
                 Charge = Math.Min(Charge + rate, OVERCHARGE_CAP);
@@ -234,7 +213,7 @@ namespace TestMod.Content.Projectiles.Minions
                 && Projectile.owner == Main.myPlayer)
             {
                 // 距离验证: 防止目标飘远空挥(可选扩展)
-                if (Projectile.Distance(target.Center) < CHARGE_RANGE * 1.2f)
+                if (Vector2.DistanceSquared(Projectile.Center, target.Center) < (CHARGE_RANGE * 1.2f) * (CHARGE_RANGE * 1.2f))
                     TriggerGlobalDash(target);
             }
         }
@@ -244,11 +223,8 @@ namespace TestMod.Content.Projectiles.Minions
         {
             bool triggeredAny = false;
 
-            for (int i = 0; i < Main.maxProjectiles; i++)
+            foreach (Projectile p in ProjectileLookup.Owned(Projectile.owner, Type))
             {
-                Projectile p = Main.projectile[i];
-                if (!p.active || p.owner != Projectile.owner || p.type != Type)
-                    continue;
                 if ((int)p.ai[0] != STATE_FOLLOW)
                     continue;
 
@@ -333,7 +309,7 @@ namespace TestMod.Content.Projectiles.Minions
 
             // 若离玩家过远则轻微向玩家靠近
             Vector2 toOwner = Owner.Center - Projectile.Center;
-            if (toOwner.Length() > 400f)
+            if (toOwner.LengthSquared() > 400f * 400f)
                 Projectile.velocity += toOwner.SafeNormalize(Vector2.Zero) * 0.5f;
 
             Projectile.rotation = MathHelper.Lerp(Projectile.rotation, 0f, 0.15f);

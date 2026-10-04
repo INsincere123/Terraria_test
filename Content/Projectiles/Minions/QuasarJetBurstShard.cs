@@ -7,6 +7,7 @@ using Terraria.ModLoader;
 using TestMod.Common.Players;
 using TestMod.Common.Systems;
 using TestMod.Common.Utilities;
+using ProjectileTracking = TestMod.Common.GlobalProjectiles.GlobalProjectile;
 
 namespace TestMod.Content.Projectiles.Minions
 {
@@ -23,7 +24,7 @@ namespace TestMod.Content.Projectiles.Minions
         private const float ConnectorOuterOpacity = 0.24f;
         private const float ConnectorCoreOpacity = 0.58f;
         private const float HomingRange = 1200f;
-        private const float HomingTurnStrength = 0.085f;
+        private const float HomingTurnStrength = 0.10625f;
         private const int HomingDelay = 6;
         private const int PlasmaFlameCount = 2;
         private static readonly Color JetColor = new(55, 160, 255);
@@ -81,31 +82,11 @@ namespace TestMod.Content.Projectiles.Minions
 
         private NPC GetHomingTarget()
         {
-            int encodedTarget = (int)Projectile.ai[0] - 1;
-            if (encodedTarget >= 0 && encodedTarget < Main.maxNPCs)
-            {
-                NPC lockedTarget = Main.npc[encodedTarget];
-                if (lockedTarget.CanBeChasedBy(Projectile) && Projectile.Distance(lockedTarget.Center) <= HomingRange * 1.35f)
-                    return lockedTarget;
-            }
-
-            NPC bestTarget = null;
-            float bestDistanceSq = HomingRange * HomingRange;
-            for (int i = 0; i < Main.maxNPCs; i++)
-            {
-                NPC npc = Main.npc[i];
-                if (!npc.CanBeChasedBy(Projectile))
-                    continue;
-
-                float distanceSq = Vector2.DistanceSquared(npc.Center, Projectile.Center);
-                if (distanceSq >= bestDistanceSq)
-                    continue;
-
-                bestDistanceSq = distanceSq;
-                bestTarget = npc;
-            }
-
-            return bestTarget;
+            // ai[0] 保留发射时的指定目标（whoAmI + 1）；备用目标独立缓存，不覆盖发射协议。
+            int targetIndex = ProjectileTracking.FindTrackingTarget(
+                Projectile, Projectile.Center, HomingRange, preferredTarget: (int)Projectile.ai[0] - 1,
+                preferredRange: HomingRange * 1.35f, includePreferredBoundary: true);
+            return targetIndex >= 0 ? Main.npc[targetIndex] : null;
         }
 
         private void SpawnPlasmaFlame()

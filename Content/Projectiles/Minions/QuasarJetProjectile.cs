@@ -30,10 +30,9 @@ namespace TestMod.Content.Projectiles.Minions
         private const float TextureBeamWidth = 52f;
         // 发射点相对于父实体中心的偏移半径（像素），决定光束从父实体哪儿发出
         private const float ParentEmissionRadius = 48f;
-        // 索敌范围（像素），在此半径内寻找目标用于跟踪
-        private const float TargetSearchRange = 1800f;
+        // 两侧喷流的目标和索敌范围统一由父 BlackHoleMinion 提供。
         // 方向跟踪强度（0-1），控制光束朝目标转向时的平滑跟随速率
-        private const float DirectionTrackingStrength = 0.16f;
+        private const float DirectionTrackingStrength = 0.20f;
         // 淡入时间（帧），影响可视透明度从 0 到 1 的过渡
         private const float FadeInTime = 5f;
         // 淡出时间（帧），影响生命周期结束时透明度从 1 到 0 的过渡
@@ -117,7 +116,7 @@ namespace TestMod.Content.Projectiles.Minions
             }
 
             Projectile parent = Main.projectile[parentIndex];
-            if (!parent.active || parent.owner != Projectile.owner || parent.type != ModContent.ProjectileType<BlackHoleMinion>())
+            if (!parent.active || parent.owner != Projectile.owner || parent.ModProjectile is not BlackHoleMinion blackHole)
             {
                 Projectile.Kill();
                 return;
@@ -125,7 +124,7 @@ namespace TestMod.Content.Projectiles.Minions
 
             float directionSign = encodedParent < 0 ? -1f : 1f;
             Vector2 desiredDirection = BeamDirection;
-            NPC target = FindTrackedTarget(parent.Center);
+            NPC target = blackHole.FindTarget();
             if (target is not null)
                 desiredDirection = (target.Center - parent.Center).SafeNormalize(desiredDirection) * directionSign;
 
@@ -134,36 +133,6 @@ namespace TestMod.Content.Projectiles.Minions
 
             Vector2 direction = BeamDirection;
             Projectile.Center = parent.Center + direction * ParentEmissionRadius;
-        }
-
-        private NPC FindTrackedTarget(Vector2 origin)
-        {
-            Player owner = Main.player[Projectile.owner];
-
-            if (owner.HasMinionAttackTargetNPC)
-            {
-                NPC forced = Main.npc[owner.MinionAttackTargetNPC];
-                if (forced.CanBeChasedBy(Projectile) && Vector2.Distance(origin, forced.Center) <= TargetSearchRange * 1.5f)
-                    return forced;
-            }
-
-            NPC bestTarget = null;
-            float bestDistance = TargetSearchRange;
-            for (int i = 0; i < Main.maxNPCs; i++)
-            {
-                NPC npc = Main.npc[i];
-                if (!npc.CanBeChasedBy(Projectile))
-                    continue;
-
-                float distance = Vector2.Distance(origin, npc.Center);
-                if (distance >= bestDistance)
-                    continue;
-
-                bestDistance = distance;
-                bestTarget = npc;
-            }
-
-            return bestTarget;
         }
 
         public override bool? Colliding(Rectangle projHitbox, Rectangle targetHitbox)

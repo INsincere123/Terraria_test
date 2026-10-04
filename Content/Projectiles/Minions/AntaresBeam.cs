@@ -6,6 +6,7 @@ using Terraria.ID;
 using Terraria.ModLoader;
 using TestMod.Common.Systems;
 using TestMod.Common.Utilities;
+using ProjectileTracking = TestMod.Common.GlobalProjectiles.GlobalProjectile;
 
 namespace TestMod.Content.Projectiles.Minions
 {
@@ -77,12 +78,13 @@ namespace TestMod.Content.Projectiles.Minions
                 Projectile.ai[0]--;
 
                 float currentSpeed = Projectile.velocity.Length();
-                if (currentSpeed < 10f)
-                    Projectile.velocity = Projectile.velocity.SafeNormalize(Vector2.UnitX) * 14f;
+                if (currentSpeed < 11.5f)
+                    Projectile.velocity = Projectile.velocity.SafeNormalize(Vector2.UnitX) * 16.1f;
             }
             else
             {
-                int targetIndex = TargetUtils.FindNearestTargetNotOnCooldown(Projectile.Center, 5000f);
+                int targetIndex = ProjectileTracking.FindTrackingTarget(Projectile, Projectile.Center,
+                    5000f, prioritizeMinionTarget: true);
                 if (targetIndex >= 0)
                 {
                     NPC target = Main.npc[targetIndex];
@@ -93,17 +95,16 @@ namespace TestMod.Content.Projectiles.Minions
                     {
                         toTarget.Normalize();
 
-                        const float desiredSpeed = 14f;
-                        const float lerpAmount = 0.1f;
+                        const float desiredSpeed = 16.1f;
+                        const float lerpAmount = 0.125f;
 
                         Projectile.velocity = Vector2.Lerp(
                             Projectile.velocity,
                             toTarget * desiredSpeed,
                             lerpAmount);
 
-                        float speed = Projectile.velocity.Length();
-                        if (speed < desiredSpeed * 0.8f)
-                            Projectile.velocity = Projectile.velocity / speed * (desiredSpeed * 0.8f);
+                        if (Projectile.velocity.LengthSquared() < desiredSpeed * desiredSpeed * 0.64f)
+                            Projectile.velocity = Projectile.velocity.SafeNormalize(toTarget) * (desiredSpeed * 0.8f);
                     }
                 }
                 else if (Projectile.velocity.Length() < 6f)
@@ -120,6 +121,7 @@ namespace TestMod.Content.Projectiles.Minions
         public override void OnHitNPC(NPC target, NPC.HitInfo hit, int damageDone)
         {
             Projectile.ai[0] = 18f;
+            Projectile.netUpdate = true;
 
             // ai[1] stores the last exploded target as whoAmI + 1, avoiding the ambiguity of 0.
             if (Projectile.ai[1] != target.whoAmI + 1)

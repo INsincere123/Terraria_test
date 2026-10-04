@@ -1,15 +1,80 @@
 using Terraria;
 using Microsoft.Xna.Framework;
 using System;
+using Terraria.ID;
+using TestMod.Common.Utilities;
 
 namespace TestMod.Common.GlobalProjectiles
 {
     public partial class GlobalProjectile
     {
         // ══════════════════════════════════════════════════════════════
-        //   星尘龙专属追踪：激进索敌 + 目标锁定 + 速度预测
+        //   星尘龙：保留原版生命周期，只替换攻击运动
         // ══════════════════════════════════════════════════════════════
         private void ApplyStardustDragonTracking(Projectile projectile)
+        {
+            if (!_dragonFlightPrepared) return;
+            bool authority = projectile.owner == Main.myPlayer;
+            // 原版返回传送/世界边界修正后清理阶段，本次保留原版返回运动。
+            if (Vector2.DistanceSquared(projectile.Center, _dragonIncomingCenter) > 256f)
+            {
+                MarkTrackingActivity(projectile, false, _dragonFlight.Reset());
+                _dragonTrackingCooldown = 0;
+                return;
+            }
+
+            bool changed = false;
+            if (authority)
+            {
+                int index = _trackingTargetCache.FindNearest(projectile, projectile.Center, 7200f,
+                    out bool replaced, prioritizeMinionTarget: true, retargetFrames: 45);
+                changed = index >= 0 ? _dragonFlight.SetTarget(index, Main.npc[index].type, replaced) : _dragonFlight.Reset();
+            }
+            NPC target = _dragonFlight.ResolveTarget(projectile, projectile.Center, 7200f);
+            if (target == null)
+            {
+                changed |= _dragonFlight.Reset();
+                _dragonTrackingCooldown = 0;
+                MarkTrackingActivity(projectile, false, changed);
+                return;
+            }
+
+            bool coast = _dragonTrackingCooldown > 0;
+            if (coast) _dragonTrackingCooldown--;
+            // localAI[0] 是原版龙链累计段数，原版段间距为 16*scale。
+            float chainLength = Math.Max(1f, projectile.localAI[0]) * 16f * projectile.scale;
+            projectile.velocity = _dragonFlight.Update(projectile.Center, projectile.Size, target.Hitbox,
+                target.velocity, _dragonIncomingVelocity, chainLength, 1f / projectile.MaxUpdates,
+                DragonFlightSettings.Stardust, authority, coast, out bool phaseChanged);
+            projectile.rotation = projectile.velocity.ToRotation() + MathHelper.PiOver2;
+            if (Math.Abs(projectile.velocity.X) > 0.01f)
+                projectile.direction = projectile.spriteDirection = projectile.velocity.X > 0f ? 1 : -1;
+            MarkTrackingActivity(projectile, true, changed || phaseChanged);
+        }
+
+        private DragonFlightController _dragonFlight;
+        private Vector2 _dragonIncomingVelocity, _dragonIncomingCenter;
+        private bool _dragonFlightPrepared;
+
+        private void PrepareStardustDragonFlight(Projectile projectile)
+        {
+            _dragonFlightPrepared = false;
+            if (projectile.type != ProjectileID.StardustDragon1) return;
+            bool enabled = projectile.owner >= 0 && projectile.owner < Main.maxPlayers
+                && Main.player[projectile.owner].active && !Main.player[projectile.owner].dead;
+            if (!enabled)
+            {
+                MarkTrackingActivity(projectile, false, _dragonFlight.Reset());
+                _dragonTrackingCooldown = 0;
+                return;
+            }
+            _dragonIncomingVelocity = projectile.velocity;
+            _dragonIncomingCenter = projectile.Center;
+            _dragonFlightPrepared = true;
+        }
+
+        // 沙漠虎仍沿用之前的追踪，不受龙头运动优化影响。
+        private void ApplyLegacyTigerTracking(Projectile projectile)
         {
             // ── 如果还在冷却中，递减并直接跳出，靠惯性飞行 ──
             if (_dragonTrackingCooldown > 0)
@@ -23,28 +88,13 @@ namespace TestMod.Common.GlobalProjectiles
             const float maxSpeed        = 150f;
             const float lerpAmount      = 0.1f;
             const float correctionForce = 0.5f;
-            const float breakDistance   = 900f;
+            // 在完整索敌范围内保留目标 45 个游戏帧，空场每 6 帧重试。
+            // 不再因目标超过 900px 就逐更新扫描；指定目标切换和目标失效立即响应。
+            int targetIndex = FindTrackingTarget(projectile, projectile.Center, maxRange,
+                prioritizeMinionTarget: true, retargetFrames: 45);
+            if (targetIndex < 0) return;
 
-            _lockedTargetTimer--;
-
-            // 锁定失效条件：无效目标 / 锁定超时 / 距离过远
-            bool needReacquire =
-                _lockedTargetIndex < 0 ||
-                _lockedTargetIndex >= Main.npc.Length ||
-                !Main.npc[_lockedTargetIndex].active ||
-                !Main.npc[_lockedTargetIndex].CanBeChasedBy() ||
-                _lockedTargetTimer <= 0 ||
-                Vector2.Distance(projectile.Center, Main.npc[_lockedTargetIndex].Center) > breakDistance;
-
-            if (needReacquire)
-            {
-                _lockedTargetIndex = AcquireNearestTarget(projectile.Center, maxRange);
-                _lockedTargetTimer = LOCK_DURATION;
-            }
-
-            if (_lockedTargetIndex < 0) return;
-
-            NPC target = Main.npc[_lockedTargetIndex];
+            NPC target = Main.npc[targetIndex];
             Vector2 toTarget = target.Center - projectile.Center;
             float dist = toTarget.Length();
             if (dist < 1f) return;
@@ -65,7 +115,6 @@ namespace TestMod.Common.GlobalProjectiles
             if (finalSpeed > maxSpeed + 8f)
                 projectile.velocity = projectile.velocity / finalSpeed * (maxSpeed + 8f);
 
-            projectile.netUpdate = true;
         }
 
         // ══════════════════════════════════════════════════════════════

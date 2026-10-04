@@ -6,6 +6,7 @@ using Terraria.ID;
 using Terraria.ModLoader;
 using Terraria.ObjectData;
 using TestMod.Content.Items;
+using TestMod.Common.Systems;
 
 namespace TestMod.Content.Tiles
 {
@@ -42,12 +43,22 @@ namespace TestMod.Content.Tiles
             DustType = DustID.Shadowflame; // 破坏时产生暗焰粒子
         }
 
-        /// <summary>
-        /// 多格 tile 整体被破坏时调用（i/j 为左上角格坐标）。
-        /// tModLoader 保证每次只调用一次，直接掉落物品即可。
-        /// </summary>
+        public override void PlaceInWorld(int i, int j, Item item)
+        {
+            ArenaAltarSystem.ObserveAltarTile(i, j);
+        }
+
+        public override bool TileFrame(int i, int j, ref bool resetFrame, ref bool noBreak)
+        {
+            // 网络 Tile 更新也会重新 framing，使已扫描区域中的新祭坛进入缓存。
+            ArenaAltarSystem.ObserveAltarTile(i, j);
+            return true;
+        }
+
+        /// <summary>多格家具破坏时注销左上角登记，再沿用原有掉落逻辑。</summary>
         public override void KillMultiTile(int i, int j, int frameX, int frameY)
         {
+            ArenaAltarSystem.ForgetAltar(i, j);
             Item.NewItem(new EntitySource_TileBreak(i, j),
                 i * 16, j * 16, 32, 48,
                 ModContent.ItemType<HuangQuanAltarItem>());

@@ -52,12 +52,12 @@ namespace TestMod.Common.GlobalProjectiles
 
         // ══════════════════════════════════════════════════════════════
         //   通用高阶追踪
-        //   用于:泰拉棱镜 + 所有 MinionShot 召唤物射弹
+        //   用于:MinionShot 召唤物射弹及星云烈焰；排除名单和专用 AI 优先
         // ══════════════════════════════════════════════════════════════
         private void ApplyHighTierTracking(Projectile projectile, float minSpeed, float maxSpeed,
-            float lerpAmount, float extraCorrection)
+            float lerpAmount, float extraCorrection, bool prioritizeMinionTarget = false)
         {
-            int targetIndex = AcquireNearestTarget(projectile.Center, 2400f);
+            int targetIndex = FindTrackingTarget(projectile, projectile.Center, 2400f, prioritizeMinionTarget);
             if (targetIndex < 0) return;
 
             NPC target = Main.npc[targetIndex];
@@ -70,7 +70,6 @@ namespace TestMod.Common.GlobalProjectiles
             float desiredSpeed = MathHelper.Clamp(minSpeed + dist / 45f, minSpeed, maxSpeed);
             projectile.velocity  = Vector2.Lerp(projectile.velocity, toTarget * desiredSpeed, lerpAmount);
             projectile.velocity += toTarget * extraCorrection;
-            projectile.netUpdate = true;
         }
 
         // ══════════════════════════════════════════════════════════════

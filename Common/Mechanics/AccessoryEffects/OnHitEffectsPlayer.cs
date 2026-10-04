@@ -30,7 +30,8 @@ namespace TestMod.Common.Mechanics.AccessoryEffects
         // ======================================================
 
         /// <summary>
-        /// key = 具体 OnHitEffect 子类的 Type，value = 唯一实例。
+        /// key = 具体 OnHitEffect 子类的 Type，value = 共享效果定义。
+        /// 效果实例只保存配置与触发逻辑，玩家运行时状态不放在注册表中。
         /// 由 LoadRegistry() 在 Mod.Load() 时自动扫描填充，运行时不再修改结构。
         /// </summary>
         private static readonly Dictionary<Type, OnHitEffect> Registry = new();
@@ -38,6 +39,15 @@ namespace TestMod.Common.Mechanics.AccessoryEffects
         // ======================================================
         //  运行时状态
         // ======================================================
+
+        private sealed class EffectState
+        {
+            public bool Active;
+            public int GlobalCooldownTimer;
+        }
+
+        // 按玩家保存各效果的激活状态和冷却，不因其他玩家更新而改变。
+        private Dictionary<Type, EffectState> effectStates = new();
 
         /// <summary>
         /// per-NPC 命中冷却。下标 = NPC.whoAmI，值 > 0 时跳过触发。
@@ -78,28 +88,54 @@ namespace TestMod.Common.Mechanics.AccessoryEffects
         /// </summary>
         public static void Activate<T>(Player player) where T : OnHitEffect
         {
-            if (Registry.TryGetValue(typeof(T), out OnHitEffect effect))
-                effect.Active = true;
+            Type type = typeof(T);
+            if (!Registry.ContainsKey(type))
+                return;
+
+            OnHitEffectsPlayer modPlayer = player.GetModPlayer<OnHitEffectsPlayer>();
+            if (!modPlayer.effectStates.TryGetValue(type, out EffectState state))
+            {
+                state = new EffectState();
+                modPlayer.effectStates.Add(type, state);
+            }
+
+            state.Active = true;
         }
 
         // ======================================================
         //  ModPlayer 生命周期
         // ======================================================
 
+        public override void Initialize()
+        {
+            effectStates = new Dictionary<Type, EffectState>();
+            npcCooldowns = new int[Main.maxNPCs];
+        }
+
+        public override void OnEnterWorld() => ClearRuntimeState();
+
+        public override void UpdateDead() => ClearRuntimeState();
+
+        private void ClearRuntimeState()
+        {
+            effectStates.Clear();
+            Array.Clear(npcCooldowns, 0, npcCooldowns.Length);
+        }
+
         public override void ResetEffects()
         {
-            // 每帧重置所有 effect 的激活状态
-            foreach (OnHitEffect effect in Registry.Values)
-                effect.Active = false;
+            // 仅重置当前玩家的激活状态，冷却保留到后续帧。
+            foreach (EffectState state in effectStates.Values)
+                state.Active = false;
         }
 
         public override void PostUpdateEquips()
         {
             // 每帧递减各 effect 的全局冷却
-            foreach (OnHitEffect effect in Registry.Values)
+            foreach (EffectState state in effectStates.Values)
             {
-                if (effect.GlobalCooldownTimer > 0)
-                    effect.GlobalCooldownTimer--;
+                if (state.GlobalCooldownTimer > 0)
+                    state.GlobalCooldownTimer--;
             }
 
             // 每帧递减 per-NPC 冷却
@@ -151,9 +187,10 @@ namespace TestMod.Common.Mechanics.AccessoryEffects
                 }
             }
 
-            foreach (OnHitEffect effect in Registry.Values)
+            foreach (KeyValuePair<Type, OnHitEffect> entry in Registry)
             {
-                if (!effect.Active)
+                OnHitEffect effect = entry.Value;
+                if (!effectStates.TryGetValue(entry.Key, out EffectState state) || !state.Active)
                     continue;
 
                 // 门控 1：per-NPC 冷却（仅穿透弹幕）
@@ -161,7 +198,7 @@ namespace TestMod.Common.Mechanics.AccessoryEffects
                     continue;
 
                 // 门控 2：全局冷却（仅穿透弹幕，且该 effect 设置了全局冷却）
-                if (isPenetrating && effect.GlobalCooldown > 0 && effect.GlobalCooldownTimer > 0)
+                if (isPenetrating && effect.GlobalCooldown > 0 && state.GlobalCooldownTimer > 0)
                     continue;
 
                 // 两关都通过，触发
@@ -173,7 +210,7 @@ namespace TestMod.Common.Mechanics.AccessoryEffects
                     npcCooldowns[target.whoAmI] = NPC_CD_FRAMES;
 
                     if (effect.GlobalCooldown > 0)
-                        effect.GlobalCooldownTimer = effect.GlobalCooldown;
+                        state.GlobalCooldownTimer = effect.GlobalCooldown;
                 }
             }
         }

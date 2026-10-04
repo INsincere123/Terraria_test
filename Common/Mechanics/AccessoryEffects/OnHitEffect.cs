@@ -7,6 +7,7 @@ namespace TestMod.Common.Mechanics.AccessoryEffects
     /// 追加攻击效果的抽象基类。
     /// 继承此类并实现 <see cref="Trigger"/> 方法，然后在装备的 UpdateEquip 中调用
     /// <see cref="OnHitEffectsPlayer.Activate{T}"/> 即可注册追加攻击。
+    /// 注册表共享此定义；激活标志、冷却及其他玩家状态应保存在 ModPlayer 中。
     /// </summary>
     public abstract class OnHitEffect
     {
@@ -19,16 +20,6 @@ namespace TestMod.Common.Mechanics.AccessoryEffects
         /// 子类在构造函数中赋值。
         /// </summary>
         public readonly int GlobalCooldown;
-
-        // ======================================================
-        //  运行时状态（由 OnHitEffectsPlayer 管理）
-        // ======================================================
-
-        /// <summary>本帧是否被装备激活。由 OnHitEffectsPlayer.ResetEffects / Activate 维护。</summary>
-        public bool Active;
-
-        /// <summary>当前全局冷却剩余帧数。由 OnHitEffectsPlayer.PostUpdateEquips 每帧递减。</summary>
-        public int GlobalCooldownTimer;
 
         // ======================================================
         //  构造

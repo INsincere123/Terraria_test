@@ -47,6 +47,10 @@ namespace TestMod.Common.Mechanics.AccessoryEffects
         public float ReflectShieldRotationAngle;
         public int   ReflectShieldRespawnCooldown;
 
+        // 仅在配置球数改变时重新分配，由各护盾效果每帧清空并填充。
+        internal bool[] DRShieldOccupied = Array.Empty<bool>();
+        internal bool[] ReflectShieldOccupied = Array.Empty<bool>();
+
         // ===== 护盾配置参数（每帧由 Apply 写入）=====
         public DRShieldConfig      DRShieldConfig;
         public ReflectShieldConfig ReflectShieldConfig;

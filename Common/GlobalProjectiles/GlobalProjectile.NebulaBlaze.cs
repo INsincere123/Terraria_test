@@ -11,7 +11,7 @@ namespace TestMod.Common.GlobalProjectiles
         private const float NebulaBlazeSpawnedFlag = 1f;
 
         // ══════════════════════════════════════════════════════════════
-        //   星云烈焰强化追踪（800px 范围）
+        //   星云烈焰强化追踪（沿用现有 2400px 通用范围）
         //   在 PostAI 分发处调用，普通弹和 Ex 弹均适用
         // ══════════════════════════════════════════════════════════════
         private void ApplyNebulaBlazeBoostedTracking(Projectile projectile)
@@ -21,9 +21,8 @@ namespace TestMod.Common.GlobalProjectiles
             if (projectile.timeLeft > 3600 - 45 * ticksPerFrame)
                 return;
 
-            // 追踪范围扩大到 800px，其余参数保持和原版手感接近
-            // minSpeed=16, maxSpeed=22 对应原版约 16~20 速度区间
-            ApplyHighTierTracking(projectile, 16f, 22f, 0.03f, 0.18f);
+            // 沿用 2400px 索敌范围，小幅提高追踪速度和转向响应。
+            ApplyHighTierTracking(projectile, 18.4f, 25.3f, 0.0375f, 0.225f);
         }
 
         // ══════════════════════════════════════════════════════════════

@@ -2,6 +2,8 @@ using Microsoft.Xna.Framework;
 using Terraria;
 using Terraria.ModLoader;
 using TestMod.Content.Projectiles.Minions;
+using System;
+using System.Collections.Generic;
 
 namespace TestMod.Common.Systems
 {
@@ -26,10 +28,33 @@ namespace TestMod.Common.Systems
     {
         public const int SegmentCount = 13;   // Head, body chain, tail.
 
+        private static readonly Dictionary<int, Projectile[]> _segmentsByOwner = new();
+
+        // 所有调用者复用段数组；每次仅从所属列表填充，不扫描全场弹幕。
+        internal static Projectile[] GetSegments(int owner, bool preferLast = false)
+        {
+            if (!_segmentsByOwner.TryGetValue(owner, out Projectile[] segments))
+            {
+                segments = new Projectile[SegmentCount];
+                _segmentsByOwner.Add(owner, segments);
+            }
+            Array.Clear(segments, 0, segments.Length);
+            int segType = ModContent.ProjectileType<DragonSegment>();
+            foreach (Projectile projectile in ProjectileLookup.Owned(owner, segType))
+            {
+                int index = (int)projectile.ai[1];
+                if (index >= 0 && index < SegmentCount && (preferLast || segments[index] == null))
+                    segments[index] = projectile;
+            }
+            return segments;
+        }
+
+        internal static void ClearSegments() => _segmentsByOwner.Clear();
+
         // ══════════════════════════════════════════════════════════════
         //   外部接口：维持指定玩家的幻影龙存在
         //
-        //   · 全部5节存活 → 刷新 timeLeft 并取 max 更新数值
+        //   · 全部13节存活 → 刷新 timeLeft 并取 max 更新数值
         //   · 任一节缺失 → 杀掉残链 + 重新生成
         // ══════════════════════════════════════════════════════════════
         public static void MaintainFor(Player player, int damage, float knockback)
@@ -39,32 +64,19 @@ namespace TestMod.Common.Systems
             int segType = ModContent.ProjectileType<DragonSegment>();
 
             // 统计现有节点
-            int[] foundIndices = new int[SegmentCount];
-            for (int i = 0; i < SegmentCount; i++) foundIndices[i] = -1;
-
-            for (int i = 0; i < Main.maxProjectiles; i++)
-            {
-                Projectile p = Main.projectile[i];
-                if (!p.active || p.owner != player.whoAmI || p.type != segType) continue;
-
-                int segIdx = (int)p.ai[1];
-                if (segIdx >= 0 && segIdx < SegmentCount && foundIndices[segIdx] < 0)
-                {
-                    foundIndices[segIdx] = i;
-
-                    // 刷新存活
-                    p.timeLeft = 2;
-
-                    // 取最大值更新数值（兼容多装备同时调用）
-                    if (damage > p.damage)         p.damage    = damage;
-                    if (knockback > p.knockBack)   p.knockBack = knockback;
-                }
-            }
-
-            // 检查完整性
+            Projectile[] segments = GetSegments(player.whoAmI);
             bool allPresent = true;
-            for (int i = 0; i < SegmentCount; i++)
-                if (foundIndices[i] < 0) { allPresent = false; break; }
+            foreach (Projectile p in segments)
+            {
+                if (p == null)
+                {
+                    allPresent = false;
+                    continue;
+                }
+                p.timeLeft = 2;
+                if (damage > p.damage) p.damage = damage;
+                if (knockback > p.knockBack) p.knockBack = knockback;
+            }
 
             if (allPresent) return;
 
@@ -78,16 +90,14 @@ namespace TestMod.Common.Systems
         // ══════════════════════════════════════════════════════════════
         private static void KillExisting(Player player, int segType)
         {
-            for (int i = 0; i < Main.maxProjectiles; i++)
+            foreach (Projectile p in ProjectileLookup.Owned(player.whoAmI, segType))
             {
-                Projectile p = Main.projectile[i];
-                if (p.active && p.owner == player.whoAmI && p.type == segType)
-                    p.Kill();
+                p.Kill();
             }
         }
 
         // ══════════════════════════════════════════════════════════════
-        //   内部：从头到尾依次生成5节，链式传递 ai[0]
+        //   内部：从头到尾依次生成13节，链式传递 ai[0]
         // ══════════════════════════════════════════════════════════════
         private static void SpawnChain(Player player, int segType, int damage, float knockback)
         {
@@ -113,7 +123,7 @@ namespace TestMod.Common.Systems
                     knockback,
                     player.whoAmI,
                     ai0: prevWhoAmI,    // 前节点索引（头节点为 -1）
-                    ai1: seg            // 段索引 0~4
+                    ai1: seg            // 段索引 0~12
                 );
 
                 prevWhoAmI = whoAmI;
@@ -136,14 +146,15 @@ namespace TestMod.Common.Systems
         {
             int segType = ModContent.ProjectileType<DragonSegment>();
 
-            for (int i = 0; i < Main.maxProjectiles; i++)
+            foreach (Projectile p in ProjectileLookup.OfType(segType))
             {
-                Projectile p = Main.projectile[i];
-                if (!p.active || p.type != segType) continue;
-
                 p.damage    = 0;
                 p.knockBack = 0f;
             }
         }
+
+        public override void OnWorldLoad() => PhantasmalDragonSummoner.ClearSegments();
+        public override void OnWorldUnload() => PhantasmalDragonSummoner.ClearSegments();
+        public override void Unload() => PhantasmalDragonSummoner.ClearSegments();
     }
 }

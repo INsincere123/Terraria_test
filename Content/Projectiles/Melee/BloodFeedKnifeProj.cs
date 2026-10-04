@@ -3,20 +3,19 @@ using Terraria.ModLoader;
 using TestMod.Common.Players;
 using TestMod.Content.Items.DamageTypes;
 using Microsoft.Xna.Framework;
-using TestMod.Common.Utilities;
+using ProjectileTracking = TestMod.Common.GlobalProjectiles.GlobalProjectile;
 
 namespace TestMod.Content.Projectiles.Melee
 {
     // ============================================================================
     //  BloodFeedKnifeProj  ——  血饲匕首弹幕
     // ----------------------------------------------------------------------------
-    //  ai[0] = 追踪目标 NPC 的 whoAmI（-1 = 尚未锁定）
-    //  ai[1] = 存活计时器（超时自毁，防止永久漂浮）
+    //  ai[0] = 命中后的停追冷却（AI 更新次数；初始 -1 表示无冷却）
+    //  存活时间由 timeLeft 管理，目标由每实体 GlobalProjectile 缓存。
     //
     //  追踪逻辑：
-    //    每帧用 FindTargetWithLineOfSight 搜索范围内最近可见敌人
-    //    将当前速度向量插值转向目标，速度大小保持不变
-    //    转向速度由 TurnRate 控制（0 = 不转，1 = 瞬间对准）
+    //    每 6 个游戏帧重选范围内最近敌人，无视墙壁；失效立即重选。
+    //    每次 AI 更新插值转向目标，保留既有稳定速度和速度保底。
     //
     //  伤害逻辑：
     //    通过 BloodFeedPlayer 读取当前阶段伤害倍率并应用到 ModifyHitNPC
@@ -26,11 +25,10 @@ namespace TestMod.Content.Projectiles.Melee
         public override string Texture => "Terraria/Images/Projectile_497";
 
         // ── 数值调节区 ────────────────────────────────────────────────
-        // 追踪参数在 GlobalProjectile.cs 的 PostAI 分发里调整：
-        //   ApplyHighTierTracking(projectile, minSpeed:10f, maxSpeed:20f, lerpAmount:0.14f, extraCorrection:0.22f)
-        public const int   Lifetime        = 240;   // 最大存活帧数（4秒）
+        // 追踪参数在本类 AI 内调整；extraUpdates = 1，每个游戏帧更新两次。
+        public const int   Lifetime        = 240;   // 最大存活更新次数（约 2 秒）
         public const float RotationOffset  = MathHelper.PiOver2; // 贴图朝向修正（顺时针90°）
-        public const int TrackingDelay      = 17;     // 生成后多少帧开始追踪
+        public const int TrackingDelay      = 17;     // 起飞延迟阈值（AI 更新次数，沿用现有时长）
         // ─────────────────────────────────────────────────────────────
 
         public override void SetDefaults()
@@ -50,7 +48,7 @@ namespace TestMod.Content.Projectiles.Melee
             Projectile.usesLocalNPCImmunity = true;
             Projectile.localNPCHitCooldown  = 10;
 
-            Projectile.ai[0] = -1f; // 未锁定状态
+            Projectile.ai[0] = -1f; // 无停追冷却
         }
 
         public override void AI()
@@ -63,10 +61,7 @@ namespace TestMod.Content.Projectiles.Melee
             }
             else if (Projectile.timeLeft < Lifetime - TrackingDelay)
             {
-                int targetIndex =
-                    TargetUtils.FindNearestTargetNotOnCooldown(
-                        Projectile.Center,
-                        3000f);
+                int targetIndex = ProjectileTracking.FindTrackingTarget(Projectile, Projectile.Center, 3000f);
                 if (targetIndex >= 0)
                 {
                     NPC target = Main.npc[targetIndex];
@@ -77,8 +72,8 @@ namespace TestMod.Content.Projectiles.Melee
                     {
                         toTarget.Normalize();
 
-                        const float desiredSpeed = 20f;
-                        const float lerpAmount   = 0.19f; // 平滑转向，不急转
+                        const float desiredSpeed = 23f;
+                        const float lerpAmount   = 0.2375f; // 平滑转向，不急转
 
                         Projectile.velocity = Vector2.Lerp(
                             Projectile.velocity,
@@ -86,9 +81,8 @@ namespace TestMod.Content.Projectiles.Melee
                             lerpAmount);
 
                         // 速度保底，防止 Lerp 后速度被拉低
-                        float speed = Projectile.velocity.Length();
-                        if (speed < desiredSpeed * 0.8f)
-                            Projectile.velocity = Projectile.velocity / speed * (desiredSpeed * 0.8f);
+                        if (Projectile.velocity.LengthSquared() < desiredSpeed * desiredSpeed * 0.64f)
+                            Projectile.velocity = Projectile.velocity.SafeNormalize(toTarget) * (desiredSpeed * 0.8f);
                     }
                 }
             }
@@ -109,8 +103,9 @@ namespace TestMod.Content.Projectiles.Melee
         // ══════════════════════════════════════════════════════════════
         public override void OnHitNPC(NPC target, NPC.HitInfo hit, int damageDone)
         {
-            // 命中后10帧不追踪，自然穿过去
+            // 命中后 10 次 AI 更新不追踪，自然穿过去。
             Projectile.ai[0] = 10f;
+            Projectile.netUpdate = true;
         }
 
     }
