@@ -1,9 +1,11 @@
 using System.Collections.Generic;
 using Terraria;
+using Terraria.ID;
 using Terraria.Localization;
 using Terraria.ModLoader;
 using TestMod.Content.Rarities;
 using TestMod.Common.Players;
+using TestMod.Common.Mechanics.AccessoryEffects;
 
 namespace TestMod.Content.Items.Accessories
 {
@@ -23,6 +25,16 @@ namespace TestMod.Content.Items.Accessories
         public override void UpdateAccessory(Player player, bool hideVisual)
         {
             player.GetModPlayer<AdversityAmuletPlayer>().HasAdversityAmulet = true;
+            DebuffImmunityEffect.ApplyAll(player);
+        }
+
+        public override void AddRecipes()
+        {
+            CreateRecipe()
+                .AddIngredient(ItemID.AnkhCharm)
+                .AddIngredient(ItemID.LunarBar, 20)
+                .AddTile(TileID.TinkerersWorkbench)
+                .Register();
         }
 
         public override void ModifyTooltips(List<TooltipLine> tooltips)
