@@ -34,6 +34,11 @@ Configs: {
 	}
 }
 
+EnvironmentEffects: {
+	AbyssImmunity: 灾厄：深渊视野清晰，水中正常移动，免除深渊扣氧、窒息、降防、离水伤害与第一层硫磺水中毒
+	TheDarkImmunity: 旅人归途：解除暗处（迷宫）的黑色遮盖，保留正常光照
+}
+
 ArmorToggle: {
 	Enabled: 已开启
 	Disabled: 已关闭

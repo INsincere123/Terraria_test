@@ -94,7 +94,10 @@ namespace TestMod.Content.Items.Armor.UltimateArmor
                 : "未绑定";
 
             string calamityBonus = CalamityCompatSystem.CalamityLoaded
-                ? "\n灾厄：移除跨职业召唤伤害惩罚"
+                ? "\n灾厄：移除跨职业召唤伤害惩罚\n" + Language.GetTextValue(AbyssImmunityEffect.DescriptionKey)
+                : "";
+            string journeyBonus = HomewardJourneyCompatSystem.TheDarkCompatibilityReady
+                ? "\n" + Language.GetTextValue(TheDarkImmunityEffect.DescriptionKey)
                 : "";
 
             // 从实际功能盔甲槽读取物品实例状态，外观槽或背包内的其他副本不参与。
@@ -105,9 +108,11 @@ namespace TestMod.Content.Items.Armor.UltimateArmor
             string cannonStatus = Language.GetTextValue("Mods.TestMod.Items.UltimateHelmet.CannonState",
                 ToggleableArmorItem.GetEffectStateText(cannonEnabled));
 
-            player.setBonus = $"致命伤害后复活，恢复50%生命值，无敌3秒\n免疫秒杀，若单次伤害大于你的最大生命值，则此伤害为1\n按下 [{key}] 激活引力井，持续拉取周围敌人{calamityBonus}\n{dragonStatus}\n{cannonStatus}";
+            player.setBonus = $"致命伤害后复活，恢复50%生命值，无敌3秒\n免疫秒杀，若单次伤害大于你的最大生命值，则此伤害为1\n按下 [{key}] 激活引力井，持续拉取周围敌人{calamityBonus}{journeyBonus}\n{dragonStatus}\n{cannonStatus}";
             player.GetModPlayer<AntaresArmorPlayer>().wearingFullSet = true;
             CalamityCompatSystem.DisableSummonPenalty(player);
+            AbyssImmunityEffect.Apply(player);
+            TheDarkImmunityEffect.Apply(player);
 
             // 腿甲仅控制套装来源；副手饰品仍可以独立激活并维持同一个炮台。
             if (cannonEnabled)

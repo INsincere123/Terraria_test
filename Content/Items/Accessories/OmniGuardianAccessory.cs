@@ -1,5 +1,6 @@
 using Terraria;
 using Terraria.ID;
+using Terraria.Localization;
 using Terraria.ModLoader;
 using TestMod.Common.Mechanics.AccessoryEffects;
 using TestMod.Common.Systems;
@@ -202,6 +203,8 @@ namespace TestMod.Content.Items.Accessories
 
             // [12] 红木魔石钩爪效果
             GrappleEffect.Apply(player);
+            AbyssImmunityEffect.Apply(player);
+            TheDarkImmunityEffect.Apply(player);
         }
 
         public override void ModifyTooltips(List<TooltipLine> tooltips)
@@ -219,6 +222,13 @@ namespace TestMod.Content.Items.Accessories
                 $"耐药性降低 25%，治疗效果提高\n" +
                 $"强化钩爪\n" +
                 $"泰拉大陆在你眼中都是蝼蚁，去挑战愤怒的突变体吧"));
+
+            if (CalamityCompatSystem.CalamityLoaded)
+                tooltips.Add(new TooltipLine(Mod, "AbyssImmunity",
+                    Language.GetTextValue(AbyssImmunityEffect.DescriptionKey)));
+            if (HomewardJourneyCompatSystem.TheDarkCompatibilityReady)
+                tooltips.Add(new TooltipLine(Mod, "TheDarkImmunity",
+                    Language.GetTextValue(TheDarkImmunityEffect.DescriptionKey)));
         }
 
         public override void AddRecipes()

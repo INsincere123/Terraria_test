@@ -8,7 +8,7 @@ using TestMod.Content.Prefixes;
 
 namespace TestMod.Common.Systems
 {
-    public class CalamityCompatSystem : ModSystem
+    public partial class CalamityCompatSystem : ModSystem
     {
         // ╔══════════════════════════════════════════════════════╗
         // ║           灾厄稀有度调整区域                         ║
@@ -73,6 +73,8 @@ namespace TestMod.Common.Systems
                 }
             }
 
+            LoadAbyssCompatibility();
+
             ModContent.TryFind<DamageClass>("CalamityMod", "TrueMeleeDamageClass", out var trueMelee);
             ModContent.TryFind<DamageClass>("CalamityMod", "TrueMeleeNoSpeedDamageClass", out var trueMeleeNoSpeed);
             CalamityTrueMelee = trueMelee;
@@ -108,6 +110,7 @@ namespace TestMod.Common.Systems
 
         public override void Unload()
         {
+            UnloadAbyssCompatibility();
             ClearMeleeCompatibility();
             _calPlayerTemplate = null;
             _calPlayerType = null;
