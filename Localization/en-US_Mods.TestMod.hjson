@@ -196,6 +196,23 @@ Items: {
 		DisplayName: 超暴击护目镜
 	}
 
+	AdversityAmulet: {
+		DisplayName: 习难护符
+		Tooltip:
+			'''
+			生命恢复 +4 点/秒，防御 +18，最大生命 +60
+			受到的接触伤害降低 11%
+			实际受伤后适应该种攻击，每层降低其伤害 15%，最多 5 层
+			同种 NPC 的接触攻击或同种弹幕共用适应，接触与弹幕分别分类
+			适应持续 11 秒，同种攻击命中后叠层并刷新时间，满层也会刷新
+			首次攻击不享受适应减伤；不同攻击命中后改为该种攻击的 1 层
+			有适应层数时，本饰品的生命恢复、防御、生命上限及接触减伤翻倍
+			环境伤害清空适应；陷阱弹幕仍可适应，持续掉血不影响适应
+			闪避、免疫及护盾完全吸收不改变适应；卸装、死亡或到期清空
+			'''
+		AdaptationState: 适应：{0}/{1} 层，该种攻击减伤 {2}%，剩余 {3} 秒
+	}
+
 	Heartsteel: {
 		DisplayName: 心之钢
 		Tooltip:
@@ -504,6 +521,11 @@ Buffs: {
 	FocusOrbCooldownBuff: {
 		DisplayName: 专注冷却
 		Description: 专注宝珠主动技能冷却中
+	}
+
+	AdversityAdaptationBuff: {
+		DisplayName: 习难适应
+		Description: 对已适应的攻击每层减伤15%，最多75%；习难护符的四项基础加成翻倍
 	}
 
 	BerserkBladeBuff: {
