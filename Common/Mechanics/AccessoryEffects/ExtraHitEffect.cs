@@ -108,7 +108,7 @@ namespace TestMod.Common.Mechanics.AccessoryEffects
         /// <summary>击退力度，0 = 无击退。</summary>
         public float Knockback;
 
-        /// <summary>额外无视防御。真实伤害类型也会由 NPC 通用钩子穿透防御；抗性仍正常结算。</summary>
+        /// <summary>额外无视防御。真实伤害另由通用钩子穿透防御并绕过通用减伤，仍保留命中限制和伤害上限。</summary>
         public bool IgnoreDefense;
 
         /// <summary>指定击退方向；null = 根据玩家与目标位置决定。</summary>

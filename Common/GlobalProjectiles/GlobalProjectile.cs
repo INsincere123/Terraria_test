@@ -233,7 +233,7 @@ namespace TestMod.Common.GlobalProjectiles
             Player player = Main.player[projectile.owner];
             if (projectile.ModProjectile is InstantExtraHitProjectile) return;
 
-            // 真实伤害：无视防御（不依赖 godMode）
+            // 真实伤害：无视防御（不依赖 godMode）；通用减伤由 TrueDamageSystem 在最终计算时处理。
             if (projectile.DamageType == TrueDamageClass.Instance)
             {
                 modifiers.ScalingArmorPenetration += 1f;

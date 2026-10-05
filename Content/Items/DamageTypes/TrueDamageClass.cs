@@ -8,7 +8,9 @@ namespace TestMod.Content.Items.DamageTypes
     //   · BloodFeedPlayer 的通用加成仍通过 Generic 继承，不重复注入
     //   · 武器前缀通过 GlobalItem.ChoosePrefix 独立实现，不影响此处继承关系
     //   · 使用标准暴击计算
-    //   · 穿透防御由 GlobalProjectile / GlobalItem 中的 ModifyHitNPC 负责
+    //   · GlobalNPC / GlobalProjectile / GlobalItem 命中钩子负责穿透防御
+    //   · TrueDamageSystem 在最终计算时绕过 FinalDamage / TargetDamageMultiplier 通用减伤
+    //   · 保留拒绝命中、无敌、SuperArmor、伤害上限及 SourceDamage 修正（含 DDR）
     public class TrueDamageClass : DamageClass
     {
         public static TrueDamageClass Instance => ModContent.GetInstance<TrueDamageClass>();
