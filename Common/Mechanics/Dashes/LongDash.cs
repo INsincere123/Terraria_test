@@ -5,6 +5,7 @@ using Terraria.Audio;
 using Terraria.ID;
 using Terraria.ModLoader;
 using TestMod.Common.Utilities;
+using TestMod.Content.Projectiles.Dashes;
 
 namespace TestMod.Common.Mechanics.Dashes
 {
@@ -160,6 +161,7 @@ namespace TestMod.Common.Mechanics.Dashes
 		// =================================================
 		private void CheckContactDamage(Player player, int dirX)
 		{
+			if (player.whoAmI != Main.myPlayer || Main.netMode == NetmodeID.Server) return;
 			DashPlayer dp = player.GetModPlayer<DashPlayer>();
 			if (dp.HitCount >= MaxHitsPerDash) return;
 
@@ -176,9 +178,6 @@ namespace TestMod.Common.Mechanics.Dashes
 				if (dp.HitTargets[i]) continue;
 				if (!hitbox.Intersects(npc.Hitbox)) continue;
 
-				dp.HitTargets[i] = true;
-				dp.HitCount++;
-
 				bool crit = ContactCritDenom > 0 && Main.rand.Next(ContactCritDenom) == 0;
 
 				// ApplyTo 包含继承的伤害属性；最终防御与暴击由 NPC 统一结算一次。
@@ -187,10 +186,9 @@ namespace TestMod.Common.Mechanics.Dashes
 				NPC.HitInfo hitInfo = npc.CalculateHitInfo(
 					scaledDamage, hitDirection, crit, ContactKnockback, DamageClass.Melee);
 
-				npc.StrikeNPC(hitInfo);
-
-				if (Main.netMode == NetmodeID.MultiplayerClient)
-					NetMessage.SendStrikeNPC(npc, hitInfo);
+				if (!DashStrikeProjectile.Strike<LongDashStrike>(player, npc, hitInfo, "LongDash")) continue;
+				dp.HitTargets[i] = true;
+				dp.HitCount++;
 
 				// 撞击爆炸粒子
 				DustUtils.SpawnImpactBurst(npc.Center, ContactDustCount, DashDustColor, 2.6f, 7.2f, 1.25f);

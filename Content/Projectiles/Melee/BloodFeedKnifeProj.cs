@@ -1,6 +1,7 @@
+using System.IO;
 using Terraria;
+using Terraria.DataStructures;
 using Terraria.ModLoader;
-using TestMod.Common.Players;
 using TestMod.Content.Items.DamageTypes;
 using Microsoft.Xna.Framework;
 using ProjectileTracking = TestMod.Common.GlobalProjectiles.GlobalProjectile;
@@ -11,6 +12,7 @@ namespace TestMod.Content.Projectiles.Melee
     //  BloodFeedKnifeProj  ——  血饲匕首弹幕
     // ----------------------------------------------------------------------------
     //  ai[0] = 命中后的停追冷却（AI 更新次数；初始 -1 表示无冷却）
+    //  ai[1] = 发射时正常阶段伤害倍率，ai[2] = 发射时正常阶段附加暴击率。
     //  存活时间由 timeLeft 管理，目标由每实体 GlobalProjectile 缓存。
     //
     //  追踪逻辑：
@@ -18,7 +20,7 @@ namespace TestMod.Content.Projectiles.Melee
     //    每次 AI 更新插值转向目标，保留既有稳定速度和速度保底。
     //
     //  伤害逻辑：
-    //    通过 BloodFeedPlayer 读取当前阶段伤害倍率并应用到 ModifyHitNPC
+    //    正常加成在扣血后、触发暴走前快照；暴走/虚弱通用加成由引擎随发射属性快照。
     // ============================================================================
     public class BloodFeedKnifeProj : ModProjectile
     {
@@ -90,13 +92,21 @@ namespace TestMod.Content.Projectiles.Melee
 
         public override void ModifyHitNPC(NPC target, ref NPC.HitModifiers modifiers)
         {
-            // 读取 BloodFeed 正常阶段伤害倍率（暴走/虚弱的通用加成已由 BloodFeedPlayer 注入 Generic）
-            Player owner = Main.player[Projectile.owner];
-            var mp = owner.GetModPlayer<BloodFeedPlayer>();
-            float mult = mp.CurrentNormalMultiplier;
+            float mult = Projectile.ai[1];
             if (mult > 1f)
                 modifiers.SourceDamage *= mult;
         }
+
+        public override void OnSpawn(IEntitySource source)
+        {
+            // ApplyStatsFromSource 已计入武器和玩家暴击；正常失血暴击只补入一次。
+            Projectile.CritChance += (int)Projectile.ai[2];
+        }
+
+        // 远端不会重新运行发射源属性继承，明确同步总暴击率。
+        public override void SendExtraAI(BinaryWriter writer) => writer.Write(Projectile.CritChance);
+
+        public override void ReceiveExtraAI(BinaryReader reader) => Projectile.CritChance = reader.ReadInt32();
 
         // ══════════════════════════════════════════════════════════════
         //   OnHitNPC — 触发冷却

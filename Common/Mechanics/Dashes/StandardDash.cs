@@ -4,6 +4,7 @@ using Terraria;
 using Terraria.Audio;
 using Terraria.ID;
 using Terraria.ModLoader;
+using TestMod.Content.Projectiles.Dashes;
 
 namespace TestMod.Common.Mechanics.Dashes
 {
@@ -152,6 +153,7 @@ namespace TestMod.Common.Mechanics.Dashes
 
 		private static void CheckContactDamage(Player player, DashPlayer dp, int dirX, ref DashConfig cfg)
 		{
+			if (player.whoAmI != Main.myPlayer || Main.netMode == NetmodeID.Server) return;
 			if (dp.HitCount >= cfg.MaxHitsPerDash) return;
 
 			int expand = cfg.HitboxExpand;
@@ -167,9 +169,6 @@ namespace TestMod.Common.Mechanics.Dashes
 				if (!npc.active || npc.dontTakeDamage || npc.friendly || npc.immortal) continue;
 				if (dp.HitTargets[i]) continue;
 				if (!hitbox.Intersects(npc.Hitbox)) continue;
-
-				dp.HitTargets[i] = true;
-				dp.HitCount++;
 
 				DashHitContext ctx = new DashHitContext
 				{
@@ -187,10 +186,9 @@ namespace TestMod.Common.Mechanics.Dashes
 				NPC.HitInfo hitInfo = npc.CalculateHitInfo(
 					scaledDamage, ctx.HitDirection, crit, ctx.Knockback, ctx.DmgClass);
 
-				npc.StrikeNPC(hitInfo);
-
-				if (Main.netMode == NetmodeID.MultiplayerClient)
-					NetMessage.SendStrikeNPC(npc, hitInfo);
+				if (!DashStrikeProjectile.Strike<StandardDashStrike>(player, npc, hitInfo, "StandardDash")) continue;
+				dp.HitTargets[i] = true;
+				dp.HitCount++;
 
 				if (cfg.OnHitBuffType > 0)
 					npc.AddBuff(cfg.OnHitBuffType, cfg.OnHitBuffDuration);

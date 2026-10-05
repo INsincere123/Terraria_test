@@ -4,6 +4,7 @@ using Terraria.GameContent.UI;
 using Terraria.ID;
 using Terraria.ModLoader;
 using Terraria.ModLoader.IO;
+using TestMod.Common.Mechanics.Dashes;
 
 namespace TestMod.Common.Players
 {
@@ -64,6 +65,8 @@ namespace TestMod.Common.Players
         // ── 处决核心 ─────────────────────────────────────────────────
         private void TryExecute(NPC target)
         {
+            if (Player.GetModPlayer<DashPlayer>().IsResolvingContactDamage) return;
+            if (Player.GetModPlayer<InstantExtraHitPlayer>().IsResolvingHit) return;
             if (!IsEquipped) return;
             if (!target.boss || target.lifeMax <= 0) return;
             if (_lastExecutedWhoAmI == target.whoAmI) return; // 本帧已处理过此 Boss

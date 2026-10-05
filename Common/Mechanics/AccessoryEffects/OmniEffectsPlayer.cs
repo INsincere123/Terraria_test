@@ -237,6 +237,9 @@ namespace TestMod.Common.Mechanics.AccessoryEffects
 
         public override void OnHitNPCWithProj(Projectile proj, NPC target, NPC.HitInfo hit, int damageDone)
         {
+            // 冲刺过去不触发普通攻击吸血；命名弹幕仅补齐投送与统计来源。
+            if (Player.GetModPlayer<global::TestMod.Common.Mechanics.Dashes.DashPlayer>().IsResolvingContactDamage) return;
+            if (Player.GetModPlayer<global::TestMod.Common.Players.InstantExtraHitPlayer>().IsResolvingHit) return;
             LifestealEffect.TryHeal(Player, this, hit, damageDone, fromProjectile: true);
 
             // 追加弹幕不消耗强制暴击次数，也不再次触发专注额外伤害。
@@ -259,7 +262,7 @@ namespace TestMod.Common.Mechanics.AccessoryEffects
             // 自然暴击率达到 100% 时必定触发；每次额度内的实际命中独立判定一次。
             if (naturalCrit <= Main.rand.NextFloat() * 100f) return;
 
-            ExtraHitEffect.Strike(Player, target, ForcedCritExtraHit, damageDone);
+            ExtraHitEffect.Strike<global::TestMod.Content.Projectiles.Accessories.FocusExtraHitProjectile>(Player, target, ForcedCritExtraHit, damageDone);
         }
 
         public override bool FreeDodge(Player.HurtInfo info)

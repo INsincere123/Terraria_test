@@ -154,7 +154,7 @@ namespace TestMod.Common.Players
             _extraHitActive = true;
             try
             {
-                ExtraHitEffect.Strike(Player, target, MaxStackHitConfig, damageDone);
+                ExtraHitEffect.Strike<global::TestMod.Content.Projectiles.Accessories.BerserkBladeExtraHitProjectile>(Player, target, MaxStackHitConfig, damageDone);
             }
             finally
             {

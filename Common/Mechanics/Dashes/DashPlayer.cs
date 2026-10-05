@@ -54,6 +54,9 @@ namespace TestMod.Common.Mechanics.Dashes
 		public bool[] HitTargets = new bool[Main.maxNPCs];
 		public int    HitCount;
 
+		// 仅覆盖同步的冲刺命中调用；finally 恢复，普通攻击不受影响。
+		internal bool IsResolvingContactDamage;
+
 		public bool IsDashing => ActiveEffect != null && ElapsedFrames < _activeDashMaxDuration;
 
 		// ── 私有状态 ───────────────────────────────────────────────────────────

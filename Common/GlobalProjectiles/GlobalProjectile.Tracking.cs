@@ -29,6 +29,8 @@ namespace TestMod.Common.GlobalProjectiles
             bitWriter.WriteBit(ExtraHitUseCrit);
             bitWriter.WriteBit(ExtraHitIgnoreDefense);
             bitWriter.WriteBit(subhandDynamicText);
+            bitWriter.WriteBit(_bloodFeedPenetrationOverridden);
+            BloodFeed_WritePenetration(binaryWriter);
             if (IsExtraHit) binaryWriter.Write(projectile.DamageType.Type);
             if (projectile.type == ProjectileID.EmpressBlade) WriteTerraprismaAI(binaryWriter);
             if (projectile.type == ProjectileID.AbigailMinion) WriteAbigailAI(projectile, binaryWriter);
@@ -48,6 +50,7 @@ namespace TestMod.Common.GlobalProjectiles
             ExtraHitUseCrit = bitReader.ReadBit();
             ExtraHitIgnoreDefense = bitReader.ReadBit();
             subhandDynamicText = bitReader.ReadBit();
+            BloodFeed_ReadPenetration(projectile, bitReader.ReadBit(), binaryReader);
             if (IsExtraHit)
             {
                 projectile.DamageType = DamageClassLoader.GetDamageClass(binaryReader.ReadInt32()) ?? projectile.DamageType;

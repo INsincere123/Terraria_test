@@ -5,6 +5,7 @@ using Terraria.DataStructures;
 using Terraria.ID;
 using Terraria.ModLoader;
 using TestMod.Common.Compatibility;
+using TestMod.Content.Projectiles.Accessories;
 
 namespace TestMod.Common.Mechanics.AccessoryEffects
 {
@@ -13,10 +14,10 @@ namespace TestMod.Common.Mechanics.AccessoryEffects
     // ----------------------------------------------------------------------------
     //  用途：计算并打出一次"额外伤害"，供饰品、武器、盔甲套装调用。
     //  固定/属性部分吃一次完整玩家增伤；实际命中比例部分不再吃玩家增伤。
-    //  Strike 与 SpawnProjectile 共用 Compute，分别负责直接打出和弹幕投送。
+    //  Strike<T> 提供命名瞬时弹幕；传统 Strike 保留直接结算，SpawnProjectile 投送持续弹幕。
     //
-    //  使用示例（直接打出）：
-    //    int dealt = ExtraHitEffect.Strike(player, target, new ExtraHitConfig
+    //  使用示例（命名瞬时追加伤害）：
+    //    int dealt = ExtraHitEffect.Strike<HeartsteelExtraHitProjectile>(player, target, new ExtraHitConfig
     //    {
     //        FlatDamage      = 240f,
     //        PlayerStatRatio = 0.88f,
@@ -115,7 +116,8 @@ namespace TestMod.Common.Mechanics.AccessoryEffects
 
         // ── 多人模式 ──────────────────────────────────────────────
         /// <summary>
-        /// true = 不登记单机玩家击杀归属。不是 OnHit 回调开关，也不是同步开关。
+        /// 传统直接 Strike 专用：true = 不登记单机玩家击杀归属。不是 OnHit 回调或同步开关。
+        /// 命名 Strike&lt;T&gt; 弹幕始终拥有玩家归属，不使用此字段。
         /// 直接 StrikeNPC 不分发物品/弹幕的玩家 OnHit 钩子；联机伤害包始终单独同步。
         /// </summary>
         public bool NoPlayerInteraction;
@@ -142,6 +144,27 @@ namespace TestMod.Common.Mechanics.AccessoryEffects
         public static readonly Color DefaultCombatTextColor = new(180, 50, 255);
 
         // ── 公开 API ──────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// owner 同帧计算并通过命名弹幕投送一次，返回命中回调的实际伤害。
+        /// 数值规则与传统 Strike 相同；弹幕始终有玩家归属，NoPlayerInteraction 仅适用于传统接口。
+        /// </summary>
+        public static int Strike<T>(Player player, NPC target, in ExtraHitConfig cfg, int hitDamage = 0)
+            where T : InstantExtraHitProjectile
+        {
+            if (Main.netMode == NetmodeID.Server || player.whoAmI != Main.myPlayer
+                || !target.active || target.life <= 0)
+                return 0;
+
+            DamageClass damageClass = ResolveDamageClass(player, cfg);
+            int damage = Compute(player, cfg, hitDamage);
+            int direction = cfg.HitDirection ?? (target.Center.X > player.Center.X ? 1 : -1);
+            NPC.HitModifiers modifiers = target.GetIncomingStrikeModifiers(damageClass, direction);
+            ApplyHitRules(player, damageClass, cfg.UseCrit, cfg.IgnoreDefense, ref modifiers);
+            NPC.HitInfo hit = modifiers.ToHitInfo(damage, false, cfg.Knockback);
+            hit.HideCombatText = !cfg.UseVanillaCombatText;
+            return InstantExtraHitProjectile.Deliver<T>(player, target, hit, cfg);
+        }
 
         /// <summary>
         /// 仅计算伤害数值，不打出。

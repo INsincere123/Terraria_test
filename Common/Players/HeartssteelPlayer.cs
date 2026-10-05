@@ -123,22 +123,26 @@ namespace TestMod.Common.Players
             if (_procActive || !HasHeartsteel || !IsCharged) return;
             if (!target.active || !target.boss || target.life <= 0) return;
 
+            if (Player.whoAmI != Main.myPlayer || Main.netMode == NetmodeID.Server) return;
             _procActive = true;
-            IsCharged   = false;
-            ChargeTimer = 0;
-
-            int damageDone = ExtraHitEffect.Strike(Player, target, ProcHitConfig);
-
-            // 永久叠层：基于实际打出的伤害（已扣除 NPC 防御）
-            if (damageDone > 0 && BonusMaxHP < MaxBonusHP)
+            try
             {
-                int gainedHP = Math.Max(1, (int)(damageDone * HpGainRatio));
-                BonusMaxHP   = Math.Min(MaxBonusHP, BonusMaxHP + gainedHP);
+                IsCharged = false;
+                ChargeTimer = 0;
+                int damageDone = ExtraHitEffect.Strike<global::TestMod.Content.Projectiles.Accessories.HeartsteelExtraHitProjectile>(Player, target, ProcHitConfig);
+
+                // 永久叠层仍基于投送入口返回的实际命中伤害。
+                if (damageDone > 0 && BonusMaxHP < MaxBonusHP)
+                {
+                    int gainedHP = Math.Max(1, (int)(damageDone * HpGainRatio));
+                    BonusMaxHP = Math.Min(MaxBonusHP, BonusMaxHP + gainedHP);
+                }
+                SpawnProcEffect(target);
             }
-
-            SpawnProcEffect(target);
-
-            _procActive = false;
+            finally
+            {
+                _procActive = false;
+            }
         }
 
         private void SpawnProcEffect(NPC target)

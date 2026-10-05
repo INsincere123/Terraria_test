@@ -523,6 +523,13 @@ Buffs: {
 }
 
 Projectiles: {
+	HeartsteelExtraHitProjectile.DisplayName: 心之钢
+	BerserkBladeExtraHitProjectile.DisplayName: 狂暴之刃
+	FocusExtraHitProjectile.DisplayName: 专注宝珠追加伤害
+	HarvestExtraHitProjectile.DisplayName: 暗印收割伤害
+	StandardDashStrike.DisplayName: 冲刺伤害
+	LongDashStrike.DisplayName: 长冲刺
+	ShortDashStrike.DisplayName: 短冲刺
 	PhantasmSpecialArrowProj.DisplayName: 真·弑神箭
 	PhantasmHoldout.DisplayName: Phantasm Holdout
 	AntaresBeam.DisplayName: 心宿二火焰

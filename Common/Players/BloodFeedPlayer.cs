@@ -18,8 +18,8 @@ namespace TestMod.Common.Players
     //  ③ 战后虚弱  暴走结束后（10秒）：最大HP-20%，伤害在前4秒衰减至0
     //
     //  武器接入：
-    //    Shoot()         → 扣血 + TriggerBerserkCheck()
-    //    ModifyHitNPC()  → modifiers.SourceDamage *= CurrentNormalMultiplier
+    //    Shoot()         → 扣血后快照正常阶段伤害/暴击，再 TriggerBerserkCheck()
+    //    ModifyHitNPC()  → 应用本发快照，暴走/虚弱加成沿用发射时的通用属性
     // ============================================================================
     public class BloodFeedPlayer : ModPlayer
     {
@@ -36,7 +36,7 @@ namespace TestMod.Common.Players
         public const float BerserkDrainRatioPerTick = 0.02f; // 每次扣当前最大HP的比例（2%/秒）
         // ─────────────────────────────────────────────────────────────
 
-        // 持久状态（不在 ResetEffects 里清零）
+        // 跨帧状态（不在 ResetEffects 里清零，死亡/进入世界时清理）
         public float BerserkPeakBonus;   // 暴走结束时的倍率，用于虚弱期衰减基准
         private bool _wasBerserkLastTick;
         private int  _drainAccum;        // 暴走扣血帧计数器
@@ -70,6 +70,17 @@ namespace TestMod.Common.Players
         }
 
         // ── ModPlayer 钩子 ────────────────────────────────────────────
+
+        public override void UpdateDead() => ClearTransientState();
+
+        public override void OnEnterWorld() => ClearTransientState();
+
+        private void ClearTransientState()
+        {
+            BerserkPeakBonus = 1f;
+            _wasBerserkLastTick = false;
+            _drainAccum = 0;
+        }
 
         public override void PostUpdateEquips()
         {
@@ -134,11 +145,17 @@ namespace TestMod.Common.Players
                 health.Base -= (int)(Player.statLifeMax * ExhaustHpRatio);
         }
 
-        // 虚弱期使用治疗药水：恢复量翻倍 + 清除所有 debuff（保留虚弱本身）
+        // 查询治疗量也用于 tooltip 和快速治疗选药，不能在这里修改 buff。
         public override void GetHealLife(Item item, bool quickHeal, ref int healValue)
         {
             if (!IsExhausted || healValue <= 0) return;
             healValue *= 2;
+        }
+
+        // 仅由实际治疗物品消耗钩子调用，保留虚弱本身。
+        internal void CleanseAfterHealingItemConsumed(Item item)
+        {
+            if (!IsExhausted || item.healLife <= 0) return;
 
             int exhaustType = ModContent.BuffType<BloodExhaustionBuff>();
             for (int i = Player.MaxBuffs - 1; i >= 0; i--)

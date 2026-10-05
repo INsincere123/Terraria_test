@@ -31,6 +31,7 @@ namespace TestMod.Common.GlobalProjectiles
         /// </summary>
         private static void DoHarvest(NPC center, Player player)
         {
+            if (player.whoAmI != Main.myPlayer || Main.netMode == Terraria.ID.NetmodeID.Server) return;
             ExtraHitConfig damageConfig = new()
             {
                 FlatDamage = 66f,
@@ -45,22 +46,11 @@ namespace TestMod.Common.GlobalProjectiles
                 if (!npc.active || npc.friendly) continue;
                 if (Vector2.Distance(center.Center, npc.Center) < 400f)
                 {
-                    ExtraHitEffect.Strike(player, npc, damageConfig);
+                    ExtraHitEffect.Strike<global::TestMod.Content.Projectiles.Accessories.HarvestExtraHitProjectile>(player, npc, damageConfig);
                     if (++count >= 6) break;
                 }
             }
             player.AddBuff(ModContent.BuffType<HarvestTimeBuff>(), 180);
         }
-
-        // ══════════════════════════════════════════════════════════════
-        //   视觉辅助（委托给 DrawUtils）
-        // ══════════════════════════════════════════════════════════════
-
-        /// <summary>
-        /// 在 from→to 之间生成链式电弧粒子线（仅客户端）。
-        /// 内部委托 DrawUtils.SpawnDustLine，新代码请直接调用 DrawUtils。
-        /// </summary>
-        private static void SpawnSplitVisual(Vector2 from, Vector2 to)
-            => DrawUtils.SpawnDustLine(from, to, Microsoft.Xna.Framework.Color.Cyan);
     }
 }

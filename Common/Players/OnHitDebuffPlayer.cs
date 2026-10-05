@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Terraria;
 using Terraria.ModLoader;
+using TestMod.Common.Mechanics.Dashes;
 
 namespace TestMod.Common.Players
 {
@@ -26,12 +27,16 @@ namespace TestMod.Common.Players
 
         public override void OnHitNPC(NPC target, NPC.HitInfo hit, int damageDone)
         {
+            if (Player.GetModPlayer<DashPlayer>().IsResolvingContactDamage) return;
+            if (Player.GetModPlayer<InstantExtraHitPlayer>().IsResolvingHit) return;
             foreach (var (type, duration) in _debuffs)
                 target.AddBuff(type, duration);
         }
 
         public override void OnHitNPCWithProj(Projectile proj, NPC target, NPC.HitInfo hit, int damageDone)
         {
+            if (Player.GetModPlayer<DashPlayer>().IsResolvingContactDamage) return;
+            if (Player.GetModPlayer<InstantExtraHitPlayer>().IsResolvingHit) return;
             foreach (var (type, duration) in _debuffs)
                 target.AddBuff(type, duration);
         }

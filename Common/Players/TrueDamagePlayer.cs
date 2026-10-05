@@ -6,26 +6,28 @@ using TestMod.Content.Items.DamageTypes;
 namespace TestMod.Common.Players
 {
     // 每帧将当前最强职业的专属加成叠加到真实伤害（Generic 已由 GetModifierInheritance 继承）
-    // 伤害系统完全职业无关：不绑定近战，取四职业中加成最高者补充差值
+    // 以手持武器基础伤害比较四职业的完整结算，合并获胜职业的专属修正。
     public class TrueDamagePlayer : ModPlayer
     {
-        public override void PostUpdateEquips()
+        public override void PreUpdateMovement()
         {
+            // 此时原版潜行、魔力病和所有 PostUpdateMiscEffects 已结算，且尚未执行物品攻击。
             // ── 伤害加成 ─────────────────────────────────────────────────
-            // GetTotalDamage 返回含所有继承链的最终加成（Additive 已包含通用部分）
-            float genericAdd = Player.GetTotalDamage(DamageClass.Generic).Additive;
-            float meleeAdd   = Player.GetTotalDamage(DamageClass.Melee).Additive;
-            float rangedAdd  = Player.GetTotalDamage(DamageClass.Ranged).Additive;
-            float magicAdd   = Player.GetTotalDamage(DamageClass.Magic).Additive;
-            float summonAdd  = Player.GetTotalDamage(DamageClass.Summon).Additive;
+            // Base/Flat 会使职业排名随基础伤害变化；空手时按 1 点基础伤害比较。
+            float comparisonDamage = Math.Max(1, Player.HeldItem.damage);
+            StatModifier genericDamage = Player.GetTotalDamage(DamageClass.Generic);
+            StatModifier bestClassDamage = StatModifier.Default;
+            float bestDamage = genericDamage.ApplyTo(comparisonDamage);
 
-            float bestClassAdd = Math.Max(Math.Max(meleeAdd, rangedAdd),
-                                          Math.Max(magicAdd, summonAdd));
+            SelectClassDamage(DamageClass.Melee, genericDamage, comparisonDamage, ref bestClassDamage, ref bestDamage);
+            SelectClassDamage(DamageClass.Ranged, genericDamage, comparisonDamage, ref bestClassDamage, ref bestDamage);
+            SelectClassDamage(DamageClass.Magic, genericDamage, comparisonDamage, ref bestClassDamage, ref bestDamage);
+            SelectClassDamage(DamageClass.Summon, genericDamage, comparisonDamage, ref bestClassDamage, ref bestDamage);
 
-            // 去掉通用部分（已由 GetModifierInheritance 继承），只追加职业专属超出量
-            float damageBonus = bestClassAdd - genericAdd;
-            if (damageBonus > 0f)
-                Player.GetDamage(TrueDamageClass.Instance) += damageBonus;
+            // 四个原版职业的数值仅继承 Generic。只合并职业自身的修正，完整保留
+            // Additive/Multiplicative/Base/Flat，Generic 仍由真实伤害类型继承一次。
+            ref StatModifier trueDamage = ref Player.GetDamage(TrueDamageClass.Instance);
+            trueDamage = trueDamage.CombineWith(bestClassDamage);
 
             // ── 暴击率加成 ───────────────────────────────────────────────
             // GetCritChance 只返回该职业专属暴击（不含继承），直接取最大值即可
@@ -35,9 +37,21 @@ namespace TestMod.Common.Players
             int summonCrit = (int)Player.GetCritChance(DamageClass.Summon);
 
             int bestClassCrit = Math.Max(Math.Max(meleeCrit, rangedCrit),
-                                         Math.Max(magicCrit, summonCrit));
+                                        Math.Max(magicCrit, summonCrit));
             if (bestClassCrit > 0)
                 Player.GetCritChance(TrueDamageClass.Instance) += bestClassCrit;
+        }
+
+        private void SelectClassDamage(DamageClass damageClass, StatModifier genericDamage, float comparisonDamage,
+            ref StatModifier bestClassDamage, ref float bestDamage)
+        {
+            StatModifier classDamage = Player.GetDamage(damageClass);
+            float damage = genericDamage.CombineWith(classDamage).ApplyTo(comparisonDamage);
+            if (damage <= bestDamage)
+                return;
+
+            bestClassDamage = classDamage;
+            bestDamage = damage;
         }
     }
 }

@@ -4,7 +4,8 @@ namespace TestMod.Content.Items.DamageTypes
 {
     // 真实伤害类型
     //   · 只继承通用加成（职业无关，不与任何职业绑定）
-    //   · BloodFeedPlayer / TrueDamagePlayer 负责动态取最强职业加成注入 Generic
+    //   · TrueDamagePlayer 在职业属性结算后合并最强职业的完整专属修正
+    //   · BloodFeedPlayer 的通用加成仍通过 Generic 继承，不重复注入
     //   · 武器前缀通过 GlobalItem.ChoosePrefix 独立实现，不影响此处继承关系
     //   · 使用标准暴击计算
     //   · 穿透防御由 GlobalProjectile / GlobalItem 中的 ModifyHitNPC 负责

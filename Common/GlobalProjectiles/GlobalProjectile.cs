@@ -3,7 +3,6 @@ using Terraria.ID;
 using Terraria.ModLoader;
 using Microsoft.Xna.Framework;
 using System;
-using System.Collections.Generic;
 using TestMod.Content.Buffs;
 using TestMod.Common.Compatibility;
 using TestMod.Common.Players;
@@ -12,7 +11,7 @@ using TestMod.Common.Mechanics.AccessoryEffects;
 using TestMod.Content.Items.DamageTypes;
 using TestMod.Content.Projectiles.Melee;
 using TestMod.Content.Projectiles.Minions;
-using TestMod.Content.Projectiles.Ranged;
+using TestMod.Content.Projectiles.Accessories;
 
 namespace TestMod.Common.GlobalProjectiles
 {
@@ -38,8 +37,6 @@ namespace TestMod.Common.GlobalProjectiles
         // ── 星尘龙追踪冷却 ──
         private int _dragonTrackingCooldown = 0;
 
-        // 破晓之光太阳爆发触发记录，防止每帧重复触发
-        private static readonly HashSet<int> _daybreakBurstFiredSet = new HashSet<int>();
         // 破晓之光追踪延迟计时器
         private int _daybreakTrackDelay = 0;
 
@@ -234,6 +231,7 @@ namespace TestMod.Common.GlobalProjectiles
             if (projectile.owner < 0 || projectile.owner >= Main.maxPlayers) return;
 
             Player player = Main.player[projectile.owner];
+            if (projectile.ModProjectile is InstantExtraHitProjectile) return;
 
             // 真实伤害：无视防御（不依赖 godMode）
             if (projectile.DamageType == TrueDamageClass.Instance)
@@ -296,6 +294,7 @@ namespace TestMod.Common.GlobalProjectiles
             if (projectile.owner < 0 || projectile.owner >= Main.maxPlayers) return;
 
             Player player = Main.player[projectile.owner];
+            if (projectile.ModProjectile is InstantExtraHitProjectile) return;
             if (!player.active) return;
 
             if (projectile.DamageType == TrueDamageClass.Instance && projectile.owner == Main.myPlayer)
@@ -342,23 +341,6 @@ namespace TestMod.Common.GlobalProjectiles
             // ─────────────── 以下为 godMode 专属效果 ───────────────
             if (!player.GetModPlayer<GodModePlayer>().GodModeBuff) return;
 
-            // 🏹 幻影弓强化箭：链式跳跃 + 范围爆炸（绕过无敌帧）
-            if (projectile.type == ModContent.ProjectileType<PhantasmSpecialArrowProj>())
-                HandlePhantasmArrowHit(player, target, damageDone);
-
-            // ☀️ 破晓之光矛：太阳爆发特效（每根矛只触发一次）
-            if (projectile.type == ProjectileID.Daybreak && !_daybreakBurstFiredSet.Contains(projectile.whoAmI))
-            {
-                _daybreakBurstFiredSet.Add(projectile.whoAmI);
-                HandleDaybreakBurst(player, target, damageDone);
-            }
-
-            // 🐉 星尘龙命中：两轮链式溅射
-            if (ProjectileID.Sets.StardustDragon[projectile.type])
-            {
-                HandleStardustDragonHit(player, target, damageDone);
-            }
-
             // 🪢 鞭子命中：打暗印 + 重置衰减 
             if (ProjectileID.Sets.IsAWhip[projectile.type])
             {
@@ -374,16 +356,6 @@ namespace TestMod.Common.GlobalProjectiles
             {
                 DoHarvest(target, player);
             }
-        }
-
-
-        // ══════════════════════════════════════════════════════════════
-        //   OnKill — 清理破晓之光矛的触发记录，防止字典无限增长
-        // ══════════════════════════════════════════════════════════════
-        public override void OnKill(Projectile projectile, int timeLeft)
-        {
-            if (projectile.type == ProjectileID.Daybreak)
-                _daybreakBurstFiredSet.Remove(projectile.whoAmI);
         }
     }
 }

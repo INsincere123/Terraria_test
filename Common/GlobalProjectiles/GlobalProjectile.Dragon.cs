@@ -3,7 +3,6 @@ using Microsoft.Xna.Framework;
 using System;
 using Terraria.ID;
 using TestMod.Common.Utilities;
-using TestMod.Common.Mechanics.AccessoryEffects;
 
 namespace TestMod.Common.GlobalProjectiles
 {
@@ -116,36 +115,6 @@ namespace TestMod.Common.GlobalProjectiles
             if (finalSpeed > maxSpeed + 8f)
                 projectile.velocity = projectile.velocity / finalSpeed * (maxSpeed + 8f);
 
-        }
-
-        // ══════════════════════════════════════════════════════════════
-        //   星尘龙命中效果：两轮链式溅射
-        // ══════════════════════════════════════════════════════════════
-        private void HandleStardustDragonHit(Player player, NPC target, int damageDone)
-        {
-            // 第一轮：500f 内最多 6 个敌人，80% 伤害
-            int chainCount = 0;
-            for (int i = 0; i < Main.npc.Length; i++)
-            {
-                NPC npc = Main.npc[i];
-                if (!npc.active || npc.friendly || npc.whoAmI == target.whoAmI) continue;
-                if (Vector2.Distance(target.Center, npc.Center) > 500f) continue;
-
-                ExtraHitEffect.StrikeRatio(player, npc, damageDone, 0.8f);
-                SpawnSplitVisual(target.Center, npc.Center);
-                if (++chainCount >= 6) break;
-            }
-
-            // 第二轮：300f 内所有敌人，50% 伤害
-            for (int i = 0; i < Main.npc.Length; i++)
-            {
-                NPC npc = Main.npc[i];
-                if (!npc.active || npc.friendly || npc.whoAmI == target.whoAmI) continue;
-                if (Vector2.Distance(target.Center, npc.Center) >= 300f) continue;
-
-                ExtraHitEffect.StrikeRatio(player, npc, damageDone, 0.5f);
-                SpawnSplitVisual(target.Center, npc.Center);
-            }
         }
     }
 }

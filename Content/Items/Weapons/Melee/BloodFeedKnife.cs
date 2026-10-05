@@ -46,6 +46,8 @@ namespace TestMod.Content.Items.Weapons.Melee
         public override bool Shoot(Player player, EntitySource_ItemUse_WithAmmo source,
             Vector2 position, Vector2 velocity, int type, int damage, float knockback)
         {
+            if (player.whoAmI != Main.myPlayer) return false;
+
             var mp = player.GetModPlayer<BloodFeedPlayer>();
 
             // 暴走期间由 BloodFeedPlayer.PostUpdateEquips 统一按秒扣血，武器不额外扣
@@ -63,10 +65,15 @@ namespace TestMod.Content.Items.Weapons.Melee
                 }
             }
 
-            // ── 检查是否应进入暴走 ─────────────────────────────────────
+            // 引擎已在 Shoot 前计算 damage；先保存扣血后的正常加成，避免触发暴走
+            // 使本发失去倍率，也不让在途匕首随玩家换阶段丢失加成。
+            float normalMultiplier = mp.CurrentNormalMultiplier;
+            int normalCritBonus = mp.CurrentNormalCritBonus;
             mp.TriggerBerserkCheck();
 
-            return true;
+            Projectile.NewProjectile(source, position, velocity, type, damage, knockback,
+                player.whoAmI, ai0: -1f, ai1: normalMultiplier, ai2: normalCritBonus);
+            return false;
         }
 
         public override void AddRecipes()

@@ -6,6 +6,11 @@ namespace TestMod.Common.GlobalItems
 {
     public partial class GlobalItem
     {
+        public override void OnConsumeItem(Item item, Player player)
+        {
+            player.GetModPlayer<BloodFeedPlayer>().CleanseAfterHealingItemConsumed(item);
+        }
+
         private static void ApplyBloodFeedHitModifiers(Player player, ref NPC.HitModifiers modifiers)
         {
             if (player.GetModPlayer<BloodFeedPlayer>().IsBerserk)
