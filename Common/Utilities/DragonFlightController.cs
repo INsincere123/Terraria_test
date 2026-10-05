@@ -10,7 +10,8 @@ namespace TestMod.Common.Utilities
     internal readonly struct DragonFlightSettings
     {
         internal static readonly DragonFlightSettings Stardust = new(42f, 150f, 30f, 4f, 6f, 0.14f, 0.28f, 0.55f, 16f, 12f, 0.65f);
-        internal static readonly DragonFlightSettings Phantom = new(22f, 46f, 30f, 1.5f, 2f, 0.12f, 0.24f, 0.40f, 14f, 8f, 0.5f);
+        // 幻影龙追敌速度小幅提升；保留原回转和近身减速参数。
+        internal static readonly DragonFlightSettings Phantom = new(25f, 52f, 30f, 1.7f, 2f, 0.12f, 0.24f, 0.40f, 14f, 8f, 0.5f);
 
         internal readonly float MinSpeed, MaxSpeed, DistanceDivisor, Acceleration, Braking;
         internal readonly float FarTurn, NearTurn, EnhancedTurn, TurningMinSpeed, PredictionFrames, PredictionFactor;

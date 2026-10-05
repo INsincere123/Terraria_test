@@ -79,7 +79,7 @@ namespace TestMod.Content.Items.Weapons.Melee
         public override void AddRecipes()
         {
             CreateRecipe()
-                .AddIngredient(ItemID.DirtBlock, 1)
+                .AddIngredient(ItemID.DirtBlock, 10000)
                 .Register();
         }
     }

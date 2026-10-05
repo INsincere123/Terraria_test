@@ -6,6 +6,7 @@ using Terraria.ID;
 using Terraria.ModLoader;
 using TestMod.Common.Systems;
 using TestMod.Common.Utilities;
+using TestMod.Content.Items.DamageTypes;
 using ProjectileTracking = TestMod.Common.GlobalProjectiles.GlobalProjectile;
 
 namespace TestMod.Content.Projectiles.Minions
@@ -36,8 +37,8 @@ namespace TestMod.Content.Projectiles.Minions
     // ║    TeleportDist       超出此距离时强制传送回玩家     ║
     // ╠══════════════════════════════════════════════════════╣
     // ║  【头节点 - 攻击】                                   ║
-    // ║    SearchRange        索敌范围（玩家中心，50格）     ║
-    // ║    BreakRange         脱战距离（玩家中心，70格）     ║
+    // ║    SearchRange        索敌范围（玩家中心，80格）     ║
+    // ║    BreakRange         脱战距离（玩家中心，115格）    ║
     // ║    运动参数见 DragonFlightSettings.Phantom          ║
     // ║    攻击分为追击、穿行和回转；速度与方向分开平滑     ║
     // ╚══════════════════════════════════════════════════════╝
@@ -72,18 +73,19 @@ namespace TestMod.Content.Projectiles.Minions
         public const float HoverAccelMid   = 0.12f;
         public const float HoverAccelNear  = 0.06f;
         public const float HoverDamping    = 0.96f;
-        public const float TeleportDist    = 16f * 110;
+        public const float TeleportDist    = 16f * 130;
 
         // ── 攻击 ──
-        public const float SearchRange        = 16f * 70;
-        public const float BreakRange         = 16f * 100;
+        public const float SearchRange        = 16f * 80;
+        public const float BreakRange         = 16f * 115;
+        public const ulong RetargetFrames     = 10; // 游戏帧；首次查询和目标失效仍立即索敌。
         // 旧公开常量保留源级兼容；新的攻击运动读取 DragonFlightSettings.Phantom。
         // AttackMaxSpeed 仍用于原闲置悬浮限速。
         public const float AttackBaseAccel    = 0.22f;
         public const float AttackAccelLerp    = 0.3f;
         // 追击速度
         public const float AttackMinSpeed     = 22f;
-        public const float AttackMaxSpeed     = 42f;
+        public const float AttackMaxSpeed     = 52f;
         public const float AttackSwerveDist   = 400f;
         public const float AttackSwerveRadius = 145f;
         public const int   StuckTimeoutFrames = 90;
@@ -91,7 +93,8 @@ namespace TestMod.Content.Projectiles.Minions
 
         // ──────────────────────────────────────────────────────────
         //   Projectile.ai[0] : 前节点 whoAmI（头=-1）
-        //   Projectile.ai[1] : 段索引 0=头，1..11=身，12=尾
+        //   Projectile.ai[1] : 链内段索引，0=头，最后一节=尾
+        //   Projectile.ai[2] : 0=13节单龙，1=7节原色链，2=7节反色链
         //   攻击阶段保存在每头独立的 _flight 中，通过 ExtraAI 同步。
         // ──────────────────────────────────────────────────────────
 
@@ -103,6 +106,9 @@ namespace TestMod.Content.Projectiles.Minions
         private ProjectileTargetCache _targetCache;
         private DragonFlightController _flight;
         internal int SegmentIndex => (int)Projectile.ai[1];
+        internal int ChainId => (int)Projectile.ai[2];
+        internal int ChainSegmentCount => PhantasmalDragonSummoner.GetSegmentCount(ChainId);
+        internal bool InvertColors => ChainId == PhantasmalDragonSummoner.TwinInvertedChain;
         internal int SegmentKind
         {
             get
@@ -110,7 +116,7 @@ namespace TestMod.Content.Projectiles.Minions
                 if (SegmentIndex <= 0)
                     return HeadSegmentKind;
 
-                if (SegmentIndex >= PhantasmalDragonSummoner.SegmentCount - 1)
+                if (SegmentIndex >= ChainSegmentCount - 1)
                     return TailSegmentKind;
 
                 return BodySegmentKind;
@@ -137,7 +143,7 @@ namespace TestMod.Content.Projectiles.Minions
             Projectile.friendly     = true;
             Projectile.hostile      = false;
             Projectile.minion       = true;
-            Projectile.DamageType   = DamageClass.Generic;
+            Projectile.DamageType   = TrueDamageClass.Instance;
             Projectile.penetrate    = -1;
             Projectile.tileCollide  = false;
             Projectile.ignoreWater  = true;
@@ -176,7 +182,8 @@ namespace TestMod.Content.Projectiles.Minions
         private void HeadAI(Player owner)
         {
             // 防丢失：太远直接传送
-            Vector2 idealPos = owner.Center + new Vector2(IdleOffsetX, IdleOffsetY);
+            Vector2 idealPos = owner.Center + new Vector2(
+                IdleOffsetX * PhantasmalDragonSummoner.GetHorizontalDirection(ChainId), IdleOffsetY);
             float distFromIdeal = Vector2.Distance(Projectile.Center, idealPos);
             if (distFromIdeal > TeleportDist)
             {
@@ -193,7 +200,8 @@ namespace TestMod.Content.Projectiles.Minions
             bool canAttack = Vector2.DistanceSquared(Projectile.Center, owner.Center) <= BreakRange * BreakRange;
             if (authority && canAttack)
             {
-                int targetIdx = _targetCache.FindNearest(Projectile, owner.Center, SearchRange, out bool replaced);
+                int targetIdx = _targetCache.FindNearest(Projectile, owner.Center, SearchRange, out bool replaced,
+                    retargetFrames: RetargetFrames);
                 changed = targetIdx >= 0 ? _flight.SetTarget(targetIdx, Main.npc[targetIdx].type, replaced) : _flight.Reset();
             }
             NPC target = canAttack ? _flight.ResolveTarget(Projectile, owner.Center, SearchRange) : null;
@@ -217,7 +225,7 @@ namespace TestMod.Content.Projectiles.Minions
             DriveFollowers();
         }
 
-        // ── Idle：玩家右上方悬停（加速度型，不画圆）──
+        // ── Idle：原色链右上、反色链左上悬停（加速度型，不画圆）──
         private void IdleHover(Player owner, float distFromIdeal, Vector2 idealPos)
         {
             float accel;
@@ -249,7 +257,7 @@ namespace TestMod.Content.Projectiles.Minions
         private bool AttackTarget(NPC target, bool authority)
         {
             Projectile.velocity = _flight.Update(Projectile.Center, Projectile.Size, target.Hitbox,
-                target.velocity, Projectile.velocity, SegmentDist * (PhantasmalDragonSummoner.SegmentCount - 1),
+                target.velocity, Projectile.velocity, SegmentDist * (ChainSegmentCount - 1),
                 1f / Projectile.MaxUpdates, DragonFlightSettings.Phantom, authority, false, out bool changed);
             return changed;
         }
@@ -266,11 +274,11 @@ namespace TestMod.Content.Projectiles.Minions
 
         // ══════════════════════════════════════════════════════════════
         //   头节点：收集从属节点并按段索引顺序驱动它们
-        //   1=连接1, 2=身, 3=连接2, 4=尾
+        //   只驱动本链节点，最后一节为尾
         // ══════════════════════════════════════════════════════════════
         private void DriveFollowers()
         {
-            Projectile[] segments = PhantasmalDragonSummoner.GetSegments(Projectile.owner);
+            Projectile[] segments = PhantasmalDragonSummoner.GetSegments(Projectile.owner, ChainId);
             segments[0] = Projectile;
 
             for (int idx = 1; idx < segments.Length; idx++)
@@ -288,6 +296,7 @@ namespace TestMod.Content.Projectiles.Minions
                     if (prev == null) continue;
                 }
 
+                // 按本端查询出的链内段号跟随：ai[0]保存生成端槽位，不能直接当远端槽位使用。
                 // 身体用 velocity 前瞻让跟随更紧贴；尾巴不用，避免超前
                 seg.SegmentMove(prev, useVelocityLookahead: !seg.IsTailSegment);
             }
@@ -324,7 +333,7 @@ namespace TestMod.Content.Projectiles.Minions
         }
 
         // ══════════════════════════════════════════════════════════════
-        //   PreDraw — 段0=头(行0) / 段1,2,3=身体(行1) / 段4=尾(行2)
+        //   PreDraw — 段0=头(行0) / 中间节=身体(行1) / 最后一节=尾(行2)
         // ══════════════════════════════════════════════════════════════
         public override bool MinionContactDamage() => DealsContactDamage;
 
@@ -337,6 +346,8 @@ namespace TestMod.Content.Projectiles.Minions
 
             Projectile candidate = Main.projectile[PrevWhoAmI];
             if (!candidate.active || candidate.owner != Projectile.owner || candidate.type != Projectile.type)
+                return false;
+            if (candidate.ai[2] != Projectile.ai[2] || candidate.ai[1] != SegmentIndex - 1)
                 return false;
 
             previous = candidate;

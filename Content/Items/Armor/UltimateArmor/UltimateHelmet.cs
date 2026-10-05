@@ -6,10 +6,11 @@ using TestMod.Common.Players;
 using TestMod.Common.Systems;
 using TestMod.Common.Mechanics.AccessoryEffects;
 
-namespace TestMod.Content.Items.Armor
+namespace TestMod.Content.Items.Armor.UltimateArmor
 {
+    [LegacyName("AntaresHelmet")]
     [AutoloadEquip(EquipType.Head)]
-    public class AntaresHelmet : ModItem
+    public class UltimateHelmet : ModItem
     {
         // ╔══════════════════════════════════════════════════════╗
         // ║              头盔数值调整区域                        ║
@@ -82,8 +83,8 @@ namespace TestMod.Content.Items.Armor
 
         // 判断是否构成套装（头盔 + 胸甲 + 腿甲）
         public override bool IsArmorSet(Item head, Item body, Item legs)
-            => body.type == ModContent.ItemType<AntaresBreastplate>()
-            && legs.type == ModContent.ItemType<AntaresLeggings>();
+            => body.type == ModContent.ItemType<UltimateBreastplate>()
+            && legs.type == ModContent.ItemType<UltimateLeggings>();
 
         // 套装激活时每帧调用，标记 ModPlayer 启用套装效果
         public override void UpdateArmorSet(Player player)
@@ -97,11 +98,11 @@ namespace TestMod.Content.Items.Armor
                 : "";
 
             // 从实际功能盔甲槽读取物品实例状态，外观槽或背包内的其他副本不参与。
-            bool dragonEnabled = player.armor[1].ModItem is AntaresBreastplate { EffectEnabled: true };
-            bool cannonEnabled = player.armor[2].ModItem is AntaresLeggings { EffectEnabled: true };
-            string dragonStatus = Language.GetTextValue("Mods.TestMod.Items.AntaresHelmet.DragonState",
+            bool dragonEnabled = player.armor[1].ModItem is UltimateBreastplate { EffectEnabled: true };
+            bool cannonEnabled = player.armor[2].ModItem is UltimateLeggings { EffectEnabled: true };
+            string dragonStatus = Language.GetTextValue("Mods.TestMod.Items.UltimateHelmet.DragonState",
                 ToggleableArmorItem.GetEffectStateText(dragonEnabled));
-            string cannonStatus = Language.GetTextValue("Mods.TestMod.Items.AntaresHelmet.CannonState",
+            string cannonStatus = Language.GetTextValue("Mods.TestMod.Items.UltimateHelmet.CannonState",
                 ToggleableArmorItem.GetEffectStateText(cannonEnabled));
 
             player.setBonus = $"致命伤害后复活，恢复50%生命值，无敌3秒\n免疫秒杀，若单次伤害大于你的最大生命值，则此伤害为1\n按下 [{key}] 激活引力井，持续拉取周围敌人{calamityBonus}\n{dragonStatus}\n{cannonStatus}";

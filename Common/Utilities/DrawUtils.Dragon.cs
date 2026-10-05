@@ -18,10 +18,12 @@ namespace TestMod.Common.Utilities
         {
             Projectile headProjectile = head.Projectile;
             // 与原绘制扫描一致：重复段索引时取最后一颗，维持/AI 则取第一颗。
-            Projectile[] segments = PhantasmalDragonSummoner.GetSegments(headProjectile.owner, preferLast: true);
+            Projectile[] segments = PhantasmalDragonSummoner.GetSegments(headProjectile.owner, head.ChainId, preferLast: true);
             segments[0] ??= headProjectile;
 
             Texture2D texture = ModContent.Request<Texture2D>(head.Texture).Value;
+            if (head.InvertColors)
+                texture = PhantasmalDragonVisualAssetSystem.GetInvertedTexture(texture);
 
             for (int i = segments.Length - 1; i >= 0; i--)
             {
@@ -30,12 +32,12 @@ namespace TestMod.Common.Utilities
                     continue;
 
                 if (i > 0 && segments[i - 1] != null)
-                    DrawPhantasmalDragonConnector(texture, segments[i - 1], projectile, lightColor);
+                    DrawPhantasmalDragonConnector(texture, segments[i - 1], projectile, lightColor, segments.Length);
 
                 DrawPhantasmalDragonSprite(
                     texture,
                     projectile.Center,
-                    GetPhantasmalDragonFrame(GetPhantasmalDragonSegmentKind(i)),
+                    GetPhantasmalDragonFrame(GetPhantasmalDragonSegmentKind(i, segments.Length)),
                     projectile.GetAlpha(lightColor),
                     projectile.rotation,
                     GetPhantasmalDragonSegmentScale(i, segments.Length) * projectile.scale,
@@ -43,7 +45,7 @@ namespace TestMod.Common.Utilities
             }
         }
 
-        private static void DrawPhantasmalDragonConnector(Texture2D texture, Projectile previous, Projectile current, Color lightColor)
+        private static void DrawPhantasmalDragonConnector(Texture2D texture, Projectile previous, Projectile current, Color lightColor, int segmentCount)
         {
             Vector2 delta = current.Center - previous.Center;
             float distance = delta.Length();
@@ -63,8 +65,8 @@ namespace TestMod.Common.Utilities
                 Vector2 position = Vector2.Lerp(previous.Center, current.Center, completion);
                 float rotation = LerpAngle(previous.rotation, current.rotation, completion);
                 float alpha = MathHelper.Clamp(MathF.Sin(completion * MathHelper.Pi) * 0.34f, 0f, 0.34f);
-                float previousScale = GetPhantasmalDragonSegmentScale((int)previous.ai[1], PhantasmalDragonSummoner.SegmentCount) * previous.scale;
-                float currentScale = GetPhantasmalDragonSegmentScale((int)current.ai[1], PhantasmalDragonSummoner.SegmentCount) * current.scale;
+                float previousScale = GetPhantasmalDragonSegmentScale((int)previous.ai[1], segmentCount) * previous.scale;
+                float currentScale = GetPhantasmalDragonSegmentScale((int)current.ai[1], segmentCount) * current.scale;
                 float scale = MathHelper.Lerp(previousScale, currentScale, completion) * DragonConnectorScale;
                 Color color = Color.Lerp(previous.GetAlpha(lightColor), current.GetAlpha(lightColor), completion) * alpha;
 
@@ -93,12 +95,12 @@ namespace TestMod.Common.Utilities
                 0);
         }
 
-        private static int GetPhantasmalDragonSegmentKind(int segmentIndex)
+        private static int GetPhantasmalDragonSegmentKind(int segmentIndex, int segmentCount)
         {
             if (segmentIndex <= 0)
                 return DragonSegment.HeadSegmentKind;
 
-            if (segmentIndex >= PhantasmalDragonSummoner.SegmentCount - 1)
+            if (segmentIndex >= segmentCount - 1)
                 return DragonSegment.TailSegmentKind;
 
             return DragonSegment.BodySegmentKind;

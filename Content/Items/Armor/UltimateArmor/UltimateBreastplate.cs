@@ -4,15 +4,16 @@ using Terraria.ModLoader;
 using TestMod.Common.Players;
 using TestMod.Common.Systems;
 
-namespace TestMod.Content.Items.Armor
+namespace TestMod.Content.Items.Armor.UltimateArmor
 {
-    [AutoloadEquip(EquipType.Legs)]
-    public class AntaresLeggings : ToggleableArmorItem
+    [LegacyName("AntaresBreastplate")]
+    [AutoloadEquip(EquipType.Body)]
+    public class UltimateBreastplate : ToggleableArmorItem
     {
-        protected override string ToggleEffectNameKey => "Mods.TestMod.Items.AntaresLeggings.ToggleEffectName";
+        protected override string ToggleEffectNameKey => "Mods.TestMod.Items.UltimateBreastplate.ToggleEffectName";
 
         // ╔══════════════════════════════════════════════════════╗
-        // ║              腿甲数值调整区域                        ║
+        // ║              胸甲数值调整区域                        ║
         // ╠══════════════════════════════════════════════════════╣
         // ║  【基础防御】                                        ║
         // ║    Defense              物品本身的防御力             ║
@@ -39,30 +40,31 @@ namespace TestMod.Content.Items.Armor
         // ║    MoveSpeedBonus       +X% 移动速度                 ║
         // ╚══════════════════════════════════════════════════════╝
 
-        public const int   Defense              = 80;
+        public const int   Defense              = 100;
 
-        public const float DamageBonus          = 0.34f;
-        public const int   CritBonus            = 11;
-        public const float AttackSpeedBonus     = 0.11f;
+        public const float DamageBonus          = 0.33f;
+        public const int   CritBonus            = 12;
+        public const float AttackSpeedBonus     = 0.12f;
         public const int   ArmorPenetration     = 8;
 
-        public const float MaxLifeBonus         = 0.34f;
-        public const float MaxManaBonus         = 0.34f;
+        public const float MaxLifeBonus         = 0.33f;
+        public const float MaxManaBonus         = 0.33f;
         public const float DamageReductionBonus = 0.05f;
         public const int   DefenseBonus         = 5;
         public const int   LifeRegenBonus       = 10;
+        public const float ManaRegenBonus       = 1f;
 
-        public const int   ExtraMinionSlots     = 2;
+        public const int   ExtraMinionSlots     = 3;
         public const int   ExtraSentrySlots     = 1;
 
-        public const float MoveSpeedBonus       = 0.1f;
+        //public const float MoveSpeedBonus       = 0.03f;
 
         // ══════════════════════════════════════════════════════
 
         public override void SetDefaults()
         {
-            Item.width   = 22;
-            Item.height  = 18;
+            Item.width   = 26;
+            Item.height  = 22;
             Item.value   = 1000000;
             Item.rare    = ItemRarityID.Red;
             if (CalamityCompatSystem.CalamityLoaded)
@@ -82,17 +84,19 @@ namespace TestMod.Content.Items.Armor
             player.DefenseEffectiveness *= (1f + DamageReductionBonus);
             player.statDefense          += DefenseBonus;
             player.lifeRegen            += LifeRegenBonus;
-            //player.manaRegenBonus       += ManaRegenBonus;
+            player.manaRegenBonus       += (int)ManaRegenBonus;
 
             // 召唤属性
             player.maxMinions += ExtraMinionSlots;
             player.maxTurrets += ExtraSentrySlots;
 
             // 移动属性
-            player.moveSpeed  += MoveSpeedBonus;
+            //player.moveSpeed  += MoveSpeedBonus;
 
             // 标记供 AntaresArmorPlayer 处理百分比生命/法力加成
-            player.GetModPlayer<AntaresArmorPlayer>().wearingLeggings = true;
+            AntaresArmorPlayer armorPlayer = player.GetModPlayer<AntaresArmorPlayer>();
+            armorPlayer.wearingBreastplate = true;
+            armorPlayer.phantasmalDragonEnabled = EffectEnabled;
         }
 
         public override void AddRecipes()

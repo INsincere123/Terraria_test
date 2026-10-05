@@ -39,7 +39,7 @@ ArmorToggle: {
 	Disabled: 已关闭
 	State: "{0}：{1}"
 	Hint: 在背包中按住 Shift 并右键切换
-	RequiresFullSet: 仅穿齐 Antares 套装时生效
+	RequiresFullSet: 仅穿齐终极盔甲套装时生效
 }
 
 Keybinds: {
@@ -138,8 +138,8 @@ Items: {
 		Tooltip: "[c/6495ED:+5%] 魔法伤害  [c/6495ED:+5%] 移动速度"
 	}
 
-	AntaresBreastplate: {
-		DisplayName: Antares Breastplate
+	UltimateBreastplate: {
+		DisplayName: 终极胸甲
 		ToggleEffectName: 幻影龙随行
 		Tooltip:
 			'''
@@ -149,8 +149,8 @@ Items: {
 			'''
 	}
 
-	AntaresHelmet: {
-		DisplayName: Antares Helmet
+	UltimateHelmet: {
+		DisplayName: 终极头盔
 		DragonState: 幻影龙随行：{0}（胸甲开关）
 		CannonState: 套装炮台：{0}（腿甲开关；命中时追加实际伤害的19%，不重复增伤或暴击）
 		Tooltip:
@@ -161,8 +161,8 @@ Items: {
 			'''
 	}
 
-	AntaresLeggings: {
-		DisplayName: Antares Leggings
+	UltimateLeggings: {
+		DisplayName: 终极腿甲
 		ToggleEffectName: 套装炮台
 		Tooltip:
 			'''

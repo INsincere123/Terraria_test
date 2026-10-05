@@ -6,7 +6,7 @@ using Terraria.ID;
 using Terraria.ModLoader;
 using TestMod.Content.Buffs;
 using TestMod.Common.Systems;
-using TestMod.Content.Items.Armor;
+using TestMod.Content.Items.Armor.UltimateArmor;
 
 namespace TestMod.Common.Players
 {
@@ -15,7 +15,7 @@ namespace TestMod.Common.Players
     // 2. 套装复活效果（PreKill 拦截死亡，CD 用 AntaresReviveCooldown debuff 计时）
     // 3. 套装秒杀免疫（ModifyHitByNPC / ModifyHitByProjectile，原始攻击力 >= 最大生命值时强制为 1，无 CD）
     // 4. 套装主动技能：引力井（按键施加增益 buff，buff 存在期间每帧持续拉取）
-    // 5. 套装被动：幻影龙随行（通过 PhantasmalDragonSummoner.MaintainFor 调用，
+    // 5. 套装被动：双幻影龙随行（通过 PhantasmalDragonSummoner.MaintainTwinFor 调用，
     //    解耦后所有龙的实现细节都在 PhantasmalDragonSummoner 与 DragonSegment 中）
     public class AntaresArmorPlayer : ModPlayer
     {
@@ -43,7 +43,7 @@ namespace TestMod.Common.Players
         // ║  其余参数（速度/索敌范围/段距等）见 DragonSegment.cs ║
         // ╚══════════════════════════════════════════════════════╝
 
-        public const int   DragonDamage    = 1100;
+        public const int   DragonDamage    = 550; // 每条短龙每个可伤害节点的基础伤害。
         public const float DragonKnockback = 4.6f;
 
         // ══════════════════════════════════════════════════════
@@ -69,18 +69,18 @@ namespace TestMod.Common.Players
         {
             if (wearingHelmet)
             {
-                Player.statLifeMax2 += (int)(Player.statLifeMax * AntaresHelmet.MaxLifeBonus);
-                Player.statManaMax2 += (int)(Player.statManaMax * AntaresHelmet.MaxManaBonus);
+                Player.statLifeMax2 += (int)(Player.statLifeMax * UltimateHelmet.MaxLifeBonus);
+                Player.statManaMax2 += (int)(Player.statManaMax * UltimateHelmet.MaxManaBonus);
             }
             if (wearingBreastplate)
             {
-                Player.statLifeMax2 += (int)(Player.statLifeMax * AntaresBreastplate.MaxLifeBonus);
-                Player.statManaMax2 += (int)(Player.statManaMax * AntaresBreastplate.MaxManaBonus);
+                Player.statLifeMax2 += (int)(Player.statLifeMax * UltimateBreastplate.MaxLifeBonus);
+                Player.statManaMax2 += (int)(Player.statManaMax * UltimateBreastplate.MaxManaBonus);
             }
             if (wearingLeggings)
             {
-                Player.statLifeMax2 += (int)(Player.statLifeMax * AntaresLeggings.MaxLifeBonus);
-                Player.statManaMax2 += (int)(Player.statManaMax * AntaresLeggings.MaxManaBonus);
+                Player.statLifeMax2 += (int)(Player.statLifeMax * UltimateLeggings.MaxLifeBonus);
+                Player.statManaMax2 += (int)(Player.statManaMax * UltimateLeggings.MaxManaBonus);
             }
         }
 
@@ -103,7 +103,7 @@ namespace TestMod.Common.Players
 
             // ── 幻影龙：一行调用搞定 ──
             if (phantasmalDragonEnabled)
-                PhantasmalDragonSummoner.MaintainFor(Player, DragonDamage, DragonKnockback);
+                PhantasmalDragonSummoner.MaintainTwinFor(Player, DragonDamage, DragonKnockback);
         }
 
         // ══════════════════════════════════════════════════════════════
@@ -212,9 +212,9 @@ namespace TestMod.Common.Players
             if (!wearingFullSet) return true;
             if (Player.HasBuff(ModContent.BuffType<AntaresReviveCooldown>())) return true;
 
-            Player.AddBuff(ModContent.BuffType<AntaresReviveCooldown>(), AntaresHelmet.ReviveCooldown);
+            Player.AddBuff(ModContent.BuffType<AntaresReviveCooldown>(), UltimateHelmet.ReviveCooldown);
 
-            int healAmount    = (int)(Player.statLifeMax2 * AntaresHelmet.ReviveLifePercent);
+            int healAmount    = (int)(Player.statLifeMax2 * UltimateHelmet.ReviveLifePercent);
             Player.statLife   = healAmount;
             Player.immune     = true;
             Player.immuneTime = 60 * 3;

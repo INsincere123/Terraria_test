@@ -5,7 +5,7 @@ using Terraria.ModLoader;
 namespace TestMod.Content.Buffs
 {
     // 复活冷却 debuff —— 存在期间无法再次触发复活
-    // 持续时间由 AntaresHelmet.ReviveCooldown 控制
+    // 持续时间由 UltimateHelmet.ReviveCooldown 控制
     // 护士无法移除此 debuff
     public class AntaresReviveCooldown : ModBuff
     {
