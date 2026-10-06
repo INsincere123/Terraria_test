@@ -8,6 +8,7 @@ using Terraria.ModLoader;
 using TestMod.Common.Compatibility;
 using TestMod.Common.Mechanics.AccessoryEffects;
 using TestMod.Common.Players;
+using TestMod.Common.Systems;
 
 namespace TestMod
 {
@@ -18,12 +19,22 @@ namespace TestMod
 		{
 			try
 			{
-				if (reader.ReadByte() == EnergyShieldPlayer.ShieldStatePacket)
-					EnergyShieldPlayer.ReceiveShieldState(reader, whoAmI);
+				switch (reader.ReadByte())
+				{
+					case EnergyShieldPlayer.ShieldStatePacket:
+						EnergyShieldPlayer.ReceiveShieldState(reader, whoAmI);
+						break;
+					case CultistSummonSystem.SummonRequestPacket:
+						CultistSummonSystem.ReceiveSummonRequest(reader, whoAmI);
+						break;
+					case CultistSummonSystem.SummonSoundPacket:
+						CultistSummonSystem.ReceiveSummonSound(reader);
+						break;
+				}
 			}
 			catch (EndOfStreamException)
 			{
-				Logger.Warn("Ignored truncated shield state packet.");
+				Logger.Warn("Ignored truncated TestMod packet.");
 			}
 		}
 

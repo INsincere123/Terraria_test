@@ -14,7 +14,7 @@ namespace TestMod.Common.Utilities
         private const float ReferenceUpdates = 6f;
         private const float InertiaRadius = 55f;
         private const float ReturnSpeed = 36f;
-        internal const int HitCooldownFrames = 15;
+        internal const int HitCooldownFrames = 20;
         internal bool Initialized { get; private set; }
         internal float Heading { get; private set; }
         internal float TurnStrength { get; private set; }

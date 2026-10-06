@@ -61,6 +61,21 @@ Keybinds: {
 }
 
 Items: {
+	CultistSummon: {
+		DisplayName: 狂信者的遗物
+		Tooltip:
+			'''
+			召唤拜月教邪教徒
+			击败石巨人后，可在任意时间和地点使用
+			邪教徒、四柱或月亮领主事件进行时无法使用
+			使用后不消耗
+			'''
+		ModeOne: 当前模式一：仅挑战；击败后不开启四柱，战斗期间保护地牢教徒
+		ModeTwo: 当前模式二：召唤时击杀现存地牢教徒；击败后开启四柱
+		ToggleHint: 在背包中右键切换模式
+		Unavailable: 四柱控制未就绪，当前无法使用；请查看模组加载日志
+	}
+
 	AegisShield: {
 		DisplayName: 神盾
 		Tooltip:
