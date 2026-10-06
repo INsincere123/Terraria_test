@@ -5,6 +5,7 @@ using Terraria.Utilities;
 using TestMod.Content.Items.DamageTypes;
 using TestMod.Common.Utilities;
 using TestMod.Content.Prefixes;
+using TestMod.Common.Systems;
 
 namespace TestMod.Common.GlobalItems
 {
@@ -28,6 +29,8 @@ namespace TestMod.Common.GlobalItems
 
         public override int ChoosePrefix(Item item, UnifiedRandom rand)
         {
+            int refinementWeight = PrefixAvailabilitySystem.RefinementEnabled ? RefinementWeight : 0;
+            int fusionWeight = PrefixAvailabilitySystem.FusionEnabled ? FusionWeight : 0;
             // ── 真实伤害武器 ──────────────────────────────────────────
             if (item.DamageType == TrueDamageClass.Instance && item.damage > 0)
             {
@@ -46,7 +49,7 @@ namespace TestMod.Common.GlobalItems
                     (PrefixID.Sluggish,   WeaponReducedWeight), (PrefixID.Lazy,       WeaponReducedWeight), (PrefixID.Annoying,  WeaponNormalWeight), // ReducedNaturalChance
                     (PrefixID.Nasty,     WeaponNormalWeight),
                     // 炼化（极稀有）
-                    (r, RefinementWeight),
+                    (r, refinementWeight),
                 ]);
             }
 
@@ -69,7 +72,7 @@ namespace TestMod.Common.GlobalItems
                     (PrefixID.Dangerous,WeaponNormalWeight),(PrefixID.Savage,WeaponNormalWeight),(PrefixID.Sharp,WeaponNormalWeight),
                     (PrefixID.Bulky,WeaponNormalWeight),(PrefixID.Heavy,WeaponNormalWeight),(PrefixID.Light,WeaponNormalWeight),
                     (PrefixID.Celestial,WeaponNormalWeight),(PrefixID.Furious,WeaponNormalWeight),
-                    (r, RefinementWeight),
+                    (r, refinementWeight),
                 ]);
             }
 
@@ -89,7 +92,7 @@ namespace TestMod.Common.GlobalItems
                         (PrefixID.Weak,WeaponReducedWeight),(PrefixID.Quick,WeaponNormalWeight),(PrefixID.Nimble,WeaponNormalWeight),
                         (PrefixID.Slow,WeaponReducedWeight),(PrefixID.Sluggish,WeaponReducedWeight),
                         (PrefixID.Mythical,WeaponNormalWeight),
-                        (r, RefinementWeight),
+                        (r, refinementWeight),
                       ]
                     : [
                         (PrefixID.Demonic,WeaponNormalWeight),(PrefixID.Ruthless,WeaponNormalWeight),
@@ -97,7 +100,7 @@ namespace TestMod.Common.GlobalItems
                         (PrefixID.Zealous,WeaponNormalWeight),(PrefixID.Broken,WeaponReducedWeight),(PrefixID.Damaged,WeaponReducedWeight),
                         (PrefixID.Quick,WeaponNormalWeight),(PrefixID.Nimble,WeaponNormalWeight),(PrefixID.Slow,WeaponReducedWeight),
                         (PrefixID.Mythical,WeaponNormalWeight),
-                        (r, RefinementWeight),
+                        (r, refinementWeight),
                       ];
                 return CurveUtils.WeightedRandom(rand, pool);
             }
@@ -127,7 +130,7 @@ namespace TestMod.Common.GlobalItems
                     (PrefixID.Inept,WeaponReducedWeight),(PrefixID.Ignorant,WeaponReducedWeight),(PrefixID.Deranged,WeaponReducedWeight),
                     (PrefixID.Intense,WeaponNormalWeight),(PrefixID.Taboo,WeaponNormalWeight),
                     (PrefixID.Mythical,WeaponNormalWeight),
-                    (r, RefinementWeight),
+                    (r, refinementWeight),
                 ];
                 (int id, int weight)[] noKBPool =
                 [
@@ -143,7 +146,7 @@ namespace TestMod.Common.GlobalItems
                     (PrefixID.Inept,WeaponReducedWeight),(PrefixID.Ignorant,WeaponReducedWeight),(PrefixID.Deranged,WeaponReducedWeight),
                     (PrefixID.Intense,WeaponNormalWeight),(PrefixID.Taboo,WeaponNormalWeight),
                     (PrefixID.Mythical,WeaponNormalWeight),
-                    (r, RefinementWeight),
+                    (r, refinementWeight),
                 ];
                 return CurveUtils.WeightedRandom(rand, hasKB ? basePool : noKBPool);
             }
@@ -173,7 +176,7 @@ namespace TestMod.Common.GlobalItems
                     (PrefixID.Staunch,WeaponNormalWeight),(PrefixID.Powerful,WeaponNormalWeight),
                     (PrefixID.Awful,WeaponReducedWeight),(PrefixID.Lethargic,WeaponReducedWeight),(PrefixID.Awkward,WeaponReducedWeight),
                     (PrefixID.Unreal,WeaponNormalWeight),
-                    (r, RefinementWeight),
+                    (r, refinementWeight),
                 ];
                 (int id, int weight)[] noKBPool =
                 [
@@ -189,7 +192,7 @@ namespace TestMod.Common.GlobalItems
                     (PrefixID.Staunch,WeaponNormalWeight),(PrefixID.Powerful,WeaponNormalWeight),
                     (PrefixID.Awful,WeaponReducedWeight),(PrefixID.Lethargic,WeaponReducedWeight),(PrefixID.Awkward,WeaponReducedWeight),
                     (PrefixID.Unreal,WeaponNormalWeight),
-                    (r, RefinementWeight),
+                    (r, refinementWeight),
                 ];
                 return CurveUtils.WeightedRandom(rand, hasKB ? basePool : noKBPool);
             }
@@ -228,7 +231,7 @@ namespace TestMod.Common.GlobalItems
                     (PrefixID.Large,WeaponNormalWeight),(PrefixID.Massive,WeaponNormalWeight),
                     (PrefixID.Tiny,WeaponReducedWeight),(PrefixID.Small,WeaponReducedWeight),
                     (PrefixID.Legendary,WeaponNormalWeight),
-                    (r, RefinementWeight),
+                    (r, refinementWeight),
                 ];
                 (int id, int weight)[] otherPool =
                 [
@@ -246,7 +249,7 @@ namespace TestMod.Common.GlobalItems
                     (PrefixID.Light,WeaponNormalWeight),(PrefixID.Intimidating,WeaponNormalWeight),(PrefixID.Deadly,WeaponNormalWeight),
                     (PrefixID.Celestial,WeaponNormalWeight),(PrefixID.Furious,WeaponNormalWeight),
                     (PrefixID.Terrible,WeaponReducedWeight),(PrefixID.Dull,WeaponReducedWeight),(PrefixID.Unhappy,WeaponReducedWeight),(PrefixID.Shameful,WeaponReducedWeight),
-                    (r, RefinementWeight),
+                    (r, refinementWeight),
                 ];
                 return CurveUtils.WeightedRandom(rand, isSwing ? swingPool : otherPool);
             }
@@ -272,7 +275,7 @@ namespace TestMod.Common.GlobalItems
                     // 最优
                     (PrefixID.Legendary2,AccessoryNormalWeight),
                     // 融合（极稀有）
-                    (fusion, FusionWeight),
+                    (fusion, fusionWeight),
                 ]);
             }
 

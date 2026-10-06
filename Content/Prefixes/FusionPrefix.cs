@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Terraria;
 using Terraria.ModLoader;
+using TestMod.Common.Systems;
 
 namespace TestMod.Content.Prefixes
 {
@@ -46,9 +47,14 @@ namespace TestMod.Content.Prefixes
         // ============================================================
 
         public override PrefixCategory Category => PrefixCategory.Accessory;
+        public override float RollChance(Item item) => PrefixAvailabilitySystem.FusionEnabled ? 1f : 0f;
+        // CanRoll 也参与读档资格检查，不能用开关拒绝恢复已有融合的名称。
+        public override bool CanRoll(Item item) => true;
 
         public override void ApplyAccessoryEffects(Player player)
         {
+            if (!PrefixAvailabilitySystem.FusionEnabled)
+                return;
             // 生存类
             player.statDefense += DefenseBonus;
             player.endurance += DamageReduction;
@@ -79,6 +85,8 @@ namespace TestMod.Content.Prefixes
 
         public override IEnumerable<TooltipLine> GetTooltipLines(Item item)
         {
+            if (!PrefixAvailabilitySystem.FusionEnabled)
+                yield break;
             // 每条 tooltip 对应上方一个参数，注释掉不需要的即可
 
             yield return new TooltipLine(Mod, "TestMod:FusionDefense",

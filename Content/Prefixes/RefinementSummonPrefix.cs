@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Terraria;
 using Terraria.ModLoader;
+using TestMod.Common.Systems;
 
 namespace TestMod.Content.Prefixes
 {
@@ -26,6 +27,7 @@ namespace TestMod.Content.Prefixes
 
         // 借用 Magic 前缀池（与召唤武器共用，靠 CanRoll 隔离魔法武器）
         public override PrefixCategory Category => PrefixCategory.Magic;
+        public override float RollChance(Item item) => PrefixAvailabilitySystem.RefinementEnabled ? 1f : 0f;
 
         public override bool CanRoll(Item item)
             // 召唤武器 且 不是鞭子 且 有击退（无击退版本由 RefinementSummonNoKBPrefix 处理）
@@ -61,6 +63,8 @@ namespace TestMod.Content.Prefixes
 
         public override IEnumerable<TooltipLine> GetTooltipLines(Item item)
         {
+            if (!PrefixAvailabilitySystem.RefinementEnabled)
+                yield break;
             yield return new TooltipLine(Mod, "TestMod:RefinementArmorPen",
                 $"+{ArmorPenetration} 护甲穿透") { IsModifier = true };
         }
