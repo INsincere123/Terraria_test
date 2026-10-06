@@ -31,7 +31,7 @@ namespace TestMod.Content.Prefixes
         // Custom：默认不出现在任何武器的重铸池，只由 GlobalItem.ChoosePrefix 手动控制
         // 防止炼化意外出现在原版近战/远程/魔法武器上
         public override PrefixCategory Category => PrefixCategory.Custom;
-        public override float RollChance(Item item) => PrefixAvailabilitySystem.RefinementEnabled ? 1f : 0f;
+        public override bool IsLoadingEnabled(Mod mod) => PrefixAvailabilitySystem.RefinementEnabled;
 
         // 只允许应用到真实伤害类型武器（非饰品、有伤害值）
         public override bool CanRoll(Item item)
@@ -64,8 +64,6 @@ namespace TestMod.Content.Prefixes
         // 护甲穿透在引擎 tooltip 里没有内置显示，手动追加一行
         public override IEnumerable<TooltipLine> GetTooltipLines(Item item)
         {
-            if (!PrefixAvailabilitySystem.RefinementEnabled)
-                yield break;
             yield return new TooltipLine(Mod, "ArmorPen", $"+{ArmorPenetration} 护甲穿透")
             {
                 IsModifier    = true,

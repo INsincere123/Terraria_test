@@ -27,7 +27,7 @@ namespace TestMod.Content.Prefixes
         // ============================================================
 
         public override PrefixCategory Category => PrefixCategory.Ranged;
-        public override float RollChance(Item item) => PrefixAvailabilitySystem.RefinementEnabled ? 1f : 0f;
+        public override bool IsLoadingEnabled(Mod mod) => PrefixAvailabilitySystem.RefinementEnabled;
 
         public override bool CanRoll(Item item)
             // 有击退的远程武器（无击退版本由 RefinementRangedNoKBPrefix 处理）
@@ -61,8 +61,6 @@ namespace TestMod.Content.Prefixes
 
         public override IEnumerable<TooltipLine> GetTooltipLines(Item item)
         {
-            if (!PrefixAvailabilitySystem.RefinementEnabled)
-                yield break;
             yield return new TooltipLine(Mod, "TestMod:RefinementArmorPen",
                 $"+{ArmorPenetration} 护甲穿透") { IsModifier = true };
         }

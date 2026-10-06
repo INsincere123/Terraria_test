@@ -5,12 +5,12 @@ Configs: {
 
 		EnableRefinementPrefixes: {
 			Label: 启用炼化前缀
-			Tooltip: 允许获取所有类型的炼化前缀及使用其属性加成。关闭后已有炼化的名称保留，加成停用；重新开启后恢复。联机使用服务端设置。
+			Tooltip: 关闭时不加载任何炼化前缀，也不会出现在重铸候选中。已有炼化暂存为缺失词条且无加成，重新开启并重载后恢复；主动重铸覆盖后不恢复。联机使用服务端设置。
 		}
 
 		EnableFusionPrefix: {
 			Label: 启用融合前缀
-			Tooltip: 允许获取融合前缀及使用其属性加成。关闭后已有融合的名称保留，加成停用；重新开启后恢复。联机使用服务端设置。
+			Tooltip: 关闭时不加载融合前缀，也不会出现在重铸候选中。已有融合暂存为缺失词条且无加成，重新开启并重载后恢复；主动重铸覆盖后不恢复。联机使用服务端设置。
 		}
 	}
 
@@ -54,8 +54,6 @@ EnvironmentEffects: {
 	TheDarkImmunity: 旅人归途：解除暗处（迷宫）的黑色遮盖，保留正常光照
 }
 
-PrefixSettings.Disabled: 此前缀的属性加成已在模组设置中停用
-
 ArmorToggle: {
 	Enabled: 已开启
 	Disabled: 已关闭
@@ -79,25 +77,13 @@ Keybinds: {
 
 Items: {
 	WeaponReforgeScroll: {
-		DisplayName: 武器重铸券
-		Tooltip:
-			'''
-			使用后选择一个前缀，一键重铸背包与快捷栏内全部适用武器
-			包含可重铸的镐、斧、锤和收藏武器，不包含弹药与鼠标上的武器
-			选择“最高级”会为每把武器选择应用后物品价值最高的合法前缀
-			至少成功修改一件武器才消耗一张，不额外收取金币
-			'''
+		DisplayName: 武器重铸券（旧版）
+		Tooltip: 批量重铸已迁至 MassReforge。启用该模组并重新加载玩家或世界后，此券自动迁移；当前无法使用。
 	}
 
 	AccessoryReforgeScroll: {
-		DisplayName: 饰品重铸券
-		Tooltip:
-			'''
-			使用后选择一个饰品前缀，一键重铸全部适用饰品
-			包含背包、快捷栏、所有配装的功能与外观饰品槽及模组饰品槽
-			收藏饰品也会重铸；不适用的饰品和已有所选前缀的饰品保持原样
-			至少成功修改一件饰品才消耗一张，不额外收取金币
-			'''
+		DisplayName: 饰品重铸券（旧版）
+		Tooltip: 批量重铸已迁至 MassReforge。启用该模组并重新加载玩家或世界后，此券自动迁移；当前无法使用。
 	}
 
 	CultistSummon: {
@@ -655,40 +641,6 @@ DamageClasses.TrueDamageClass.DisplayName: 真实伤害
 Tiles.HuangQuanAltarTile.MapEntry: Huang Quan Altar Tile
 
 UI: {
-	WeaponReforge: {
-		Title: 武器批量重铸
-		Hint: 包含背包与快捷栏的武器、工具（含收藏）
-		SelectPrefix: 请选择目标前缀或“最高级”
-		Highest: 最高级
-		HighestHint: 逐把武器选择应用后物品价值最高的合法前缀；同价值优先保留当前词条
-		Counts: 预计修改 {0} 件 · 原已符合 {1} 件 · 不适用 {2} 件
-		Confirm: 一键重铸
-		Refresh: 刷新列表
-		Cancel: 取消
-		Empty: 当前没有可重铸的武器或工具
-		StorageError: 无法读取武器存储，操作已停止
-		Unavailable: 当前无法执行，请等待使用动作结束后重试
-		NoScroll: 背包或鼠标上没有武器重铸券
-		NoChanges: 没有成功修改武器，未消耗重铸券
-		Success: 已修改 {0} 件武器，原已符合 {1} 件，跳过 {2} 件；消耗一张武器重铸券
-	}
-
-	AccessoryReforge: {
-		Title: 饰品批量重铸
-		Hint: 包含背包、全部配装、外观与模组饰品槽（含收藏）
-		SelectPrefix: 请选择目标饰品前缀
-		Counts: 预计修改 {0} 件 · 已符合 {1} 件 · 不适用 {2} 件
-		Confirm: 一键重铸
-		Refresh: 刷新列表
-		Cancel: 取消
-		Empty: 当前没有可重铸的饰品
-		StorageError: 无法读取全部模组饰品槽，操作已停止
-		Unavailable: 当前无法执行，请等待使用动作结束后重试
-		NoScroll: 背包或鼠标上没有饰品重铸券
-		NoChanges: 没有成功修改饰品，未消耗重铸券
-		Success: 已修改 {0} 件饰品，原已符合 {1} 件，跳过 {2} 件；消耗一张重铸券
-	}
-
 	ShieldBar: {
 		Ready: 护盾就绪
 		Waiting: 等待恢复 {0}秒

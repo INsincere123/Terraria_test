@@ -5,7 +5,6 @@ using Terraria.Utilities;
 using TestMod.Content.Items.DamageTypes;
 using TestMod.Common.Utilities;
 using TestMod.Content.Prefixes;
-using TestMod.Common.Systems;
 
 namespace TestMod.Common.GlobalItems
 {
@@ -27,15 +26,24 @@ namespace TestMod.Common.GlobalItems
         private const int FusionWeight = 1;           // 自定义融合词缀
         // 抽中概率 = 该词缀权重 / 当前池的总权重；修改后需 Build + Reload。
 
+        // 未注册的词条没有实例，不能通过 GetInstance/PrefixType 强行取得。
+        private static int LoadedPrefixType<T>() where T : ModPrefix =>
+            ModContent.TryFind<T>("TestMod", typeof(T).Name, out var prefix) ? prefix.Type : 0;
+
+        private static int RollWithOptionalPrefix(UnifiedRandom rand, (int id, int weight)[] pool,
+            int prefix, int weight)
+        {
+            // 自定义词条仍排在原版候选之后；关闭时不加入候选池。
+            return CurveUtils.WeightedRandom(rand, prefix > 0 ? [.. pool, (prefix, weight)] : pool);
+        }
+
         public override int ChoosePrefix(Item item, UnifiedRandom rand)
         {
-            int refinementWeight = PrefixAvailabilitySystem.RefinementEnabled ? RefinementWeight : 0;
-            int fusionWeight = PrefixAvailabilitySystem.FusionEnabled ? FusionWeight : 0;
             // ── 真实伤害武器 ──────────────────────────────────────────
             if (item.DamageType == TrueDamageClass.Instance && item.damage > 0)
             {
-                int r = ModContent.GetInstance<RefinementPrefix>().Type;
-                return CurveUtils.WeightedRandom(rand, [
+                int r = LoadedPrefixType<RefinementPrefix>();
+                return RollWithOptionalPrefix(rand, [
                     // 通用词缀（Universal）
                     (PrefixID.Keen,      WeaponNormalWeight), (PrefixID.Superior,  WeaponNormalWeight), (PrefixID.Forceful,  WeaponNormalWeight),
                     (PrefixID.Broken,     WeaponReducedWeight), (PrefixID.Damaged,    WeaponReducedWeight), (PrefixID.Shoddy,     WeaponReducedWeight), // ReducedNaturalChance
@@ -48,9 +56,7 @@ namespace TestMod.Common.GlobalItems
                     (PrefixID.Nimble,    WeaponNormalWeight), (PrefixID.Murderous, WeaponNormalWeight), (PrefixID.Slow,       WeaponReducedWeight), // ReducedNaturalChance
                     (PrefixID.Sluggish,   WeaponReducedWeight), (PrefixID.Lazy,       WeaponReducedWeight), (PrefixID.Annoying,  WeaponNormalWeight), // ReducedNaturalChance
                     (PrefixID.Nasty,     WeaponNormalWeight),
-                    // 炼化（极稀有）
-                    (r, refinementWeight),
-                ]);
+                ], r, RefinementWeight);
             }
 
             if (item.damage <= 0) return -1;
@@ -58,8 +64,8 @@ namespace TestMod.Common.GlobalItems
             // ── 鞭子（SummonMeleeSpeed）— 先于 Summon/Melee 判断 ──────
             if (item.CountsAsClass(DamageClass.SummonMeleeSpeed))
             {
-                int r = ModContent.GetInstance<RefinementWhipPrefix>().Type;
-                return CurveUtils.WeightedRandom(rand, [
+                int r = LoadedPrefixType<RefinementWhipPrefix>();
+                return RollWithOptionalPrefix(rand, [
                     (PrefixID.Keen,WeaponNormalWeight),(PrefixID.Superior,WeaponNormalWeight),(PrefixID.Forceful,WeaponNormalWeight),
                     (PrefixID.Broken,WeaponReducedWeight),(PrefixID.Damaged,WeaponReducedWeight),(PrefixID.Shoddy,WeaponReducedWeight),
                     (PrefixID.Hurtful,WeaponNormalWeight),(PrefixID.Strong,WeaponNormalWeight),(PrefixID.Unpleasant,WeaponNormalWeight),
@@ -72,8 +78,7 @@ namespace TestMod.Common.GlobalItems
                     (PrefixID.Dangerous,WeaponNormalWeight),(PrefixID.Savage,WeaponNormalWeight),(PrefixID.Sharp,WeaponNormalWeight),
                     (PrefixID.Bulky,WeaponNormalWeight),(PrefixID.Heavy,WeaponNormalWeight),(PrefixID.Light,WeaponNormalWeight),
                     (PrefixID.Celestial,WeaponNormalWeight),(PrefixID.Furious,WeaponNormalWeight),
-                    (r, refinementWeight),
-                ]);
+                ], r, RefinementWeight);
             }
 
             // ── 召唤（非鞭子）────────────────────────────────────────
@@ -81,8 +86,8 @@ namespace TestMod.Common.GlobalItems
             {
                 bool hasKB = item.knockBack > 0f;
                 int r = hasKB
-                    ? ModContent.GetInstance<RefinementSummonPrefix>().Type
-                    : ModContent.GetInstance<RefinementSummonNoKBPrefix>().Type;
+                    ? LoadedPrefixType<RefinementSummonPrefix>()
+                    : LoadedPrefixType<RefinementSummonNoKBPrefix>();
 
                 (int id, int weight)[] pool = hasKB
                     ? [
@@ -92,7 +97,6 @@ namespace TestMod.Common.GlobalItems
                         (PrefixID.Weak,WeaponReducedWeight),(PrefixID.Quick,WeaponNormalWeight),(PrefixID.Nimble,WeaponNormalWeight),
                         (PrefixID.Slow,WeaponReducedWeight),(PrefixID.Sluggish,WeaponReducedWeight),
                         (PrefixID.Mythical,WeaponNormalWeight),
-                        (r, refinementWeight),
                       ]
                     : [
                         (PrefixID.Demonic,WeaponNormalWeight),(PrefixID.Ruthless,WeaponNormalWeight),
@@ -100,9 +104,8 @@ namespace TestMod.Common.GlobalItems
                         (PrefixID.Zealous,WeaponNormalWeight),(PrefixID.Broken,WeaponReducedWeight),(PrefixID.Damaged,WeaponReducedWeight),
                         (PrefixID.Quick,WeaponNormalWeight),(PrefixID.Nimble,WeaponNormalWeight),(PrefixID.Slow,WeaponReducedWeight),
                         (PrefixID.Mythical,WeaponNormalWeight),
-                        (r, refinementWeight),
                       ];
-                return CurveUtils.WeightedRandom(rand, pool);
+                return RollWithOptionalPrefix(rand, pool, r, RefinementWeight);
             }
 
             // ── 魔法 ─────────────────────────────────────────────────
@@ -110,8 +113,8 @@ namespace TestMod.Common.GlobalItems
             {
                 bool hasKB = item.knockBack > 0f;
                 int r = hasKB
-                    ? ModContent.GetInstance<RefinementMagicPrefix>().Type
-                    : ModContent.GetInstance<RefinementMagicNoKBPrefix>().Type;
+                    ? LoadedPrefixType<RefinementMagicPrefix>()
+                    : LoadedPrefixType<RefinementMagicNoKBPrefix>();
 
                 // 魔法专属正面：Mystic(26) Adept(27) Masterful(28) Intense(32) Taboo(33)
                 // 魔法负面（ReducedNaturalChance）：Inept(29) Ignorant(30) Deranged(31)
@@ -130,7 +133,6 @@ namespace TestMod.Common.GlobalItems
                     (PrefixID.Inept,WeaponReducedWeight),(PrefixID.Ignorant,WeaponReducedWeight),(PrefixID.Deranged,WeaponReducedWeight),
                     (PrefixID.Intense,WeaponNormalWeight),(PrefixID.Taboo,WeaponNormalWeight),
                     (PrefixID.Mythical,WeaponNormalWeight),
-                    (r, refinementWeight),
                 ];
                 (int id, int weight)[] noKBPool =
                 [
@@ -146,9 +148,8 @@ namespace TestMod.Common.GlobalItems
                     (PrefixID.Inept,WeaponReducedWeight),(PrefixID.Ignorant,WeaponReducedWeight),(PrefixID.Deranged,WeaponReducedWeight),
                     (PrefixID.Intense,WeaponNormalWeight),(PrefixID.Taboo,WeaponNormalWeight),
                     (PrefixID.Mythical,WeaponNormalWeight),
-                    (r, refinementWeight),
                 ];
-                return CurveUtils.WeightedRandom(rand, hasKB ? basePool : noKBPool);
+                return RollWithOptionalPrefix(rand, hasKB ? basePool : noKBPool, r, RefinementWeight);
             }
 
             // ── 远程 ─────────────────────────────────────────────────
@@ -156,8 +157,8 @@ namespace TestMod.Common.GlobalItems
             {
                 bool hasKB = item.knockBack > 0f;
                 int r = hasKB
-                    ? ModContent.GetInstance<RefinementRangedPrefix>().Type
-                    : ModContent.GetInstance<RefinementRangedNoKBPrefix>().Type;
+                    ? LoadedPrefixType<RefinementRangedPrefix>()
+                    : LoadedPrefixType<RefinementRangedNoKBPrefix>();
 
                 // 远程专属正面：Sighted(16) Rapid(17) Hasty(18) Staunch(21) Powerful(25)
                 // 远程负面（ReducedNaturalChance）：Awful(22) Lethargic(23) Awkward(24)
@@ -176,7 +177,6 @@ namespace TestMod.Common.GlobalItems
                     (PrefixID.Staunch,WeaponNormalWeight),(PrefixID.Powerful,WeaponNormalWeight),
                     (PrefixID.Awful,WeaponReducedWeight),(PrefixID.Lethargic,WeaponReducedWeight),(PrefixID.Awkward,WeaponReducedWeight),
                     (PrefixID.Unreal,WeaponNormalWeight),
-                    (r, refinementWeight),
                 ];
                 (int id, int weight)[] noKBPool =
                 [
@@ -192,9 +192,8 @@ namespace TestMod.Common.GlobalItems
                     (PrefixID.Staunch,WeaponNormalWeight),(PrefixID.Powerful,WeaponNormalWeight),
                     (PrefixID.Awful,WeaponReducedWeight),(PrefixID.Lethargic,WeaponReducedWeight),(PrefixID.Awkward,WeaponReducedWeight),
                     (PrefixID.Unreal,WeaponNormalWeight),
-                    (r, refinementWeight),
                 ];
-                return CurveUtils.WeightedRandom(rand, hasKB ? basePool : noKBPool);
+                return RollWithOptionalPrefix(rand, hasKB ? basePool : noKBPool, r, RefinementWeight);
             }
 
             // ── 近战 ─────────────────────────────────────────────────
@@ -203,8 +202,8 @@ namespace TestMod.Common.GlobalItems
                 // noUseGraphic=true → 矛/连枷/悠悠球（Other）；false → 挥砍剑（Swing）
                 bool isSwing = !item.noUseGraphic;
                 int r = isSwing
-                    ? ModContent.GetInstance<RefinementMeleeSwingPrefix>().Type
-                    : ModContent.GetInstance<RefinementMeleeOtherPrefix>().Type;
+                    ? LoadedPrefixType<RefinementMeleeSwingPrefix>()
+                    : LoadedPrefixType<RefinementMeleeOtherPrefix>();
 
                 // 近战专属正面：Dangerous(3) Savage(4) Sharp(5) Pointy(6) Bulky(12)
                 //              Heavy(14) Light(15) Intimidating(19) Deadly(20) Celestial(34) Furious(35)
@@ -231,7 +230,6 @@ namespace TestMod.Common.GlobalItems
                     (PrefixID.Large,WeaponNormalWeight),(PrefixID.Massive,WeaponNormalWeight),
                     (PrefixID.Tiny,WeaponReducedWeight),(PrefixID.Small,WeaponReducedWeight),
                     (PrefixID.Legendary,WeaponNormalWeight),
-                    (r, refinementWeight),
                 ];
                 (int id, int weight)[] otherPool =
                 [
@@ -249,9 +247,8 @@ namespace TestMod.Common.GlobalItems
                     (PrefixID.Light,WeaponNormalWeight),(PrefixID.Intimidating,WeaponNormalWeight),(PrefixID.Deadly,WeaponNormalWeight),
                     (PrefixID.Celestial,WeaponNormalWeight),(PrefixID.Furious,WeaponNormalWeight),
                     (PrefixID.Terrible,WeaponReducedWeight),(PrefixID.Dull,WeaponReducedWeight),(PrefixID.Unhappy,WeaponReducedWeight),(PrefixID.Shameful,WeaponReducedWeight),
-                    (r, refinementWeight),
                 ];
-                return CurveUtils.WeightedRandom(rand, isSwing ? swingPool : otherPool);
+                return RollWithOptionalPrefix(rand, isSwing ? swingPool : otherPool, r, RefinementWeight);
             }
 
             // ── 饰品 ─────────────────────────────────────────────────
@@ -259,8 +256,8 @@ namespace TestMod.Common.GlobalItems
             // 融合概率 = FusionWeight / (20 × AccessoryNormalWeight + FusionWeight)，默认约 0.83%
             if (item.accessory)
             {
-                int fusion = ModContent.GetInstance<FusionPrefix>().Type;
-                return CurveUtils.WeightedRandom(rand,
+                int fusion = LoadedPrefixType<FusionPrefix>();
+                return RollWithOptionalPrefix(rand,
                 [
                     // 防御类
                     (PrefixID.Hard,AccessoryNormalWeight),(PrefixID.Guarding,AccessoryNormalWeight),(PrefixID.Armored,AccessoryNormalWeight),(PrefixID.Warding,AccessoryNormalWeight),
@@ -274,9 +271,7 @@ namespace TestMod.Common.GlobalItems
                     (PrefixID.Wild,AccessoryNormalWeight),(PrefixID.Rash,AccessoryNormalWeight),(PrefixID.Intrepid,AccessoryNormalWeight),(PrefixID.Violent,AccessoryNormalWeight),
                     // 最优
                     (PrefixID.Legendary2,AccessoryNormalWeight),
-                    // 融合（极稀有）
-                    (fusion, fusionWeight),
-                ]);
+                ], fusion, FusionWeight);
             }
 
             return -1; // 其余走原版逻辑

@@ -27,7 +27,7 @@ namespace TestMod.Content.Prefixes
         // ============================================================
 
         public override PrefixCategory Category => PrefixCategory.AnyWeapon;
-        public override float RollChance(Item item) => PrefixAvailabilitySystem.RefinementEnabled ? 1f : 0f;
+        public override bool IsLoadingEnabled(Mod mod) => PrefixAvailabilitySystem.RefinementEnabled;
 
         public override bool CanRoll(Item item)
             // 近战武器 且 无挥动动画（noUseGraphic），排除鞭子（SummonMeleeSpeed）
@@ -63,8 +63,6 @@ namespace TestMod.Content.Prefixes
 
         public override IEnumerable<TooltipLine> GetTooltipLines(Item item)
         {
-            if (!PrefixAvailabilitySystem.RefinementEnabled)
-                yield break;
             yield return new TooltipLine(Mod, "TestMod:RefinementArmorPen",
                 $"+{ArmorPenetration} 护甲穿透") { IsModifier = true };
         }

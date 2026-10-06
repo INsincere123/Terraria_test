@@ -30,7 +30,7 @@ namespace TestMod.Content.Prefixes
         // ============================================================
 
         public override PrefixCategory Category => PrefixCategory.Melee;
-        public override float RollChance(Item item) => PrefixAvailabilitySystem.RefinementEnabled ? 1f : 0f;
+        public override bool IsLoadingEnabled(Mod mod) => PrefixAvailabilitySystem.RefinementEnabled;
 
         public override bool CanRoll(Item item)
             // 近战武器 且 有挥动动画（!noUseGraphic）
@@ -66,8 +66,6 @@ namespace TestMod.Content.Prefixes
         {
             // damageMult / knockbackMult / useTimeMult / scaleMult / critBonus
             // 原版会自动显示，此处只补充额外属性
-            if (!PrefixAvailabilitySystem.RefinementEnabled)
-                yield break;
             yield return new TooltipLine(Mod, "TestMod:RefinementArmorPen",
                 $"+{ArmorPenetration} 护甲穿透") { IsModifier = true };
         }

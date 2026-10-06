@@ -148,6 +148,9 @@ namespace TestMod.Common.Systems
         // 保持原样，不注入
         private static void InjectRefinementPrefixTiers(Mod cal)
         {
+            // 关闭时炼化内容没有注册，也不向灾厄注入相应等级。
+            if (!PrefixAvailabilitySystem.RefinementEnabled)
+                return;
             var reforgeChangeType = cal.Code.GetType("CalamityMod.Prefixes.ReforgeChange");
             if (reforgeChangeType == null)
             {
