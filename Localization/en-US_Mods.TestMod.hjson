@@ -416,6 +416,11 @@ Items: {
 			强大的[c/B78ADA:天体]可吸引并吸收[c/D12A2A:敌方弹幕]
 			'''
 	}
+
+	MapRevealScroll: {
+		DisplayName: 全图卷轴
+		Tooltip: 使用后点亮整个地图
+	}
 }
 
 Buffs: {
