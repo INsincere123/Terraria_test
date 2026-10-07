@@ -322,6 +322,19 @@ Items: {
 		DisplayName: Test Hook
 	}
 
+	EnhancedStaticHook: {
+		DisplayName: 静止钩ProMax
+		Tooltip:
+			'''
+			拥有更远的射程和更快的速度
+			可钩住 Boss，并随其移动
+			钩住物块时获得 10% 伤害减免
+			钩住 Boss 时获得 20% 伤害减免
+			Boss 瞬移或无法被攻击时自动脱钩
+			使用方向键沿绳移动，跳跃脱钩
+			'''
+	}
+
 	ReflectShieldItem: {
 		Tooltip: ""
 		DisplayName: 反射
@@ -613,6 +626,7 @@ Projectiles: {
 	TestWhipProj.DisplayName: Test Whip Proj
 	TestWhipExplosionProj.DisplayName: Test Whip Explosion Proj
 	TestHookProj.DisplayName: Test Hook Proj
+	EnhancedStaticHookProj.DisplayName: 加强版静止钩
 	ReflectShieldOrb.DisplayName: Reflect Shield Orb
 	DRShieldOrb.DisplayName: D R Shield Orb
 	SwordQiProjectile.DisplayName: 泰拉切割
