@@ -78,6 +78,11 @@ Keybinds: {
 	MomentumConversion.DisplayName: 动量转换
 }
 
+GuideTimeEcho: {
+	CoreReward: 唉……你都追着我问了十遍了。行吧行吧，这个给你——拿好了，算我怕了你了，别再来问我了。
+	DisruptorReward: 哦？你身上带着时之幻影的气息……看来你已经用上那东西了。这个你也许用得上，拿去吧。
+}
+
 Items: {
 	TimeEchoCore: {
 		DisplayName: 时之回响核心

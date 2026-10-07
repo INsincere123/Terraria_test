@@ -42,6 +42,9 @@ namespace TestMod
 					case TimeEchoPlayer.SuccessPacket:
 						TimeEchoPlayer.ReceiveSuccess(reader);
 						break;
+					case Common.GlobalNPCs.GlobalNPC.GuideItemPacket:
+						Common.GlobalNPCs.GlobalNPC.ReceiveGuideItem(reader, whoAmI);
+						break;
 				}
 			}
 			catch (EndOfStreamException)
