@@ -33,6 +33,15 @@ namespace TestMod
 					case MomentumConverterPlayer.ConversionEventPacket:
 						MomentumConverterPlayer.ReceiveConversionEvent(reader, whoAmI);
 						break;
+					case TimeEchoPlayer.RequestPacket:
+						TimeEchoPlayer.ReceiveRequest(reader, whoAmI);
+						break;
+					case TimeEchoPlayer.StatePacket:
+						TimeEchoPlayer.ReceiveState(reader);
+						break;
+					case TimeEchoPlayer.SuccessPacket:
+						TimeEchoPlayer.ReceiveSuccess(reader);
+						break;
 				}
 			}
 			catch (EndOfStreamException)

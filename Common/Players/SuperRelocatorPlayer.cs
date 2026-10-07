@@ -47,6 +47,9 @@ namespace TestMod.Common.Players
             _freezeTimer = 0;
         }
 
+        // 其他主动位移接管坐标时解除原定位器的定点维持，避免下一帧拉回旧位置。
+        internal void CancelPositionFreeze() => _freezeTimer = 0;
+
         public override void PostUpdate()
         {
             // 传送触发：仅本地客户端处理输入

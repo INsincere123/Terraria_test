@@ -63,6 +63,8 @@ ArmorToggle: {
 }
 
 Keybinds: {
+	TimeEchoRewind.DisplayName: 时之幻影·回溯
+	TimeEchoSwap.DisplayName: 时之幻影·互换
 	"Omniguardian Dash.DisplayName": 长冲刺
 	"Antares Gravity Well.DisplayName": 引力井
 	PreciseFlightSlowdown.DisplayName: 减速以精确走位
@@ -77,6 +79,25 @@ Keybinds: {
 }
 
 Items: {
+	TimeEchoCore: {
+		DisplayName: 时之回响核心
+		Tooltip:
+			'''
+			消耗后获得时之幻影能力
+			记录5秒后，幻影会复现你5秒前的位置
+			回溯：回溯时空，获得1秒无敌帧
+			回溯后5秒内每秒恢复8点生命，增加20%减伤
+			回溯冷却30秒，第25秒重新开始记录，第30秒恢复幻影
+			互换：移动至幻影位置，获得0.25秒无敌帧
+			互换后3秒内伤害×1.2，冷却10秒，第5秒开始重新记录，第10秒恢复幻影
+			'''
+	}
+
+	TimeEchoDisruptor: {
+		DisplayName: 时之断裂器
+		Tooltip: 消耗后移除时之幻影能力
+	}
+
 	MomentumConverter: {
 		DisplayName: 动量转换器
 		Tooltip:
@@ -677,3 +698,5 @@ UI: {
 		Broken: 护盾破碎 · {0}秒
 	}
 }
+
+TimeEcho.Recording: 时间记录建立中

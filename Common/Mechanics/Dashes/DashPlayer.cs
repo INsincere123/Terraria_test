@@ -261,6 +261,14 @@ namespace TestMod.Common.Mechanics.Dashes
 			FinishDash();
 		}
 
+		// 时间位移结束当前冲刺，同时清除尚未消费的双击/单键窗口；保留正常结束冷却。
+		internal void CancelForTimeEcho()
+		{
+			EndDash();
+			_dashTimeMod = 0;
+			_vanillaDashKeyJustPressed = false;
+		}
+
 		// ── 私有工具 ───────────────────────────────────────────────────────────
 
 		private (int, int) ResolveDashDirection(PlayerDashEffect effect)
