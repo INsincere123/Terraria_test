@@ -73,9 +73,23 @@ Keybinds: {
 	"Omniguardian Blink.DisplayName": 短冲刺
 	SuperRelocator.DisplayName: 闪现
 	VanillaDash.DisplayName: 单键冲刺
+	MomentumConversion.DisplayName: 动量转换
 }
 
 Items: {
+	MomentumConverter: {
+		DisplayName: 动量转换器
+		Tooltip:
+			'''
+			将当前合速度转向鼠标指向位置
+			储存两层充能，每2秒回复一层
+			两层时保留全部速度，一层时保留50%速度
+			转换后0.5秒内免疫坠落伤害与击退
+			矿车与钩爪状态下无法使用
+			'''
+		ActivationHint: 按 [{0}] 转换动量
+	}
+
 	WeaponReforgeScroll: {
 		DisplayName: 武器重铸券（旧版）
 		Tooltip: 批量重铸已迁至 MassReforge。启用该模组并重新加载玩家或世界后，此券自动迁移；当前无法使用。

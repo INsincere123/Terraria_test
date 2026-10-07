@@ -30,6 +30,9 @@ namespace TestMod
 					case CultistSummonSystem.SummonSoundPacket:
 						CultistSummonSystem.ReceiveSummonSound(reader);
 						break;
+					case MomentumConverterPlayer.ConversionEventPacket:
+						MomentumConverterPlayer.ReceiveConversionEvent(reader, whoAmI);
+						break;
 				}
 			}
 			catch (EndOfStreamException)
