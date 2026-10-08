@@ -5,8 +5,8 @@ namespace TestMod.Common.DataStructures
     // 等待包含持续期和随后冷却；中断只关闭效果，不能缩短再次开启的等待。
     internal sealed class TimeEchoAttackState
     {
-        internal const int Duration = 1800; // 持续30秒，方便连续测试
-        internal const int Cooldown = 60;   // 冷却1秒，也可以设为0
+        internal const int Duration = 300; // 持续30秒，方便连续测试
+        internal const int Cooldown = 900;   // 冷却1秒，也可以设为0
         internal const int TotalWait = Duration + Cooldown;
         internal int ActiveTicks { get; private set; }
         internal int WaitTicks { get; private set; }

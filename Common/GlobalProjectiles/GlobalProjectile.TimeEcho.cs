@@ -15,9 +15,11 @@ namespace TestMod.Common.GlobalProjectiles
         public bool IsTimeEchoAttack { get; private set; }
         private TimeEchoAttackIdentity echoIdentity;
         private bool echoRegistered;
+        private bool echoPreserveBubbleAmmo;
 
         private bool TimeEcho_OnSpawn(Projectile p, IEntitySource source)
         {
+            RecordEchoSource(p, source);
             if (source is TimeEchoAttackSource attack)
             {
                 IsTimeEchoAttack = true;
@@ -25,7 +27,8 @@ namespace TestMod.Common.GlobalProjectiles
                 p.DamageType = attack.DamageClass;
                 p.CritChance = attack.CritChance;
                 p.ArmorPenetration = attack.ArmorPenetration;
-                if (attack.Shot is { } shot) shot.ApplyParameters(p);
+                if (attack.Shot is { } shot)
+                { shot.ApplyParameters(p); echoPreserveBubbleAmmo = shot.PreserveBubbleAmmo && p.type == Terraria.ID.ProjectileID.Xenopopper; }
                 InitializeEchoOwner(p, attack.Shot?.OwnerPose ?? default, attack.OwnerOrigin ?? p.Center, attack.Shot?.Entity);
             }
             else if (source is EntitySource_Parent { Entity: Projectile parent } &&
@@ -108,6 +111,8 @@ namespace TestMod.Common.GlobalProjectiles
             writer.Write(p.penetrate); writer.Write(p.maxPenetrate); writer.Write(p.timeLeft);
             writer.Write(p.extraUpdates); writer.Write(p.tileCollide); writer.Write(p.ignoreWater);
             WriteEchoOwner(writer);
+            writer.Write(echoPreserveBubbleAmmo);
+            if (echoPreserveBubbleAmmo) { writer.Write(p.localAI[0]); writer.Write(p.localAI[1]); }
         }
 
         private void TimeEcho_Read(Projectile p, BinaryReader reader)
@@ -121,6 +126,15 @@ namespace TestMod.Common.GlobalProjectiles
             p.penetrate = reader.ReadInt32(); p.maxPenetrate = reader.ReadInt32(); p.timeLeft = reader.ReadInt32();
             p.extraUpdates = reader.ReadInt32(); p.tileCollide = reader.ReadBoolean(); p.ignoreWater = reader.ReadBoolean();
             ReadEchoOwner(p, reader);
+            echoPreserveBubbleAmmo = reader.ReadBoolean();
+            if (echoPreserveBubbleAmmo)
+            {
+                float ammo = reader.ReadSingle(), speed = reader.ReadSingle();
+                if (p.type != Terraria.ID.ProjectileID.Xenopopper || !float.IsFinite(ammo) || !float.IsFinite(speed) ||
+                    ammo <= 0 || ammo >= ProjectileLoader.ProjectileCount || speed < 0 || speed > 10000)
+                { p.active = false; return; }
+                p.localAI[0] = ammo; p.localAI[1] = speed;
+            }
             ConfigureEcho(p);
             p.localNPCHitCooldown = cooldown;
         }

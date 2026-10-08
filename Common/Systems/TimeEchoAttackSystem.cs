@@ -34,6 +34,7 @@ namespace TestMod.Common.Systems
             internal Projectile Parent;
             internal Vector2 Center, Mouse, Aim;
             internal uint Root, Generation;
+            internal int SpawnOrdinal;
             internal readonly List<(Projectile Entity, int Identity)> Candidates = new(16);
         }
 
@@ -64,6 +65,7 @@ namespace TestMod.Common.Systems
                 bombPlayerHook = new Hook(bombPlayer, (BombPlayerDetour)PreventEchoBombPlayerDamage);
                 projectileAIHook = new Hook(typeof(ProjectileLoader).GetMethod(nameof(ProjectileLoader.ProjectileAI)),
                     (ProjectileAIDetour)CaptureCarrierAttack);
+                LoadWorldEffectHooks();
                 foreach (string name in new[] { nameof(Projectile.VanillaAI), "AI_019_Spears", nameof(Projectile.AI_019_Spears_GetExtensionHitbox),
                     "AI_161_RapierStabs", "AI_075", "AI_182_FinalFractal", "AI_165_Whip", "AI_190_NightsEdge", "AI_191_TrueNightsEdge", "AI_167_SparkleGuitar",
                     nameof(Projectile.FillWhipControlPoints), nameof(Projectile.GetWhipSettings), "CanHitWithMeleeWeapon" })
@@ -106,6 +108,7 @@ namespace TestMod.Common.Systems
             bombPlayerHook?.Dispose(); bombPlayerHook = null;
             damageHook?.Dispose(); damageHook = null;
             projectileAIHook?.Dispose(); projectileAIHook = null;
+            DisposeWorldEffectHooks();
             foreach (ILHook hook in ownerHooks) hook.Dispose();
             ownerHooks.Clear();
         }
@@ -142,26 +145,51 @@ namespace TestMod.Common.Systems
         {
             ShotContext previous = currentShot;
             ShotContext context = null;
+            EchoProjectile data = carrier.GetGlobalProjectile<EchoProjectile>();
+            AttackAdapter adapter = GetAttackAdapter(carrier);
+            TimeEchoPlayer state = null;
+            TimeEchoShot? pending = null;
+            int identity = carrier.identity, type = carrier.type, owner = carrier.owner;
             if (Ready && Main.netMode != NetmodeID.Server && carrier.owner == Main.myPlayer &&
-                !carrier.GetGlobalProjectile<EchoProjectile>().IsTimeEchoAttack)
+                !data.IsTimeEchoAttack && !data.IsExtraHit)
             {
                 Player player = Main.player[carrier.owner];
-                // 可复制的攻击本体由副本 AI 自己派生后续攻击，不能再捕获原本体的子弹造成双份。
-                if (player.TryGetModPlayer(out TimeEchoPlayer echo) && echo.CanCopyAttack && !CanCopyProjectile(carrier) &&
-                    (carrier.aiStyle == ProjAIStyleID.HeldProjectile || player.heldProj == carrier.whoAmI ||
-                    carrier.ModProjectile is Content.Projectiles.Ranged.PhantasmHoldout))
-                    context = new ShotContext { Player = player, Item = player.HeldItem, Parent = carrier, Center = player.Center,
-                        Mouse = Main.MouseWorld, Aim = (Main.MouseWorld - player.Center).SafeNormalize(new Vector2(player.direction, 0)),
-                        Root = ++nextRoot, Generation = echo.attackState.Generation };
+                if (player.TryGetModPlayer(out state))
+                {
+                    pending = state.TakePendingShot(carrier);
+                    // 首次 AI 暂存可能的射弹，AI 后确认是资源载体才投送；普通本体由副本自行派生。
+                    if (state.CanCopyAttack && data.EchoHasWeaponSource && !carrier.hostile && !IsExcludedProjectile(carrier) &&
+                        (IsResourceCarrier(carrier) || NeedsFirstAIConfirmation(carrier) || adapter != null))
+                        context = new ShotContext { Player = player, Item = data.EchoSourceItem, Parent = carrier, Center = player.Center,
+                            Mouse = Main.MouseWorld, Aim = (Main.MouseWorld - player.Center).SafeNormalize(new Vector2(player.direction, 0)),
+                            Root = ++nextRoot, Generation = state.attackState.Generation };
+                }
             }
             currentShot = context;
             bool completed = false;
+            Projectile previousWorldSource = worldEffectSource;
+            worldEffectSource = carrier;
             try { original(carrier); completed = true; }
             finally
             {
+                worldEffectSource = previousWorldSource;
                 currentShot = previous;
-                // 玩家更新后的射弹 AI 仍在同一 tick；立即投送，不能留到下一 tick 成为过期队列。
-                if (completed && context != null) FinishCapture(context, true);
+                if (completed && carrier.identity == identity && carrier.type == type && carrier.owner == owner &&
+                    ReferenceEquals(Main.projectile[carrier.whoAmI], carrier))
+                {
+                    bool resourceCarrier = IsResourceCarrier(carrier);
+                    data.ConfirmEchoCopyMode(resourceCarrier);
+                    if (!data.IsTimeEchoAttack && state != null && adapter is { ReplaysBody: true })
+                    {
+                        if (!carrier.hostile && !IsExcludedProjectile(carrier))
+                            data.UpdateEchoProjection(carrier, state, adapter, ++nextRoot);
+                        else data.StopEchoProjection();
+                    }
+                    // 载体投送实际射弹，本体碰撞另经回放；不刷新近战队列或执行副本载体 AI。
+                    if ((resourceCarrier || adapter != null) && context != null && !carrier.hostile && !IsExcludedProjectile(carrier))
+                        FinishCapture(context, true);
+                    else if (pending is { } shot) state.EmitEchoShot(shot);
+                }
             }
         }
 
@@ -172,20 +200,27 @@ namespace TestMod.Common.Systems
             {
                 Projectile p = candidate.Entity;
                 if (!p.active || p.identity != candidate.Identity || p.owner != context.Player.whoAmI ||
-                    !ReferenceEquals(Main.projectile[p.whoAmI], p) || !CanCopyProjectile(p) ||
+                    !ReferenceEquals(Main.projectile[p.whoAmI], p) || !CanCopyProjectileBody(p) ||
                     p.GetGlobalProjectile<EchoProjectile>() is { IsExtraHit: true } or { IsTimeEchoAttack: true }) continue;
-                state.QueueShot(TimeEchoShot.Capture(p, context.Player, context.Center, context.Mouse,
-                    context.Aim, context.Root, context.Generation));
+                TimeEchoShot shot = TimeEchoShot.Capture(p, context.Player, context.Center, context.Mouse,
+                    context.Aim, context.Root, context.Generation);
+                if (NeedsFirstAIConfirmation(p)) state.DeferEchoShot(shot);
+                else if (flush) state.EmitEchoShot(shot);
+                else state.QueueShot(shot);
             }
-            if (flush) state.FlushEchoAttacks();
         }
 
         internal static void ObserveSpawn(Projectile p, IEntitySource source)
         {
             ShotContext context = currentShot;
-            if (context == null || context.Candidates.Count >= 64 || p.owner != context.Player.whoAmI ||
-                !IsDirectAttackSource(context, source) ||
-                !CanCopyProjectile(p) ||
+            if (context == null || p.owner != context.Player.whoAmI || !IsDirectAttackSource(context, source)) return;
+            // 在过滤前计数，弹种被排除也不能把后续天降批次误认成枪口批次。
+            int ordinal = context.SpawnOrdinal++;
+            p.GetGlobalProjectile<EchoProjectile>().SetEchoSpawnPolicy(
+                GetSpawnCoordinates(p, context.Item, context.Parent == null ? ordinal : -1),
+                context.Parent == null && IsVortexpopperBubble(p, context.Item));
+            if (context.Candidates.Count >= 64 ||
+                (!CanCopyProjectile(p) && GetAttackAdapter(p) == null) || IsExcludedProjectile(p) ||
                 p.GetGlobalProjectile<EchoProjectile>() is { IsExtraHit: true } or { IsTimeEchoAttack: true }) return;
             context.Candidates.Add((p, p.identity));
         }
@@ -209,15 +244,17 @@ namespace TestMod.Common.Systems
         internal static void CopyShot(Player player, Vector2 origin, in TimeEchoShot shot)
         {
             if (!shot.Entity.active || shot.Entity.identity != shot.Identity || shot.Entity.owner != player.whoAmI ||
-                !ReferenceEquals(Main.projectile[shot.Entity.whoAmI], shot.Entity) || !CanCopyProjectile(shot.Entity)) return;
+                shot.Entity.type != shot.Type || !ReferenceEquals(Main.projectile[shot.Entity.whoAmI], shot.Entity) ||
+                !CanCopyProjectileBody(shot.Entity)) return;
             TimeEchoAttackGeometry.AimShot(origin, shot.Center, shot.PlayerCenter, shot.Aim, shot.Mouse,
-                shot.Velocity, out Vector2 position, out Vector2 velocity);
+                shot.Velocity, out Vector2 position, out Vector2 velocity, shot.Coordinates);
             var source = new TimeEchoAttackSource(new(shot.Root, shot.Generation), shot.DamageClass, shot.Crit, shot.ArmorPenetration, shot, origin);
             float ai0 = shot.Ai0, ai1 = shot.Ai1;
             if (shot.Entity.aiStyle == ProjAIStyleID.StellarTune) { ai0 = shot.Mouse.X; ai1 = shot.Mouse.Y; }
             int index = Projectile.NewProjectile(source, position, velocity, shot.Type,
                 shot.Damage, shot.Knockback, player.whoAmI, ai0, ai1, shot.Ai2);
             if (index >= Main.maxProjectiles) return;
+            shot.Entity.GetGlobalProjectile<EchoProjectile>().RecordEchoBody(Main.projectile[index], shot.Generation);
             Main.projectile[index].netUpdate = true;
         }
 

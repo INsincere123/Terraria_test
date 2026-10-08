@@ -1,13 +1,18 @@
 using System;
 using Microsoft.Xna.Framework;
+using TestMod.Common.DataStructures;
 
 namespace TestMod.Common.Utilities
 {
     internal static class TimeEchoAttackGeometry
     {
         internal static void AimShot(Vector2 origin, Vector2 sourceCenter, Vector2 playerCenter,
-            Vector2 sourceAim, Vector2 mouse, Vector2 velocity, out Vector2 position, out Vector2 aimedVelocity)
+            Vector2 sourceAim, Vector2 mouse, Vector2 velocity, out Vector2 position, out Vector2 aimedVelocity,
+            TimeEchoShotCoordinates coordinates = TimeEchoShotCoordinates.MuzzleRelative)
         {
+            // 天降等世界目标攻击保留原出生点与轨迹；不旋转成幻影附近的枪口攻击。
+            if (coordinates == TimeEchoShotCoordinates.WorldTarget)
+            { position = sourceCenter; aimedVelocity = velocity; return; }
             Vector2 aim = NormalizeOr(mouse - origin, sourceAim);
             float rotation = Angle(aim) - Angle(sourceAim);
             position = origin + Rotate(sourceCenter - playerCenter, rotation);
@@ -20,6 +25,14 @@ namespace TestMod.Common.Utilities
         private static Vector2 Rotate(Vector2 value, float rotation)
             => new(value.X * MathF.Cos(rotation) - value.Y * MathF.Sin(rotation),
                 value.X * MathF.Sin(rotation) + value.Y * MathF.Cos(rotation));
+
+        internal static bool IntersectsCircle(Vector2 center, float radius, Rectangle target)
+        {
+            if (radius <= 0) return false;
+            Vector2 closest = new(Math.Clamp(center.X, target.Left, target.Right),
+                Math.Clamp(center.Y, target.Top, target.Bottom));
+            return Vector2.DistanceSquared(center, closest) <= radius * radius;
+        }
 
         internal static bool Intersects(Vector2 center, Vector2 halfSize, float rotation, Rectangle target)
         {

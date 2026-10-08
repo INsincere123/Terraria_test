@@ -677,6 +677,7 @@ Projectiles: {
 	QuasarJetProjectile.DisplayName: 类星体喷流
 	QuasarJetBurstShard.DisplayName: 吸积盘喷发
 	TimeEchoMeleeProjectile.DisplayName: 幻影攻击
+	TimeEchoProjectionProjectile.DisplayName: Time Echo Projection Projectile
 }
 
 Prefixes: {

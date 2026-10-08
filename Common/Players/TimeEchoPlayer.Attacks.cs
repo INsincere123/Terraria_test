@@ -18,6 +18,7 @@ namespace TestMod.Common.Players
         private bool pendingAttack;
         private readonly List<(Projectile Entity, int Identity)> echoAttacks = new();
         private readonly List<TimeEchoShot> queuedShots = new(64);
+        private readonly List<TimeEchoShot> pendingShots = new(64);
         private TimeEchoMeleeFrame? meleeFrame;
         private uint meleeSwing;
         private uint meleeGeneration;
@@ -65,6 +66,32 @@ namespace TestMod.Common.Players
             if (queuedShots.Count < 64) queuedShots.Add(shot);
         }
 
+        internal void DeferEchoShot(in TimeEchoShot shot)
+        {
+            if (pendingShots.Count < 64) pendingShots.Add(shot);
+        }
+
+        internal TimeEchoShot? TakePendingShot(Projectile projectile)
+        {
+            for (int i = pendingShots.Count - 1; i >= 0; i--)
+            {
+                TimeEchoShot shot = pendingShots[i];
+                if (!ReferenceEquals(shot.Entity, projectile)) continue;
+                pendingShots.RemoveAt(i);
+                if (projectile.identity == shot.Identity && projectile.type == shot.Type &&
+                    projectile.owner == Player.whoAmI && ReferenceEquals(Main.projectile[projectile.whoAmI], projectile))
+                    return shot;
+            }
+            return null;
+        }
+
+        internal void EmitEchoShot(in TimeEchoShot shot)
+        {
+            if (Player.whoAmI == Main.myPlayer && Main.netMode != NetmodeID.Server && CanCopyAttack &&
+                shot.Tick == Main.GameUpdateCount && shot.Generation == attackState.Generation)
+                TimeEchoAttackSystem.CopyShot(Player, AttackOrigin, shot);
+        }
+
         internal void BeginMeleeSwing()
         {
             meleeSwing++;
@@ -74,6 +101,7 @@ namespace TestMod.Common.Players
         {
             attackBlockedTick = Main.GameUpdateCount;
             queuedShots.Clear();
+            pendingShots.Clear();
             meleeFrame = null;
             pendingAttack = false;
             StopMeleeCarrier();
@@ -95,8 +123,7 @@ namespace TestMod.Common.Players
             if (CanCopyAttack)
             {
                 foreach (TimeEchoShot shot in queuedShots)
-                    if (shot.Tick == Main.GameUpdateCount && shot.Generation == attackState.Generation)
-                        TimeEchoAttackSystem.CopyShot(Player, AttackOrigin, shot);
+                    EmitEchoShot(shot);
                 if (meleeFrame is { } frame && frame.Tick == Main.GameUpdateCount)
                 {
                     if (meleeCarrier == null || !meleeCarrier.active || meleeCarrier.identity != meleeIdentity ||
@@ -156,12 +183,14 @@ namespace TestMod.Common.Players
             attackState.Stop();
             pendingAttack = false;
             queuedShots.Clear();
+            pendingShots.Clear();
             meleeFrame = null;
             StopMeleeCarrier();
             foreach (var entry in echoAttacks)
                 if (IsRegisteredAttack(entry))
                     entry.Entity.active = false; // 不调用 Kill：不能因清理产生爆炸、分裂、掉落。
             echoAttacks.Clear();
+            projectionImmunity.Clear();
             if (echoImmunityUntil != null)
             {
                 Array.Clear(echoImmunityUntil);
@@ -180,6 +209,8 @@ namespace TestMod.Common.Players
 
         internal void FinishAttackTick()
         {
+            // 未在生成 tick 进入首次 AI 的候选不跨 tick 补发，释放来源实体引用。
+            pendingShots.Clear();
             // 原攻击已在玩家更新中捕获；先投送本 tick 的有效副本，再结束这一 tick 的持续期。
             if (attackStartedTick == Main.GameUpdateCount) return;
             int active = attackState.ActiveTicks;

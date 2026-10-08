@@ -8,6 +8,8 @@ namespace TestMod.Common.DataStructures
 {
     internal readonly record struct TimeEchoAttackIdentity(uint Root, uint Generation);
 
+    internal enum TimeEchoShotCoordinates : byte { MuzzleRelative, WorldTarget }
+
     internal sealed class TimeEchoAttackSource : IEntitySource
     {
         public string Context => "TimeEchoAttack";
@@ -27,7 +29,8 @@ namespace TestMod.Common.DataStructures
         float Knockback, DamageClass DamageClass, int Crit, int ArmorPenetration, float Ai0, float Ai1, float Ai2,
         float Scale, int Penetrate, int MaxPenetrate, int TimeLeft, int ExtraUpdates, bool TileCollide,
         bool IgnoreWater, bool LocalImmunity, int HitCooldown, uint Root, uint Generation, ulong Tick,
-        TimeEchoOwnerPose OwnerPose = default)
+        TimeEchoOwnerPose OwnerPose = default, TimeEchoShotCoordinates Coordinates = TimeEchoShotCoordinates.MuzzleRelative,
+        bool PreserveBubbleAmmo = false, float BubbleAmmo = 0, float BubbleSpeed = 0)
     {
         internal void ApplyParameters(Projectile p)
         {
@@ -38,6 +41,8 @@ namespace TestMod.Common.DataStructures
             p.CritChance = Crit; p.ArmorPenetration = ArmorPenetration;
             p.usesLocalNPCImmunity = LocalImmunity;
             p.localNPCHitCooldown = HitCooldown;
+            if (PreserveBubbleAmmo && p.type == Terraria.ID.ProjectileID.Xenopopper)
+            { p.localAI[0] = BubbleAmmo; p.localAI[1] = BubbleSpeed; }
         }
         internal static TimeEchoShot Capture(Projectile p, Player player, Vector2 center, Vector2 mouse,
             Vector2 aim, uint root, uint generation) => new(p, p.identity, p.type, p.Center, p.velocity,
@@ -45,7 +50,11 @@ namespace TestMod.Common.DataStructures
                 p.ArmorPenetration, p.ai[0], p.ai[1], p.ai[2], p.scale, p.penetrate, p.maxPenetrate,
                 p.timeLeft, p.extraUpdates, p.tileCollide, p.ignoreWater, p.usesLocalNPCImmunity,
                 p.localNPCHitCooldown, root, generation, Main.GameUpdateCount,
-                TimeEchoOwnerPose.NeedsProxy(p) ? TimeEchoOwnerPose.Capture(player, p) : default);
+                TimeEchoOwnerPose.NeedsProxy(p) ? TimeEchoOwnerPose.Capture(player, p) : default,
+                p.GetGlobalProjectile<Common.GlobalProjectiles.GlobalProjectile>().EchoSpawnCoordinates ??
+                    Common.Systems.TimeEchoAttackSystem.GetShotCoordinates(p),
+                p.GetGlobalProjectile<Common.GlobalProjectiles.GlobalProjectile>().EchoPreserveBubbleAmmo,
+                p.localAI[0], p.localAI[1]);
     }
 
     internal readonly record struct TimeEchoOwnerPose(int ItemType, int Animation, int Direction, float Gravity,
