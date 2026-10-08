@@ -61,6 +61,7 @@ namespace TestMod.Common.GlobalProjectiles
             _dragonFlightPrepared = false;
             // 减速力场：在 AI 跑之前恢复上帧保存的自然速度，防止衰减
             SlowField_RestoreVelocity(projectile);
+            if (IsTimeEchoAttack) return TimeEcho_PreAI(projectile);
 
             // 暴走期间：在碰撞检测前强制弹幕无限穿透
             BloodFeed_SetBerserkPenetrate(projectile);
@@ -133,6 +134,14 @@ namespace TestMod.Common.GlobalProjectiles
         // ══════════════════════════════════════════════════════════════
         public override void PostAI(Projectile projectile)
         {
+            if (IsTimeEchoAttack)
+            {
+                TimeEcho_PostAI(projectile);
+                if (!projectile.active) return;
+                ApplyTimeSlowToProjectile(projectile);
+                RequestTrackingSync(projectile);
+                return;
+            }
             Blindness_PostAI(projectile);
 
             if (projectile.owner < 0 || projectile.owner >= Main.maxPlayers) return;
@@ -243,6 +252,12 @@ namespace TestMod.Common.GlobalProjectiles
             if (subhandDynamicText)
                 modifiers.HideCombatText();
 
+            if (IsTimeEchoAttack)
+            {
+                TimeEcho_ModifyHit(projectile, ref modifiers);
+                return;
+            }
+
             if (IsExtraHit)
             {
                 ExtraHitEffect.ApplyHitRules(player, projectile.DamageType, ExtraHitUseCrit, ExtraHitIgnoreDefense, ref modifiers);
@@ -317,7 +332,7 @@ namespace TestMod.Common.GlobalProjectiles
             }
 
             // 额外伤害只完成投送和数字显示，不再次触发追加攻击、鞭爆炸或收割。
-            if (IsExtraHit) return;
+            if (IsExtraHit || IsTimeEchoAttack) return;
 
             // 通过 GlobalProjectile 路径分发副手等追加攻击效果
             // 不走 ModPlayer.OnHitNPCWithProj 是因为自定义 DamageClass 对该钩子存在兼容性问题

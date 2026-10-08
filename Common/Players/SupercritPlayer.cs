@@ -50,6 +50,7 @@ namespace TestMod.Common.Players
     {
         public override void ModifyHitByProjectile(NPC npc, Projectile projectile, ref NPC.HitModifiers modifiers)
         {
+            if (projectile.GetGlobalProjectile<global::TestMod.Common.GlobalProjectiles.GlobalProjectile>().IsTimeEchoAttack) return;
             Player player = Main.player[projectile.owner];
             if (!player.active || player.dead)
                 return;
@@ -73,6 +74,7 @@ namespace TestMod.Common.Players
 
         public override void OnHitByProjectile(NPC npc, Projectile projectile, NPC.HitInfo hit, int damageDone)
         {
+            if (projectile.GetGlobalProjectile<global::TestMod.Common.GlobalProjectiles.GlobalProjectile>().IsTimeEchoAttack) return;
             if (!hit.Crit || projectile.owner < 0 || projectile.owner >= Main.maxPlayers)
                 return;
 

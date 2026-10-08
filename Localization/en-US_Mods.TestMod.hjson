@@ -65,6 +65,7 @@ ArmorToggle: {
 Keybinds: {
 	TimeEchoRewind.DisplayName: 时之幻影·回溯
 	TimeEchoSwap.DisplayName: 时之幻影·互换
+	TimeEchoAttack.DisplayName: 时之幻影·同步攻击
 	"Omniguardian Dash.DisplayName": 长冲刺
 	"Antares Gravity Well.DisplayName": 引力井
 	PreciseFlightSlowdown.DisplayName: 减速以精确走位
@@ -675,6 +676,7 @@ Projectiles: {
 	BlackHoleMinion.DisplayName: Black Hole Minion
 	QuasarJetProjectile.DisplayName: 类星体喷流
 	QuasarJetBurstShard.DisplayName: 吸积盘喷发
+	TimeEchoMeleeProjectile.DisplayName: 幻影攻击
 }
 
 Prefixes: {
@@ -704,4 +706,9 @@ UI: {
 	}
 }
 
-TimeEcho.Recording: 时间记录建立中
+TimeEcho: {
+	Recording: 时间记录建立中
+	AttackHint: "{0}：同步攻击（需幻影）"
+	AttackDetails: 持续5秒，结束后冷却15秒；攻击伤害50%
+	Unbound: 未绑定
+}

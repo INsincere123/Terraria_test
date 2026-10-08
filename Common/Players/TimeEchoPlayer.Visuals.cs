@@ -1,8 +1,10 @@
 using System;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using Terraria;
 using Terraria.DataStructures;
 using Terraria.ID;
+using Terraria.ModLoader;
 using TestMod.Common.DataStructures;
 using TestMod.Common.Systems;
 
@@ -88,8 +90,29 @@ namespace TestMod.Common.Players
                 proxy.proxyOpacity = VisualOpacity * 0.40f;
                 Main.PlayerRenderer.DrawPlayer(Main.Camera, visualPlayer, visualPosition, visualPlayer.fullRotation,
                     visualPlayer.fullRotationOrigin, 0.5f);
+                DrawEchoWeapon();
+                DrawAttackReadyGlow();
             }
             finally { proxy.isVisualProxy = false; }
+        }
+
+        private void DrawAttackReadyGlow()
+        {
+            if (Main.dedServ || !HasAbility || !HasPhantom || Player.dead || Player.statLife <= 0 ||
+                attackState.WaitTicks != 0 || !TimeEchoAttackSystem.Ready || visualPlayer.HandPosition is not Vector2 hand)
+                return;
+
+            // 原版手部坐标包含历史朝向、反重力和身体旋转；只画柔光，不产生环境照明或残留粒子。
+            Texture2D texture = ModContent.Request<Texture2D>("TestMod/Assets/Particles/SourceTextures/SoftBloom").Value;
+            float pulse = 0.82f + 0.18f * MathF.Sin(Main.GlobalTimeWrappedHourly * 2.6f);
+            Color glow = Color.Lerp(new Color(255, 40, 40), new Color(255, 130, 160), 0.4f);
+            glow.A = 0; // 预乘 AlphaBlend 下叠加柔光，保持现有 SpriteBatch 状态。
+            Vector2 position = hand - Main.screenPosition;
+            Vector2 origin = texture.Size() * 0.5f;
+            Main.EntitySpriteDraw(texture, position, null, glow * (0.48f * pulse * VisualOpacity),
+                0f, origin, 42f / texture.Width, SpriteEffects.None);
+            Main.EntitySpriteDraw(texture, position, null, glow * (0.80f * pulse * VisualOpacity),
+                0f, origin, 16f / texture.Width, SpriteEffects.None);
         }
 
         private void PrepareVisualPlayer(Player proxy, TimeEchoSnapshot pose)
@@ -140,6 +163,14 @@ namespace TestMod.Common.Players
             proxy.heldProj = -1;
             proxy.itemAnimation = proxy.itemTime = 0;
             proxy.compositeFrontArm = proxy.compositeBackArm = default;
+            if (TryGetAttackPose(out TimeEchoMeleeFrame attack, out float angle))
+            {
+                proxy.bodyFrame = attack.BodyFrame;
+                proxy.compositeFrontArm = attack.FrontArm;
+                proxy.compositeBackArm = attack.BackArm;
+                proxy.compositeFrontArm.rotation += angle;
+                proxy.compositeBackArm.rotation += angle;
+            }
         }
 
         public override void DrawEffects(PlayerDrawSet drawInfo, ref float r, ref float g, ref float b, ref float a, ref bool fullBright)

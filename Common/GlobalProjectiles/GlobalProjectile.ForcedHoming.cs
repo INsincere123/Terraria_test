@@ -20,6 +20,7 @@ namespace TestMod.Common.GlobalProjectiles
         public override void OnSpawn(Projectile projectile, IEntitySource source)
         {
             ProjectileLookup.Observe(projectile, this);
+            if (TimeEcho_OnSpawn(projectile, source)) return;
             // 只对玩家直接使用物品生成的弹幕打标记；衍生弹幕不消耗追踪次数。
             if (source is not EntitySource_ItemUse) return;
             if (projectile.owner < 0 || projectile.owner >= Main.maxPlayers) return;

@@ -15,7 +15,7 @@ namespace TestMod.Common.Players
         internal const byte RequestPacket = 4;
         internal const byte StatePacket = 5;
         internal const byte SuccessPacket = 6;
-        private enum Request : byte { Join, Acquire, Remove, Rewind, Swap, Resources }
+        private enum Request : byte { Join, Acquire, Remove, Rewind, Swap, Resources, Attack }
         private bool sessionInitialized;
         private bool joinConfirmed;
         private uint revision, receivedRevision, lastSuccessRevision;
@@ -44,6 +44,7 @@ namespace TestMod.Common.Players
             packet.Write(timeline.Owned);
             packet.Write((ushort)timeline.RewindCooldown);
             packet.Write((ushort)timeline.SwapCooldown);
+            packet.Write((ushort)attackState.WaitTicks);
             packet.Send();
         }
 
@@ -103,7 +104,7 @@ namespace TestMod.Common.Players
             if (request == Request.Join)
             {
                 bool owned = reader.ReadBoolean();
-                int rewind = reader.ReadUInt16(), swap = reader.ReadUInt16();
+                int rewind = reader.ReadUInt16(), swap = reader.ReadUInt16(), attackWait = reader.ReadUInt16();
                 if (state.sessionInitialized)
                 {
                     state.SendState(sender);
@@ -111,6 +112,7 @@ namespace TestMod.Common.Players
                 }
                 state.sessionInitialized = true;
                 state.timeline.Restore(owned, rewind, swap);
+                state.attackState.Restore(owned ? attackWait : 0);
                 state.SendState();
                 return;
             }
@@ -150,7 +152,9 @@ namespace TestMod.Common.Players
                 // 每 tick 最多保留一个请求，回溯优先；消费时再次验证所有状态。
                 bool rewind = request == Request.Rewind;
                 if (rewind || !state.pendingSkill.HasValue) state.pendingSkill = rewind;
+                state.pendingAttack = false;
             }
+            else if (request == Request.Attack && !state.pendingSkill.HasValue) state.pendingAttack = true;
         }
 
         private void SendState(int toWho = -1)
@@ -165,6 +169,9 @@ namespace TestMod.Common.Players
             packet.Write(timeline.RecordingGeneration);
             packet.Write((ushort)rewindBonusTicks);
             packet.Write((ushort)swapBonusTicks);
+            packet.Write((ushort)attackState.ActiveTicks);
+            packet.Write((ushort)attackState.WaitTicks);
+            packet.Write(attackState.Generation);
             packet.Write(timeline.Recording && !Player.dead);
             packet.Write(timeline.HasPhantom && !Player.dead);
             if (timeline.HasPhantom && !Player.dead) timeline.Phantom.WriteVisual(packet);
@@ -184,6 +191,8 @@ namespace TestMod.Common.Players
             int rewind = reader.ReadUInt16(), swap = reader.ReadUInt16();
             uint generation = reader.ReadUInt32();
             int rewindBonus = reader.ReadUInt16(), swapBonus = reader.ReadUInt16();
+            int attackActive = reader.ReadUInt16(), attackWait = reader.ReadUInt16();
+            uint attackGeneration = reader.ReadUInt32();
             bool recording = reader.ReadBoolean(), phantom = reader.ReadBoolean();
             TimeEchoSnapshot snapshot = phantom ? TimeEchoSnapshot.ReadVisual(reader) : default;
             state.receivedRevision = serial;
@@ -191,6 +200,8 @@ namespace TestMod.Common.Players
             if (index == Main.myPlayer) state.joinConfirmed = true;
             bool previousPhantom = state.remotePhantom;
             state.remoteOwned = owned;
+            state.attackState.Synchronize(attackActive, attackWait, attackGeneration);
+            if (!owned || state.Player.dead) state.ClearEchoAttacks();
             state.SyncBonuses(rewindBonus, swapBonus);
             state.remoteRewind = rewind;
             state.remoteSwap = swap;
@@ -240,6 +251,7 @@ namespace TestMod.Common.Players
             state.remoteRewind = rewindCooldown;
             state.remoteSwap = swapCooldown;
             state.remotePhantom = false;
+            state.BlockQueuedAttacks();
             state.ClearVisuals();
             // 网络往返期间已经死亡时，只接收冷却，不复活或移动尸体。
             if (state.Player.dead || !state.Player.active) return;
@@ -265,10 +277,13 @@ namespace TestMod.Common.Players
 
         internal void ResetConnection()
         {
+            ResetGuideChat();
             // 同一角色对象可能直接换世界；将最新服务端镜像转存，不能退回最初 LoadData 的冷却。
             if (useServerMirror)
                 timeline.Restore(remoteOwned, remoteRewind, remoteSwap);
             ClearTransient();
+            clearedAttackGeneration = 0;
+            attackStartedTick = attackBlockedTick = ulong.MaxValue;
             ReleaseVisuals();
             sessionInitialized = false;
             joinConfirmed = false;
@@ -279,6 +294,7 @@ namespace TestMod.Common.Players
             lastResourceTick = 0;
             wasAlive = false;
             if (Main.netMode == NetmodeID.Server) timeline.Restore(false, 0, 0);
+            if (Main.netMode == NetmodeID.Server) attackState.Clear();
         }
     }
 }

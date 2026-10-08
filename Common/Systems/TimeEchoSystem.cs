@@ -14,6 +14,7 @@ namespace TestMod.Common.Systems
     {
         public static ModKeybind RewindKey { get; private set; }
         public static ModKeybind SwapKey { get; private set; }
+        public static ModKeybind AttackKey { get; private set; }
         private readonly bool[] activeLastTick = new bool[Main.maxPlayers];
         internal static readonly Color EchoBlue = new(105, 150, 255);
         internal static readonly Color EchoPurple = new(175, 115, 245);
@@ -22,11 +23,12 @@ namespace TestMod.Common.Systems
         {
             RewindKey = KeybindLoader.RegisterKeybind(Mod, "TimeEchoRewind", "R");
             SwapKey = KeybindLoader.RegisterKeybind(Mod, "TimeEchoSwap", "Q");
+            AttackKey = KeybindLoader.RegisterKeybind(Mod, "TimeEchoAttack", "G");
         }
 
         public override void Unload()
         {
-            RewindKey = SwapKey = null;
+            RewindKey = SwapKey = AttackKey = null;
             ResetWorldState();
         }
 
@@ -53,10 +55,22 @@ namespace TestMod.Common.Systems
                     activeLastTick[i] = false;
                     continue;
                 }
-                if (player.active) state.UpdateEcho();
+                if (player.active)
+                {
+                    state.UpdateEcho();
+                    state.FlushEchoAttacks();
+                }
                 else if (activeLastTick[i]) state.ResetConnection();
                 activeLastTick[i] = player.active;
             }
+        }
+
+        public override void PostUpdateProjectiles()
+        {
+            if (Main.gameMenu || (Main.netMode == NetmodeID.SinglePlayer && Main.gamePaused)) return;
+            // 手持载体在射弹 AI 中才产生实际攻击，本 tick 的复制完成后再推进持续期。
+            foreach (Player player in Main.player)
+                if (player?.active == true && player.TryGetModPlayer(out TimeEchoPlayer state)) state.FinishAttackTick();
         }
 
         public override void PostDrawTiles()

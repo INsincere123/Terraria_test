@@ -68,7 +68,8 @@ namespace TestMod.Content.Projectiles.Summon
         public override void OnHitNPC(NPC target, NPC.HitInfo hit, int damageDone)
         {
             target.AddBuff(ModContent.BuffType<TestWhipTagBuff>(), 600); // 施加自定义标记buff，持续10秒（600帧）
-            Main.player[Projectile.owner].MinionAttackTargetNPC = target.whoAmI;
+            if (!Projectile.GetGlobalProjectile<Common.GlobalProjectiles.GlobalProjectile>().IsTimeEchoAttack)
+                Main.player[Projectile.owner].MinionAttackTargetNPC = target.whoAmI;
         }
 
         public override bool PreDraw(ref Color lightColor)

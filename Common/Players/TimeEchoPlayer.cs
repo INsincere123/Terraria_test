@@ -32,6 +32,7 @@ namespace TestMod.Common.Players
             tag["timeEchoOwned"] = HasAbility;
             tag["timeEchoRewind"] = RewindCooldown;
             tag["timeEchoSwap"] = SwapCooldown;
+            tag["timeEchoAttackWait"] = attackState.WaitTicks;
         }
 
         public override void LoadData(TagCompound tag)
@@ -41,6 +42,7 @@ namespace TestMod.Common.Players
             remoteOwned = timeline.Owned;
             remoteRewind = timeline.RewindCooldown;
             remoteSwap = timeline.SwapCooldown;
+            attackState.Restore(timeline.Owned ? tag.GetInt("timeEchoAttackWait") : 0);
         }
 
         public override void OnEnterWorld()
@@ -62,6 +64,7 @@ namespace TestMod.Common.Players
 
         internal void ClearTransient()
         {
+            ClearEchoAttacks();
             ClearBonuses();
             timeline.ClearHistory();
             pendingSkill = null;
@@ -73,6 +76,7 @@ namespace TestMod.Common.Players
 
         public override void UpdateDead()
         {
+            ClearEchoAttacks();
             ClearBonuses();
             // 冷却只由系统每 tick 统一递减，死亡钩子只清历史，避免双重计时。
             if (timeline.Recording) timeline.ClearHistory();
@@ -87,12 +91,14 @@ namespace TestMod.Common.Players
                 Main.drawingPlayerChat || Main.editSign || Main.editChest || Main.blockInput ||
                 PlayerInput.WritingText || Main.mapFullscreen || Main.playerInventory || Player.mouseInterface)
                 return;
-            if (TimeEchoSystem.RewindKey?.JustPressed == true) pendingSkill = true;
-            else if (TimeEchoSystem.SwapKey?.JustPressed == true) pendingSkill = false;
+            if (TimeEchoSystem.RewindKey?.JustPressed == true) { pendingSkill = true; pendingAttack = false; }
+            else if (TimeEchoSystem.SwapKey?.JustPressed == true) { pendingSkill = false; pendingAttack = false; }
+            else if (TimeEchoSystem.AttackKey?.JustPressed == true) pendingAttack = true;
         }
 
         internal void UpdateEcho()
         {
+            UpdateGuideChat();
             TickBonuses();
             if (Main.netMode == NetmodeID.MultiplayerClient)
             {
@@ -109,6 +115,12 @@ namespace TestMod.Common.Players
                     pendingSkill = null;
                     if (HasPhantom && (rewind ? RewindCooldown : SwapCooldown) == 0)
                         SendSkillRequest(rewind);
+                }
+                if (pendingAttack)
+                {
+                    pendingAttack = false;
+                    if (HasAbility && HasPhantom && attackState.WaitTicks == 0 && TimeEchoAttackSystem.Ready)
+                        NewRequest(Request.Attack).Send();
                 }
                 UpdateVisuals();
                 return;
@@ -138,6 +150,7 @@ namespace TestMod.Common.Players
                 pendingSkill = null;
                 TryActivate(rewind);
             }
+            ConsumeAttackRequest();
             NotifyRecording(timeline.RecordingGeneration, timeline.Recording);
             if (Main.netMode == NetmodeID.Server && (lifeChanged || oldPhantom != timeline.HasPhantom ||
                 oldGeneration != timeline.RecordingGeneration || (timeline.Owned && Main.GameUpdateCount % 6 == 0)))
@@ -155,6 +168,8 @@ namespace TestMod.Common.Players
 
         internal void ChangeAbility(bool enabled)
         {
+            ClearEchoAttacks();
+            attackState.Clear();
             ClearBonuses();
             hasObservedResources = false;
             awaitingRelocation = false;
@@ -186,6 +201,7 @@ namespace TestMod.Common.Players
             timeline.Consume(rewind);
             StartBonuses(rewind);
             transitionTick = Main.GameUpdateCount;
+            BlockQueuedAttacks();
             ClearVisuals();
             NotifyRecording(timeline.RecordingGeneration, timeline.Recording);
             if (Main.netMode == NetmodeID.Server)
