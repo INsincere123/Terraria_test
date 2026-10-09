@@ -18,8 +18,10 @@ namespace TestMod.Common.GlobalItems
         {
             if (weapon.useAmmo == AmmoID.Rocket && player.TryGetModPlayer(out VortexQuiverPlayer state) &&
                 state.IsEquipped(AmmoID.Rocket))
+            {
                 // Flat 已含修正过的武器伤害；乘算只处理弹药贡献，不能再次乘 Flat。
                 damage *= 1.1f;
+            }
         }
     }
 }

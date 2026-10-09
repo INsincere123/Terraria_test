@@ -32,6 +32,7 @@ namespace TestMod.Common.GlobalProjectiles
             bitWriter.WriteBit(vortexAmmoEmpowered);
             binaryWriter.Write((byte)(vortexAmmoCategory == AmmoID.Bullet ? 1 :
                 vortexAmmoCategory == AmmoID.Rocket ? 2 : 0));
+            RangedMotion_Write(binaryWriter);
             bitWriter.WriteBit(IsExtraHit);
             bitWriter.WriteBit(ExtraHitUseCrit);
             bitWriter.WriteBit(ExtraHitIgnoreDefense);
@@ -61,6 +62,7 @@ namespace TestMod.Common.GlobalProjectiles
             vortexAmmoCategory = binaryReader.ReadByte() switch
             { 1 => AmmoID.Bullet, 2 => AmmoID.Rocket, _ => 0 };
             if (vortexAmmoCategory == 0) vortexAmmoEmpowered = false;
+            RangedMotion_Read(binaryReader);
             IsExtraHit = bitReader.ReadBit();
             ExtraHitUseCrit = bitReader.ReadBit();
             ExtraHitIgnoreDefense = bitReader.ReadBit();

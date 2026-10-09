@@ -1,5 +1,6 @@
 using System;
 using Terraria;
+using Terraria.DataStructures;
 using Terraria.ID;
 using Terraria.ModLoader;
 using TestMod.Content.Items.Accessories;
@@ -42,6 +43,19 @@ namespace TestMod.Common.Players
             category == AmmoID.Bullet ? cycles[1] : category == AmmoID.Rocket ? cycles[2] : null;
         internal bool IsEquipped(int category) => GetCycle(category)?.Equipped == true;
         internal bool IsCycling(int category) => GetCycle(category) is { Equipped: true, Mode: not VortexAmmoMode.Simple };
+
+        public override bool ImmuneTo(PlayerDeathReason damageSource, int cooldownCounter, bool dodgeable)
+        {
+            // 弹幕槽位只在本地受伤入口解析。Kill 内的爆炸可能已将 active 清空，不能据此排除。
+            int slot = damageSource.SourceProjectileLocalIndex;
+            if (Player.whoAmI != Main.myPlayer || Player.dead || slot < 0 || slot >= Main.maxProjectiles ||
+                damageSource.SourceNPCIndex >= 0 || damageSource.SourceOtherIndex >= 0 ||
+                (damageSource.SourcePlayerIndex >= 0 && damageSource.SourcePlayerIndex != Player.whoAmI))
+                return false;
+            Projectile projectile = Main.projectile[slot];
+            return projectile.owner == Player.whoAmI && projectile.type == damageSource.SourceProjectileType &&
+                projectile.GetGlobalProjectile<global::TestMod.Common.GlobalProjectiles.GlobalProjectile>().VortexProtectsOwner(projectile);
+        }
 
         public override void PostUpdateEquips()
         {

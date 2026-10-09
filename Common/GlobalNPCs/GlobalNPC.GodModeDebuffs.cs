@@ -13,6 +13,7 @@ namespace TestMod.Common.GlobalNPCs
         public override void UpdateLifeRegen(NPC npc, ref int damage)
         {
             ClearArmorShredIfExpired(npc);
+            Electrified_UpdateLifeRegen(npc, ref damage);
 
             if (!AnyPlayerInGodMode())
                 return;

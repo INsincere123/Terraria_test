@@ -56,6 +56,7 @@ namespace TestMod.Common.GlobalProjectiles
         // ══════════════════════════════════════════════════════════════
         public override bool PreAI(Projectile projectile)
         {
+            RangedMotion_RestoreVelocity(projectile);
             ProjectileLookup.Observe(projectile, this);
             ResetTrackingUpdate();
             _dragonFlightPrepared = false;
@@ -134,6 +135,7 @@ namespace TestMod.Common.GlobalProjectiles
         // ══════════════════════════════════════════════════════════════
         public override void PostAI(Projectile projectile)
         {
+            RangedMotion_ApplyVelocity(projectile);
             if (IsTimeEchoAttack)
             {
                 TimeEcho_PostAI(projectile);

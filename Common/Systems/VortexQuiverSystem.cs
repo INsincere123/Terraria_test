@@ -18,6 +18,7 @@ namespace TestMod.Common.Systems
         internal static bool AmmoReady { get; private set; }
         internal static bool GravityReady { get; private set; }
         private static AmmoSelectionContext currentSelection;
+        private static bool loggedArrowSpawn, loggedArrowGravity;
 
         private sealed class AmmoSelectionContext
         {
@@ -61,6 +62,7 @@ namespace TestMod.Common.Systems
                 if (ai == null) throw new MissingMethodException("Projectile.AI_001");
                 gravityHook = new ILHook(ai, ReduceArrowGravity);
                 GravityReady = true;
+                Mod.Logger.Info("[VortexQuiver] 已接入普通箭双向重力及圣箭独立重力赋值（20%）。");
             }
             catch (Exception exception)
             {
@@ -75,11 +77,13 @@ namespace TestMod.Common.Systems
             chooseHook?.Dispose(); pickHook?.Dispose(); gravityHook?.Dispose();
             chooseHook = pickHook = null; gravityHook = null;
             currentSelection = null;
+            loggedArrowSpawn = loggedArrowGravity = false;
         }
 
         public override void OnWorldUnload()
         {
             currentSelection = null;
+            loggedArrowSpawn = loggedArrowGravity = false;
             if (Main.player == null) return;
             foreach (Player player in Main.player)
                 if (player != null && player.TryGetModPlayer(out VortexQuiverPlayer quiver))
@@ -130,24 +134,78 @@ namespace TestMod.Common.Systems
         private static void ReduceArrowGravity(ILContext il)
         {
             var cursor = new ILCursor(il);
-            int count = 0;
-            // 只匹配 velocity.Y 的常量重力增量，不修改 Dust、旋转、速度上限或 AI 计时。
-            while (cursor.TryGotoNext(MoveType.Before,
+            // 先锁定普通分支 ai[0]=15 的赋值，不能仅以整个方法中的 0.1 常量数量判定成功。
+            if (!cursor.TryGotoNext(MoveType.After,
+                i => i.MatchLdarg(0),
+                i => i.MatchLdfld(typeof(Projectile), nameof(Projectile.ai)),
+                i => i.MatchLdcI4(0),
+                i => i.MatchLdcR4(15f),
+                i => i.OpCode == OpCodes.Stelem_R4,
+                i => i.OpCode.Code is Code.Ldloc or Code.Ldloc_S or Code.Ldloc_0 or Code.Ldloc_1 or Code.Ldloc_2 or Code.Ldloc_3,
+                i => i.OpCode == OpCodes.Brfalse || i.OpCode == OpCodes.Brfalse_S))
+                throw new InvalidOperationException("找不到普通箭重力计时分支。");
+            int branchStart = cursor.Index;
+            var constants = new System.Collections.Generic.List<Instruction>();
+            for (int direction = 0; direction < 2; direction++)
+            {
+                if (!cursor.TryGotoNext(MoveType.Before,
                 i => i.MatchLdflda(typeof(Entity), nameof(Entity.velocity)),
                 i => i.MatchLdflda(typeof(Vector2), nameof(Vector2.Y)),
                 i => i.OpCode == OpCodes.Dup,
                 i => i.OpCode == OpCodes.Ldind_R4,
                 i => i.MatchLdcR4(0.1f),
                 i => i.OpCode == OpCodes.Add || i.OpCode == OpCodes.Sub,
-                i => i.OpCode == OpCodes.Stind_R4))
-            {
-                cursor.Index += 5;
-                cursor.Emit(OpCodes.Ldarg_0);
-                cursor.EmitDelegate<Func<float, Projectile, float>>((gravity, p) =>
-                    p.GetGlobalProjectile<QuiverProjectile>().VortexHasLowGravity(p) ? gravity * 0.2f : gravity);
-                count++;
+                i => i.OpCode == OpCodes.Stind_R4) || cursor.Index - branchStart > 32 ||
+                    il.Body.Instructions[cursor.Index + 5].OpCode != (direction == 0 ? OpCodes.Sub : OpCodes.Add))
+                    throw new InvalidOperationException("普通箭双向重力分支不匹配。");
+                constants.Add(il.Body.Instructions[cursor.Index + 4]);
+                cursor.Index += 7;
             }
-            if (count < 2) throw new InvalidOperationException("找不到普通箭双向重力增量。");
+            // 圣箭不进入上述普通分支：它在 ai[0]=20 后使用独立的 +0.07 重力。
+            cursor.Index = 0;
+            if (!cursor.TryGotoNext(MoveType.After,
+                i => i.MatchLdarg(0),
+                i => i.MatchLdfld(typeof(Projectile), nameof(Projectile.ai)),
+                i => i.MatchLdcI4(0),
+                i => i.MatchLdcR4(20f),
+                i => i.OpCode == OpCodes.Stelem_R4,
+                i => i.MatchLdarg(0),
+                i => i.MatchLdflda(typeof(Entity), nameof(Entity.velocity)),
+                i => i.MatchLdflda(typeof(Vector2), nameof(Vector2.Y)),
+                i => i.OpCode == OpCodes.Dup,
+                i => i.OpCode == OpCodes.Ldind_R4,
+                i => i.MatchLdcR4(0.07f),
+                i => i.OpCode == OpCodes.Add,
+                i => i.OpCode == OpCodes.Stind_R4))
+                throw new InvalidOperationException("找不到圣箭独立重力分支。");
+            constants.Add(il.Body.Instructions[cursor.Index - 3]);
+            // 完成全部校验后才修改；每次原版实际重力赋值只经过一次倍率修正。
+            foreach (Instruction constant in constants)
+            {
+                cursor.Goto(constant, MoveType.After);
+                cursor.Emit(OpCodes.Ldarg_0);
+                cursor.EmitDelegate<Func<float, Projectile, float>>(ScaleArrowGravity);
+            }
+        }
+
+        internal static void NoteArrowSpawn(Projectile p, bool marked)
+        {
+            if (loggedArrowSpawn || !p.arrow || p.owner != Main.myPlayer) return;
+            loggedArrowSpawn = true;
+            ModContent.GetInstance<VortexQuiverSystem>().Mod.Logger.Debug(
+                $"[VortexQuiver] 首枚箭来源：type={p.type}, owner={p.owner}, 强化={marked}, GravityReady={GravityReady}");
+        }
+
+        private static float ScaleArrowGravity(float gravity, Projectile p)
+        {
+            bool lowGravity = p.GetGlobalProjectile<QuiverProjectile>().VortexHasLowGravity(p);
+            if (!loggedArrowGravity && p.arrow && p.owner == Main.myPlayer)
+            {
+                loggedArrowGravity = true;
+                ModContent.GetInstance<VortexQuiverSystem>().Mod.Logger.Debug(
+                    $"[VortexQuiver] 首次普通箭重力：type={p.type}, 强化={lowGravity}, 增量={gravity}->{(lowGravity ? gravity * 0.2f : gravity)}");
+            }
+            return lowGravity ? gravity * 0.2f : gravity;
         }
     }
 }
