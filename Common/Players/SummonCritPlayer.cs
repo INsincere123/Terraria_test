@@ -1,6 +1,7 @@
 using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
+using TestMod.Common.GlobalProjectiles;
 
 namespace TestMod.Common.Players
 {
@@ -23,6 +24,9 @@ namespace TestMod.Common.Players
 
         public static void TryApplySummonCrit(Player player, Projectile proj, ref NPC.HitModifiers modifiers, bool requireEnabled = true)
         {
+            // 泰拉召唤模式统一结算 20% + 鞭标记，不能再独立抽取通用暴击。
+            if (player.GetModPlayer<TerraArmorPlayer>().IsMode(TerraArmorMode.Summoner) &&
+                TerraArmorProjectile.IsSummonAttack(proj)) return;
             if (requireEnabled && !player.GetModPlayer<SummonCritPlayer>().Enabled)
                 return;
 

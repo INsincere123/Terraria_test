@@ -10,6 +10,7 @@ using MonoMod.RuntimeDetour;
 using Terraria;
 using Terraria.Graphics.Light;
 using Terraria.ModLoader;
+using TestMod.Content.Items.Armor.TerraArmor;
 
 namespace TestMod.Common.Systems
 {
@@ -78,7 +79,8 @@ namespace TestMod.Common.Systems
         public override void PostUpdatePlayers()
         {
             // 装备结算后每 tick 只判断一次，不在光照逐格循环中读取玩家或反射深渊属性。
-            _ambientLightEnabled = CalamityCompatSystem.ShouldIlluminateAbyssViewport();
+            _ambientLightEnabled = TerraHelmet.ShouldIlluminateViewport()
+                || CalamityCompatSystem.ShouldIlluminateAbyssViewport();
             _worldWidth = Main.maxTilesX;
             _worldHeight = Main.maxTilesY;
         }

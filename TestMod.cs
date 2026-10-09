@@ -45,6 +45,9 @@ namespace TestMod
 					case Common.GlobalNPCs.GlobalNPC.GuideItemPacket:
 						Common.GlobalNPCs.GlobalNPC.ReceiveGuideItem(reader, whoAmI);
 						break;
+					case TerraArmorPlayer.StatePacket:
+						TerraArmorPlayer.ReceiveState(reader, whoAmI);
+						break;
 				}
 			}
 			catch (EndOfStreamException)

@@ -63,6 +63,7 @@ ArmorToggle: {
 }
 
 Keybinds: {
+	TerraArmorMode.DisplayName: 泰拉套：切换职业
 	TimeEchoRewind.DisplayName: 时之幻影·回溯
 	TimeEchoSwap.DisplayName: 时之幻影·互换
 	TimeEchoAttack.DisplayName: 时之幻影·同步攻击
@@ -90,6 +91,21 @@ VortexAmmo: {
 }
 
 Items: {
+	TerraHelmet: {
+		DisplayName: 泰拉头盔
+		Tooltip: "{$Mods.TestMod.TerraArmor.PieceTooltip}"
+	}
+
+	TerraBreastplate: {
+		DisplayName: 泰拉胸甲
+		Tooltip: "{$Mods.TestMod.TerraArmor.PieceTooltip}"
+	}
+
+	TerraLeggings: {
+		DisplayName: 泰拉腿甲
+		Tooltip: "{$Mods.TestMod.TerraArmor.PieceTooltip}"
+	}
+
 	VortexQuiver: {
 		DisplayName: 星璇箭袋
 		Tooltip:
@@ -759,4 +775,42 @@ TimeEcho: {
 	AttackHint: "{0}：同步攻击（需幻影）"
 	AttackDetails: 持续5秒，结束后冷却15秒；攻击伤害50%
 	Unbound: 未绑定
+}
+
+TerraArmor: {
+	LightState: 环境光照：{0}
+	PieceTooltip:
+		'''
+		+33%伤害、12%暴击、10%攻速、10护甲穿透
+		+11%移速，-8%魔力消耗，3%伤害减免
+		每秒回复5生命，+3召唤物、1哨兵栏位
+		'''
+	SetBonus:
+		'''
+		免疫原版减益，获得钯金、神圣和叶绿套效果
+		+200生命、200魔力，重力正常化
+		使用时间缩短20%，弹幕速度加快
+		致死时满血复活并获得3秒保护，冷却120秒
+		当前：{0}，按[{1}]切换职业
+		{2}
+		'''
+	ModeChanged: 泰拉套：{0}
+
+	Modes: {
+		Warrior: 战士
+		Ranger: 射手
+		Mage: 法师
+		Summoner: 召唤师
+	}
+
+	Effects: {
+		Warrior: 双甲虫、耀斑套和烈火手套效果，+15%免伤、1500仇恨
+		Ranger: 星璇潜行，无限弹药，远程命中触发幻影追击，-400仇恨
+		Mage: 双幽灵与星云套效果，强化焰拾取即满层
+		Summoner:
+			'''
+			四套高级酒馆盔甲与星尘套效果，护卫范围翻倍
+			+50%鞭子范围，召唤物20%暴击并叠加鞭标记，-400仇恨
+			'''
+	}
 }

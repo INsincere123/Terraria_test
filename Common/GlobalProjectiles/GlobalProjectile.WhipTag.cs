@@ -5,6 +5,7 @@ using TestMod.Content.Buffs;
 using TestMod.Common.Systems;
 using TestMod.Content.Projectiles.Summon;
 using TestMod.Common.Mechanics.AccessoryEffects;
+using TestMod.Common.Players;
 
 namespace TestMod.Common.GlobalProjectiles
 {
@@ -33,8 +34,8 @@ namespace TestMod.Common.GlobalProjectiles
                 if (data.FlatDamage > 0f)
                     modifiers.FlatBonusDamage += data.FlatDamage;
 
-                if (data.CritChance > 0 && Main.rand.Next(100) < data.CritChance)
-                    modifiers.SetCrit();
+                if (data.CritChance > 0 && !Main.player[projectile.owner].GetModPlayer<TerraArmorPlayer>()
+                    .IsMode(TerraArmorMode.Summoner) && Main.rand.Next(100) < data.CritChance) modifiers.SetCrit();
             }
         }
 

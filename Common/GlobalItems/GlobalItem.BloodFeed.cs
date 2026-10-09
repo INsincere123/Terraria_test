@@ -20,23 +20,25 @@ namespace TestMod.Common.GlobalItems
         public override float UseTimeMultiplier(Item item, Player player)
         {
             BloodFeedPlayer bloodFeed = player.GetModPlayer<BloodFeedPlayer>();
+            float armorMultiplier = player.GetModPlayer<TerraArmorPlayer>().FullSet ? 0.8f : 1f;
             if (bloodFeed.IsBerserk)
-                return 1f / 5f;
+                return armorMultiplier / 5f;
             if (bloodFeed.IsExhausted)
-                return 2f;
+                return armorMultiplier * 2f;
 
-            return 1f;
+            return armorMultiplier;
         }
 
         public override float UseAnimationMultiplier(Item item, Player player)
         {
             BloodFeedPlayer bloodFeed = player.GetModPlayer<BloodFeedPlayer>();
+            float armorMultiplier = player.GetModPlayer<TerraArmorPlayer>().FullSet ? 0.8f : 1f;
             if (bloodFeed.IsBerserk)
-                return 1f / 5f;
+                return armorMultiplier / 5f;
             if (bloodFeed.IsExhausted)
-                return 2f;
+                return armorMultiplier * 2f;
 
-            return 1f;
+            return armorMultiplier;
         }
     }
 }
