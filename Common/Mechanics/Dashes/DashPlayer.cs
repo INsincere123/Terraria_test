@@ -2,7 +2,6 @@ using System;
 using Microsoft.Xna.Framework;
 using Terraria;
 using Terraria.ModLoader;
-using TestMod.Common.Configs;
 using TestMod.Common.Systems;
 
 namespace TestMod.Common.Mechanics.Dashes
@@ -15,12 +14,12 @@ namespace TestMod.Common.Mechanics.Dashes
 	//    BlinkKey (Secondary) → ShortDashEffectId   短冲刺
 	//    双击方向键 (Vanilla)  → VanillaDashEffectId  vanilla 兼容双击触发
 	//
-	//  Vanilla 槽的触发机制（在 PostUpdateRunSpeeds 里，与灾厄相同挂载点）：
+	//  Vanilla 槽：双击在 PostUpdateRunSpeeds 检测；单键在装备更新后优先分发。
 	//    - 信号来源：controlRight && releaseRight（"松开后再次按下" = 新的按键动作）
 	//    - 双击窗口：自有 _dashTimeMod（±15帧），不依赖 vanilla 的 DoCommonDashHandle
 	//    - HelpfulHotkeys 兼容：检查 Player.dashTime > 0（HH 在 SetControls 直接写 dashTime=±15）
 	//    - 饰品设 dashType=0（与灾厄相同），彻底阻止 vanilla DashMovement 执行速度/dashDelay 逻辑
-	//    - 冲刺进行中：PostUpdateRunSpeeds 继续维持 dashType=0，dashTime=0
+	//    - 单键模式由 DashInputSystem 在装备更新后统一分发，不伪造移动输入。
 	//
 	//  饰品在 UpdateAccessory 里：
 	//      dp.VanillaDashEffectId = "StandardDash";
@@ -28,7 +27,7 @@ namespace TestMod.Common.Mechanics.Dashes
 	//      player.dashType        = 0;   // 防止 vanilla DashMovement 干扰
 	// ============================================================================
 
-	public class DashPlayer : ModPlayer
+	public partial class DashPlayer : ModPlayer
 	{
 		// ── 三槽注册（每帧 ResetEffects 清空，UpdateAccessory 重新写入） ─────────
 		public string LongDashEffectId;
@@ -69,8 +68,6 @@ namespace TestMod.Common.Mechanics.Dashes
 		//   < 0 = 左冲刺窗口开启
 		//   = 0 = 空闲
 		private int  _dashTimeMod;
-		// SetControls 与 PostUpdateRunSpeeds 跨帧通信：VanillaDashKey 本帧是否被按下
-		private bool _vanillaDashKeyJustPressed;
 
 		// ── 生命周期 ───────────────────────────────────────────────────────────
 
@@ -82,43 +79,19 @@ namespace TestMod.Common.Mechanics.Dashes
 			VanillaDashConfig   = default;
 		}
 
-		// ── 单键模式：在 SetControls 里模拟双击（与 HelpfulHotkeys 相同原理） ────
-		public override void SetControls()
-		{
-			bool singleTap = TestModClientConfig.Instance?.SingleTapDash ?? false;
-			if (!singleTap) return;
-			if (DashKeybinds.VanillaDashKey == null || !DashKeybinds.VanillaDashKey.JustPressed) return;
-
-			// 判断冲刺方向：优先按住的方向键，否则取角色朝向
-			int dir;
-			if      (Player.controlRight && !Player.controlLeft) dir =  1;
-			else if (Player.controlLeft  && !Player.controlRight) dir = -1;
-			else dir = Player.direction;
-
-			if (dir > 0)
-			{
-				// 伪造右双击：dashTime=15（窗口已打开）+ releaseRight=true（按键刚松开）
-				Player.dashTime    = 15;
-				Player.releaseRight = true;
-				Player.controlRight = true;
-			}
-			else
-			{
-				Player.dashTime    = -15;
-				Player.releaseLeft  = true;
-				Player.controlLeft  = true;
-			}
-
-			_vanillaDashKeyJustPressed = true;
-		}
-
 		public override void PreUpdate()
 		{
 			if (LongDashCooldown    > 0) LongDashCooldown--;
 			if (ShortDashCooldown   > 0) ShortDashCooldown--;
 			if (VanillaDashCooldown > 0) VanillaDashCooldown--;
+		}
 
-			if (Player.whoAmI != Main.myPlayer) return;
+		// 装备标志已完成注入，在 PlayerLoader.PostUpdateEquips 的前置钩子调用。
+		internal void PrepareEquippedDashes()
+		{
+			PrepareHorizontalInput();
+
+			if (Player.whoAmI != Main.myPlayer || Player.dead) return;
 			if (ActiveEffect != null) return;
 
 			// --- 长冲刺（DashKey） ---
@@ -152,8 +125,17 @@ namespace TestMod.Common.Mechanics.Dashes
 					if (dirX != 0 || dirY != 0)
 					{
 						TryStart(effect, dirX, dirY, DashSlot.Secondary);
+						return;
 					}
 				}
+			}
+
+			if (SingleTapMode && PeekHorizontalRequest() != 0 && VanillaDashCooldown <= 0
+				&& !string.IsNullOrEmpty(VanillaDashEffectId))
+			{
+				PlayerDashEffect effect = PlayerDashManager.FindById(VanillaDashEffectId);
+				if (effect != null && effect.CanUseDash(Player))
+					TryStart(effect, ConsumeHorizontalRequest(), 0, DashSlot.Vanilla);
 			}
 		}
 
@@ -166,25 +148,12 @@ namespace TestMod.Common.Mechanics.Dashes
 			if (ActiveEffect != null)
 			{
 				Player.dashType = 0; // → dash=0 → vanilla exits cleanly
-				Player.dashTime = 0;
 				return;
 			}
 
-			bool singleTap = TestModClientConfig.Instance?.SingleTapDash ?? false;
-
-			// 单键模式：每帧清零 dashTime，屏蔽 vanilla 的双击判定。
-			// 但本帧 VanillaDashKey 被按下时例外——SetControls 已写入 dashTime=±15，
-			// 需要保留它让我们的检测（Player.dashTime > 0）能读到。
-			if (singleTap && !_vanillaDashKeyJustPressed)
-				Player.dashTime = 0;
-			_vanillaDashKeyJustPressed = false; // 消费标志
-
-			// 双击模式下，窗口计时器自然衰减（向 0 收缩）
-			if (!singleTap)
-			{
-				if (_dashTimeMod > 0) _dashTimeMod--;
-				else if (_dashTimeMod < 0) _dashTimeMod++;
-			}
+			if (SingleTapMode) return;
+			if (_dashTimeMod > 0) _dashTimeMod--;
+			else if (_dashTimeMod < 0) _dashTimeMod++;
 
 			if (string.IsNullOrEmpty(VanillaDashEffectId) || VanillaDashCooldown > 0) return;
 
@@ -194,51 +163,25 @@ namespace TestMod.Common.Mechanics.Dashes
 			// ── 右冲刺 ────────────────────────────────────────────────────────
 			if (Player.controlRight && Player.releaseRight)
 			{
-				if (singleTap)
+				// _dashTimeMod 是自身窗口，Player.dashTime 接受 HelpfulHotkeys 的信号。
+				if (_dashTimeMod > 0 || Player.dashTime > 0)
 				{
-					// 单键模式：只响应 VanillaDashKey 设置的 dashTime 信号（方向键本身不触发）
-					if (Player.dashTime > 0)
-					{
-						TryStart(effect, 1, 0, DashSlot.Vanilla);
-						return;
-					}
-					// 方向键单独按下不做任何事（dashTime 已被清零）
+					_dashTimeMod = 0;
+					TryStart(effect, 1, 0, DashSlot.Vanilla);
+					return;
 				}
-				else
-				{
-					// 双击模式：
-					//   _dashTimeMod > 0    = 我们自己记录的第一次按右
-					//   Player.dashTime > 0 = HelpfulHotkeys 等 mod 声明窗口已打开
-					if (_dashTimeMod > 0 || Player.dashTime > 0)
-					{
-						_dashTimeMod = 0;
-						TryStart(effect, 1, 0, DashSlot.Vanilla);
-						return;
-					}
-					_dashTimeMod = 15; // 第一次按右，开启窗口
-				}
+				_dashTimeMod = 15; // 第一次按右，开启窗口
 			}
 			// ── 左冲刺 ────────────────────────────────────────────────────────
 			else if (Player.controlLeft && Player.releaseLeft)
 			{
-				if (singleTap)
+				if (_dashTimeMod < 0 || Player.dashTime < 0)
 				{
-					if (Player.dashTime < 0)
-					{
-						TryStart(effect, -1, 0, DashSlot.Vanilla);
-						return;
-					}
+					_dashTimeMod = 0;
+					TryStart(effect, -1, 0, DashSlot.Vanilla);
+					return;
 				}
-				else
-				{
-					if (_dashTimeMod < 0 || Player.dashTime < 0)
-					{
-						_dashTimeMod = 0;
-						TryStart(effect, -1, 0, DashSlot.Vanilla);
-						return;
-					}
-					_dashTimeMod = -15;
-				}
+				_dashTimeMod = -15;
 			}
 		}
 
@@ -265,8 +208,7 @@ namespace TestMod.Common.Mechanics.Dashes
 		internal void CancelForTimeEcho()
 		{
 			EndDash();
-			_dashTimeMod = 0;
-			_vanillaDashKeyJustPressed = false;
+			ClearDashInput();
 		}
 
 		// ── 私有工具 ───────────────────────────────────────────────────────────
@@ -295,6 +237,7 @@ namespace TestMod.Common.Mechanics.Dashes
 
 		private void TryStart(PlayerDashEffect effect, int dirX, int dirY, DashSlot slot)
 		{
+			ConsumeHorizontalRequest();
 			ActiveEffect     = effect;
 			ElapsedFrames    = 0;
 			DirX             = dirX;
@@ -320,9 +263,9 @@ namespace TestMod.Common.Mechanics.Dashes
 			effect.OnDashStart(Player, dirX != 0 ? dirX : dirY);
 		}
 
-		private void FinishDash()
+		private void FinishDash(bool applyEndEffects = true)
 		{
-			ActiveEffect.OnDashEnd(Player);
+			if (applyEndEffects) ActiveEffect.OnDashEnd(Player);
 
 			int cooldown = ActiveEffect.GetCooldown(Player);
 			switch (_triggeredBySlot)

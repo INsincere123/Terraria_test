@@ -74,7 +74,7 @@ namespace TestMod.Common.Mechanics.Dashes
 			// 清除水平惯性, 保留垂直惯性 (与长冲刺一致)
 			player.velocity.X = 0f;
 
-			player.SetImmuneTimeForAllTypes(StartIFrames);
+			DashImmunity.Grant(player, StartIFrames);
 
 			SoundEngine.PlaySound(SoundID.Item8, player.Center);
 
@@ -101,8 +101,7 @@ namespace TestMod.Common.Mechanics.Dashes
 			player.fallStart  = (int)(player.position.Y / 16f);
 			player.fallStart2 = player.fallStart;
 
-			if (player.immuneTime < ActiveIFrames)
-				player.SetImmuneTimeForAllTypes(ActiveIFrames);
+			DashImmunity.Grant(player, ActiveIFrames);
 
 			for (int i = 0; i < 3; i++)
 			{
@@ -174,7 +173,7 @@ namespace TestMod.Common.Mechanics.Dashes
 				DustUtils.SpawnImpactBurst(npc.Center, ContactDustCount, DashDustColor, 2.2f, 6.4f, 1.05f);
 
 				SoundEngine.PlaySound(SoundID.Item14, npc.Center);
-				player.SetImmuneTimeForAllTypes(ContactIFrames);
+				DashImmunity.Grant(player, ContactIFrames);
 
 				if (dp.HitCount >= MaxHitsPerDash) break;
 			}

@@ -16,7 +16,7 @@ namespace TestMod.Content.Items.Accessories
 	//    衰减      第 10 帧起每帧 ×0.97
 	//    速度上限  140 px/帧
 	//    冷却      30 帧
-	//  触发方式: 接管 vanilla 双击方向键（player.dashType = 1）
+	//  触发方式: DashPlayer 双击 / 统一单键输入（player.dashType = 0）
 	// ============================================================================
 
 	public class VoidSash : ModItem

@@ -17,7 +17,7 @@ namespace TestMod.Content.Items.Accessories
 	//    击退      9
 	//    无敌帧    命中 12 帧
 	//    冷却      30 帧
-	//  触发方式: 接管 vanilla 双击方向键（player.dashType = 1）
+	//  触发方式: DashPlayer 双击 / 统一单键输入（player.dashType = 0）
 	// ============================================================================
 
 	public class AegisShield : ModItem

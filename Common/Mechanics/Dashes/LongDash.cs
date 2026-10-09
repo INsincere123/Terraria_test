@@ -82,7 +82,7 @@ namespace TestMod.Common.Mechanics.Dashes
 			player.velocity.X = 0f;
 
 			// 起始无敌帧
-			player.SetImmuneTimeForAllTypes(StartIFrames);
+			DashImmunity.Grant(player, StartIFrames);
 
 			// 起始音效 (克苏鲁之盾的冲刺音)
 			SoundEngine.PlaySound(SoundID.Item24, player.Center);
@@ -116,8 +116,7 @@ namespace TestMod.Common.Mechanics.Dashes
 			player.fallStart2 = player.fallStart;
 
 			// 5. 维持持续无敌
-			if (player.immuneTime < ActiveIFrames)
-				player.SetImmuneTimeForAllTypes(ActiveIFrames);
+			DashImmunity.Grant(player, ActiveIFrames);
 
 			// 6. 拖尾粒子
 			for (int i = 0; i < 3; i++)
@@ -194,7 +193,7 @@ namespace TestMod.Common.Mechanics.Dashes
 				DustUtils.SpawnImpactBurst(npc.Center, ContactDustCount, DashDustColor, 2.6f, 7.2f, 1.25f);
 
 				SoundEngine.PlaySound(SoundID.Item14, npc.Center);
-				player.SetImmuneTimeForAllTypes(ContactIFrames);
+				DashImmunity.Grant(player, ContactIFrames);
 
 				if (dp.HitCount >= MaxHitsPerDash) break;
 			}

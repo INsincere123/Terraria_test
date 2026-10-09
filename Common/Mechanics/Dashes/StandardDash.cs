@@ -14,7 +14,7 @@ namespace TestMod.Common.Mechanics.Dashes
 	//  饰品不需要继承任何类，只需在 UpdateAccessory 里填写：
 	//      dp.VanillaDashEffectId = "StandardDash";
 	//      dp.VanillaDashConfig   = new DashConfig { ... };
-	//      player.dashType        = 1;   // 让 vanilla 做双击检测
+	//      player.dashType        = 0;   // 由 DashPlayer 检测输入
 	//
 	//  支持的行为（全部由 DashConfig 控制）：
 	//    - 匀速 / 逐帧衰减 / 速度上限
@@ -53,7 +53,7 @@ namespace TestMod.Common.Mechanics.Dashes
 			player.velocity.X = 0f;
 
 			if (cfg.StartIFrames > 0)
-				player.SetImmuneTimeForAllTypes(cfg.StartIFrames);
+				DashImmunity.Grant(player, cfg.StartIFrames);
 
 			if (cfg.BurstDustCount > 0)
 				SpawnBurstDust(player, ref cfg);
@@ -95,8 +95,7 @@ namespace TestMod.Common.Mechanics.Dashes
 			player.fallStart2 = player.fallStart;
 
 			// 4. 持续无敌帧
-			if (cfg.ActiveIFrames > 0 && player.immuneTime < cfg.ActiveIFrames)
-				player.SetImmuneTimeForAllTypes(cfg.ActiveIFrames);
+			DashImmunity.Grant(player, cfg.ActiveIFrames);
 
 			// 5. 拖尾粒子
 			if (cfg.TrailDustPerFrame > 0)
@@ -197,7 +196,7 @@ namespace TestMod.Common.Mechanics.Dashes
 					SoundEngine.PlaySound(cfg.HitSound.Value, npc.Center);
 
 				if (ctx.PlayerImmunityFrames > 0)
-					player.SetImmuneTimeForAllTypes(ctx.PlayerImmunityFrames);
+					DashImmunity.Grant(player, ctx.PlayerImmunityFrames);
 
 				SpawnHitDust(npc, ref cfg);
 

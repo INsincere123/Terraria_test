@@ -21,7 +21,7 @@ namespace TestMod.Common.Systems
 		/// <summary>短冲刺 / 走位闪现键（默认 C）</summary>
 		public static ModKeybind BlinkKey       { get; private set; }
 
-		/// <summary>单键冲刺键（默认 V）：SingleTapDash 开启时，按此键触发 Vanilla 槽冲刺</summary>
+		/// <summary>统一水平冲刺键（默认 V）：SingleTapDash 开启时由各冲刺入口消费</summary>
 		public static ModKeybind VanillaDashKey { get; private set; }
 
 		public override void Load()
