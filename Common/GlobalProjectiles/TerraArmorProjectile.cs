@@ -12,6 +12,44 @@ namespace TestMod.Common.GlobalProjectiles
     {
         public override bool InstancePerEntity => true;
         private bool _extraUpdateApplied;
+        private const int MaxVisiblePhantasms = 50;
+        private static readonly TerraArmorProjectile[] VisiblePhantasms = new TerraArmorProjectile[Main.maxProjectiles];
+        private static bool _hasVisibilityCache;
+        private static ulong _visibilityTick;
+        private static Rectangle _visibilityViewport;
+
+        public override void Unload()
+        {
+            System.Array.Clear(VisiblePhantasms);
+            _hasVisibilityCache = false;
+        }
+
+        public override bool PreDraw(Projectile projectile, ref Color lightColor)
+        {
+            if (projectile.type != ProjectileID.PhantasmArrow) return true;
+            Rectangle viewport = new((int)Main.screenPosition.X, (int)Main.screenPosition.Y,
+                Main.screenWidth, Main.screenHeight);
+            viewport.Inflate(32, 32); // 箭身仍可出现在屏幕边缘时也计入额度。
+            if (!_hasVisibilityCache || _visibilityTick != Main.GameUpdateCount || _visibilityViewport != viewport)
+            {
+                _hasVisibilityCache = true;
+                _visibilityTick = Main.GameUpdateCount;
+                _visibilityViewport = viewport;
+                System.Array.Clear(VisiblePhantasms);
+                int count = 0;
+                // 每 tick / 镜头变化仅扫描一次；原版、GodMode 和泰拉套等所有来源共享本地绘制额度。
+                for (int i = 0; i < Main.maxProjectiles && count < MaxVisiblePhantasms; i++)
+                {
+                    Projectile candidate = Main.projectile[i];
+                    if (!candidate.active || candidate.type != ProjectileID.PhantasmArrow ||
+                        !viewport.Intersects(candidate.Hitbox)) continue;
+                    TerraArmorProjectile state = candidate.GetGlobalProjectile<TerraArmorProjectile>();
+                    VisiblePhantasms[i] = state;
+                    count++;
+                }
+            }
+            return ReferenceEquals(VisiblePhantasms[projectile.whoAmI], this);
+        }
 
         internal static bool TryGetArmor(Projectile projectile, out TerraArmorPlayer armor)
         {
@@ -41,8 +79,20 @@ namespace TestMod.Common.GlobalProjectiles
         public override bool PreAI(Projectile projectile)
         {
             TryGetArmor(projectile, out TerraArmorPlayer armor);
+            if (projectile.type == ProjectileID.StardustGuardian && armor != null && armor.IsMode(TerraArmorMode.Summoner))
+            {
+                // 原版每次更新会重算召唤伤害；先加基础伤害，再应用玩家增伤，不累加到 originalDamage。
+                projectile.damage = (int)armor.Player.GetTotalDamage(projectile.DamageType).ApplyTo(projectile.originalDamage + 35);
+            }
             UpdateExtraUpdates(projectile, armor);
             return true;
+        }
+
+        public override void ModifyHitNPC(Projectile projectile, NPC target, ref NPC.HitModifiers modifiers)
+        {
+            if (projectile.type == ProjectileID.StardustGuardian &&
+                TryGetArmor(projectile, out TerraArmorPlayer armor) && armor.IsMode(TerraArmorMode.Summoner))
+                modifiers.ArmorPenetration += 20;
         }
 
         private void UpdateExtraUpdates(Projectile projectile, TerraArmorPlayer armor)

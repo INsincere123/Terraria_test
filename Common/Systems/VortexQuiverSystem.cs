@@ -5,6 +5,7 @@ using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using MonoMod.RuntimeDetour;
 using Terraria;
+using Terraria.ID;
 using Terraria.ModLoader;
 using TestMod.Common.Players;
 using QuiverProjectile = TestMod.Common.GlobalProjectiles.GlobalProjectile;
@@ -62,7 +63,7 @@ namespace TestMod.Common.Systems
                 if (ai == null) throw new MissingMethodException("Projectile.AI_001");
                 gravityHook = new ILHook(ai, ReduceArrowGravity);
                 GravityReady = true;
-                Mod.Logger.Info("[VortexQuiver] 已接入普通箭双向重力及圣箭独立重力赋值（20%）。");
+                Mod.Logger.Info("[VortexQuiver] 已接入普通箭双向重力、圣箭及夜明箭独立重力赋值（20%）。");
             }
             catch (Exception exception)
             {
@@ -179,6 +180,32 @@ namespace TestMod.Common.Systems
                 i => i.OpCode == OpCodes.Stind_R4))
                 throw new InvalidOperationException("找不到圣箭独立重力分支。");
             constants.Add(il.Body.Instructions[cursor.Index - 3]);
+            // 夜明箭按剩余寿命启动重力，ai[] 保存初始速度；不能套用普通箭计时。
+            cursor.Index = 0;
+            if (!cursor.TryGotoNext(MoveType.After,
+                i => i.MatchLdarg(0),
+                i => i.MatchLdfld(typeof(Projectile), nameof(Projectile.type)),
+                i => i.MatchLdcI4(ProjectileID.MoonlordArrow),
+                i => i.OpCode == OpCodes.Bne_Un || i.OpCode == OpCodes.Bne_Un_S,
+                i => i.MatchLdarg(0),
+                i => i.MatchLdfld(typeof(Projectile), nameof(Projectile.timeLeft)),
+                i => i.MatchLdarg(0),
+                i => i.MatchCall(typeof(Projectile), "get_MaxUpdates"),
+                i => i.MatchLdcI4(45),
+                i => i.OpCode == OpCodes.Mul,
+                i => i.MatchLdcI4(14),
+                i => i.OpCode == OpCodes.Sub,
+                i => i.OpCode == OpCodes.Bgt || i.OpCode == OpCodes.Bgt_S,
+                i => i.MatchLdarg(0),
+                i => i.MatchLdflda(typeof(Entity), nameof(Entity.velocity)),
+                i => i.MatchLdflda(typeof(Vector2), nameof(Vector2.Y)),
+                i => i.OpCode == OpCodes.Dup,
+                i => i.OpCode == OpCodes.Ldind_R4,
+                i => i.MatchLdcR4(0.1f),
+                i => i.OpCode == OpCodes.Add,
+                i => i.OpCode == OpCodes.Stind_R4))
+                throw new InvalidOperationException("找不到夜明箭独立重力分支。");
+            constants.Add(il.Body.Instructions[cursor.Index - 3]);
             // 完成全部校验后才修改；每次原版实际重力赋值只经过一次倍率修正。
             foreach (Instruction constant in constants)
             {
@@ -203,7 +230,7 @@ namespace TestMod.Common.Systems
             {
                 loggedArrowGravity = true;
                 ModContent.GetInstance<VortexQuiverSystem>().Mod.Logger.Debug(
-                    $"[VortexQuiver] 首次普通箭重力：type={p.type}, 强化={lowGravity}, 增量={gravity}->{(lowGravity ? gravity * 0.2f : gravity)}");
+                    $"[VortexQuiver] 首次箭矢重力：type={p.type}, 强化={lowGravity}, 增量={gravity}->{(lowGravity ? gravity * 0.2f : gravity)}");
             }
             return lowGravity ? gravity * 0.2f : gravity;
         }

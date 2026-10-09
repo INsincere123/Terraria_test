@@ -21,7 +21,7 @@ namespace TestMod.Common.GlobalProjectiles
             ProjectileID.WoodenArrowFriendly or ProjectileID.FireArrow or ProjectileID.UnholyArrow or
             ProjectileID.HellfireArrow or ProjectileID.HolyArrow or ProjectileID.CursedArrow or
             ProjectileID.BoneArrow or ProjectileID.BoneArrowFromMerchant or ProjectileID.FrostburnArrow or
-            ProjectileID.IchorArrow or ProjectileID.VenomArrow;
+            ProjectileID.IchorArrow or ProjectileID.VenomArrow or ProjectileID.MoonlordArrow;
         private static bool IsQuiverArrow(Projectile p) => p.arrow ||
             p.ModProjectile is { AIType: > 0 } mod && IsQuiverGravityArrowType(mod.AIType);
         internal bool VortexHasLowGravity(Projectile p) => vortexArrow && IsQuiverArrow(p) &&
