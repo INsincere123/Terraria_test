@@ -84,7 +84,53 @@ GuideTimeEcho: {
 	DisruptorReward: 哦？你身上带着时之幻影的气息……看来你已经用上那东西了。这个你也许用得上，拿去吧。
 }
 
+VortexAmmo: {
+	ToggleHint: 在物品栏或热键栏中按住 Shift 并右键切换弹药模式
+	AmmoUnavailable: 弹药轮换暂不可用，使用正常弹药顺序
+}
+
 Items: {
+	VortexQuiver: {
+		DisplayName: 星璇箭袋
+		Tooltip:
+			'''
+			箭矢伤害×1.1，远程暴击率提高5%
+			提高箭矢速度和击退，20%几率不消耗箭矢
+			箭矢重力降低80%，命中使敌人带电5秒
+			'''
+		ModeDefault: 当前模式：默认——按弹药栏顺序轮换箭矢
+		ModeFull: 当前模式：全域——在弹药栏和整个物品栏中顺序轮换箭矢
+		ModeRandom: 当前模式：随机——在弹药栏和整个物品栏中随机选择箭矢
+		ModeSimple: 当前模式：普通——按正常顺序使用箭矢
+		GravityUnavailable: 普通箭低重力效果暂不可用
+	}
+
+	VortexAmmoBelt: {
+		DisplayName: 星璇弹药腰带
+		Tooltip:
+			'''
+			子弹伤害×1.1，远程暴击率提高5%
+			子弹及其衍生攻击命中使敌人带电5秒
+			'''
+		ModeDefault: 当前模式：默认——按弹药栏顺序轮换子弹
+		ModeFull: 当前模式：全域——在弹药栏和整个物品栏中顺序轮换子弹
+		ModeRandom: 当前模式：随机——在弹药栏和整个物品栏中随机选择子弹
+		ModeSimple: 当前模式：普通——按正常顺序使用子弹
+	}
+
+	VortexRocketBox: {
+		DisplayName: 星璇炮弹箱
+		Tooltip:
+			'''
+			火箭伤害×1.1，远程暴击率提高5%
+			火箭及其衍生攻击命中使敌人带电5秒
+			'''
+		ModeDefault: 当前模式：默认——按弹药栏顺序轮换火箭
+		ModeFull: 当前模式：全域——在弹药栏和整个物品栏中顺序轮换火箭
+		ModeRandom: 当前模式：随机——在弹药栏和整个物品栏中随机选择火箭
+		ModeSimple: 当前模式：普通——按正常顺序使用火箭
+	}
+
 	TimeEchoCore: {
 		DisplayName: 时之回响核心
 		Tooltip:

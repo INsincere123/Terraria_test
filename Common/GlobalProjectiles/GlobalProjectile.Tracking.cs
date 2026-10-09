@@ -27,6 +27,11 @@ namespace TestMod.Common.GlobalProjectiles
             bitWriter.WriteBit(IsTimeEchoAttack);
             if (IsTimeEchoAttack) TimeEcho_Write(projectile, binaryWriter);
             bitWriter.WriteBit(IsHomingTagged);
+            bitWriter.WriteBit(vortexArrow);
+            bitWriter.WriteBit(vortexHolyStar);
+            bitWriter.WriteBit(vortexAmmoEmpowered);
+            binaryWriter.Write((byte)(vortexAmmoCategory == AmmoID.Bullet ? 1 :
+                vortexAmmoCategory == AmmoID.Rocket ? 2 : 0));
             bitWriter.WriteBit(IsExtraHit);
             bitWriter.WriteBit(ExtraHitUseCrit);
             bitWriter.WriteBit(ExtraHitIgnoreDefense);
@@ -50,6 +55,12 @@ namespace TestMod.Common.GlobalProjectiles
             IsTimeEchoAttack = bitReader.ReadBit();
             if (IsTimeEchoAttack) TimeEcho_Read(projectile, binaryReader);
             IsHomingTagged = bitReader.ReadBit();
+            vortexArrow = bitReader.ReadBit();
+            vortexHolyStar = bitReader.ReadBit();
+            vortexAmmoEmpowered = bitReader.ReadBit();
+            vortexAmmoCategory = binaryReader.ReadByte() switch
+            { 1 => AmmoID.Bullet, 2 => AmmoID.Rocket, _ => 0 };
+            if (vortexAmmoCategory == 0) vortexAmmoEmpowered = false;
             IsExtraHit = bitReader.ReadBit();
             ExtraHitUseCrit = bitReader.ReadBit();
             ExtraHitIgnoreDefense = bitReader.ReadBit();

@@ -334,6 +334,8 @@ namespace TestMod.Common.GlobalProjectiles
             // 额外伤害只完成投送和数字显示，不再次触发追加攻击、鞭爆炸或收割。
             if (IsExtraHit || IsTimeEchoAttack) return;
 
+            VortexQuiver_OnHitNPC(projectile, target);
+
             // 通过 GlobalProjectile 路径分发副手等追加攻击效果
             // 不走 ModPlayer.OnHitNPCWithProj 是因为自定义 DamageClass 对该钩子存在兼容性问题
             if (projectile.friendly && !projectile.hostile)

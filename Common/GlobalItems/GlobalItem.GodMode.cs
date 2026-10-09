@@ -5,8 +5,7 @@ using Terraria.ModLoader;
 namespace TestMod.Common.GlobalItems
 {
     /// <summary>
-    /// godMode 模式下的武器伤害与击退倍率。
-    /// 所有修正均在 IsGodMode 为 true 时才生效。
+    /// 武器伤害先分发星璇炮弹箱的独立修正，再处理 godMode 的专属伤害与击退倍率。
     /// </summary>
     public partial class GlobalItem
     {
@@ -15,6 +14,7 @@ namespace TestMod.Common.GlobalItems
         // ══════════════════════════════════════════════════════════════
         public override void ModifyWeaponDamage(Item item, Player player, ref StatModifier damage)
         {
+            VortexAmmo_ModifyWeaponDamage(item, player, ref damage);
             if (!IsGodMode(player)) return;
 
             // 🏹 幻影弓 ×3.6
