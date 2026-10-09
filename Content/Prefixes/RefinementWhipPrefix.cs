@@ -16,13 +16,13 @@ namespace TestMod.Content.Prefixes
         // ====================【可调参数 - 慢慢测试】===================
         // ============================================================
 
-        public const float DamageMult         = 1.35f;  // 伤害倍率
-        public const float KnockbackMult      = 1.20f;  // 击退倍率
+        public const float DamageMult         = 1.27f;  // 伤害倍率
+        public const float KnockbackMult      = 1.15f;  // 击退倍率
         public const float UseTimeMult        = 0.80f;  // 使用时间倍率（越小挥鞭越快）
         public const float ScaleMult          = 1.60f;  // 大小倍率（影响鞭子攻击范围）
         public const int   ArmorPenetration   = 20;     // 护甲穿透
 
-        public const float ReforgeValueMult   = 20.0f;
+        public const float ReforgeValueMult   = 10.0f;
 
         // ============================================================
 

@@ -15,17 +15,17 @@ namespace TestMod.Content.Prefixes
     //  效果来源：
     //    SetStats  → 伤害/击退/攻速/暴击（引擎内置，tooltip 自动显示）
     //    Apply     → 护甲穿透（引擎无内置，需手动修改物品并在 GetTooltipLines 额外显示）
-    //    ModifyValue → 重铸费用 ×20（高阶词缀应当昂贵）
+    //    ModifyValue → 重铸费用 ×10（高阶词缀应当昂贵）
     // ============================================================================
     public class RefinementPrefix : ModPrefix
     {
         // ── 数值调节区 ────────────────────────────────────────────────
-        public const float DamageMult         = 1.35f;  // 伤害倍率
+        public const float DamageMult         = 1.27f;  // 伤害倍率
         public const float KnockbackMult      = 1.15f;  // 击退倍率
         public const float UseTimeMult        = 0.70f;  // 使用时间倍率（< 1 = 加速）
-        public const int   CritBonus          = 20;     // 暴击率加成（%）
+        public const int   CritBonus          = 10;     // 暴击率加成（%）
         public const int   ArmorPenetration   = 10;     // 护甲穿透（固定）
-        public const float ReforgeValueMult   = 20.0f;  // 重铸费用倍率
+        public const float ReforgeValueMult   = 10.0f;  // 重铸费用倍率
         // ─────────────────────────────────────────────────────────────
 
         // Custom：默认不出现在任何武器的重铸池，只由 GlobalItem.ChoosePrefix 手动控制
