@@ -63,12 +63,18 @@ namespace TestMod.Content.Items.Accessories
         }
 
         public override void UpdateAccessory(Player player, bool hideVisual)
+            => ApplyEffects(player);
+
+        internal static void ApplyEffects(Player player)
         {
             player.GetModPlayer<SuperEnergyShieldPlayer>().IsEquipped = true;
             ShieldEffect.Apply(player, Definition);
         }
 
         public override void ModifyTooltips(List<TooltipLine> tooltips)
+            => AddShieldTooltip(tooltips, Mod);
+
+        internal static void AddShieldTooltip(List<TooltipLine> tooltips, Mod mod)
         {
             Player player    = Main.LocalPlayer;
             var    sp        = player.GetModPlayer<EnergyShieldPlayer>();
@@ -77,7 +83,7 @@ namespace TestMod.Content.Items.Accessories
             int idx = tooltips.FindIndex(t => t.Name == "Tooltip0");
             if (idx >= 0)
             {
-                tooltips.Insert(idx + 1, new TooltipLine(Mod, "ShieldCurrent",
+                tooltips.Insert(idx + 1, new TooltipLine(mod, "ShieldCurrent",
                     sp.MaxShield > 0f ? $"当前护盾值 [c/64C8FF:{System.Math.Ceiling(sp.CurrentShield):0}] / [c/64C8FF:{System.Math.Ceiling(sp.MaxShield):0}]" : $"预计普通护盾上限 [c/64C8FF:{maxShield}]"));
             }
         }

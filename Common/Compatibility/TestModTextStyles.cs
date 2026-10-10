@@ -20,6 +20,7 @@ namespace TestMod.Common.Compatibility
         public const string EnergyShieldBreak = "EnergyShield.Break";
         public const string RarityAntares = "Rarity.Antares";
         public const string RarityEventHorizon = "Rarity.EventHorizon";
+        public const string RarityTerra = "Rarity.Terra";
 
         public static Color GetFallbackColor(string key) => key switch
         {
@@ -37,6 +38,7 @@ namespace TestMod.Common.Compatibility
             EnergyShieldDamage or EnergyShieldBreak => new Color(64, 224, 255),
             RarityAntares => new Color(30, 60, 180),
             RarityEventHorizon => new Color(168, 104, 196),
+            RarityTerra => new Color(36, 184, 106),
             _ => new Color(180, 50, 255)
         };
     }

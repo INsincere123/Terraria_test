@@ -5,6 +5,7 @@ using Terraria.GameContent;
 using Terraria.ID;
 using Terraria.ModLoader;
 using TestMod.Common.Players;
+using TestMod.Content.Rarities;
 
 namespace TestMod.Content.Items.Armor.TerraArmor
 {
@@ -117,7 +118,7 @@ namespace TestMod.Content.Items.Armor.TerraArmor
             Item.width = 24;
             Item.height = 24;
             Item.value = Item.sellPrice(gold: 20);
-            Item.rare = ItemRarityID.Red;
+            Item.rare = ModContent.RarityType<TerraRarity>();
             Item.defense = 50;
         }
 

@@ -27,6 +27,9 @@ namespace TestMod.Common.GlobalItems
 
             if (line.Name == "ItemName")
             {
+                if (item.rare == ModContent.RarityType<TerraRarity>())
+                    return !TextRenderingBridge.TryDrawTooltipLine(item, line, TestModTextStyles.RarityTerra);
+
                 if (item.rare == ModContent.RarityType<EventHorizonRarity>())
                     return !TextRenderingBridge.TryDrawTooltipLine(item, line, TestModTextStyles.RarityEventHorizon);
 

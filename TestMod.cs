@@ -48,6 +48,9 @@ namespace TestMod
 					case TerraArmorPlayer.StatePacket:
 						TerraArmorPlayer.ReceiveState(reader, whoAmI);
 						break;
+					case TerraShieldPlayer.StatePacket:
+						TerraShieldPlayer.ReceiveState(reader, whoAmI);
+						break;
 				}
 			}
 			catch (EndOfStreamException)

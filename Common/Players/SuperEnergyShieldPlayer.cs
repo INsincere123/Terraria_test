@@ -23,16 +23,22 @@ namespace TestMod.Common.Players
             if (shield.IsAuthority)
             {
                 TickCooldown(shield);
-                float lifeFrac = (float)Player.statLife / Math.Max(1, Player.statLifeMax2);
-                if (IsEquipped && !Player.dead && lifeFrac < 0.30f && _prevLifeFrac >= 0.30f && Cooldown == 0)
-                {
-                    Cooldown = CooldownFrames;
-                    shield.AddTemporaryShield(Player.statLifeMax2 * 0.5f + Player.statDefense,
-                        EmergencyFrames);
-                }
-                _prevLifeFrac = lifeFrac;
+                CheckEmergencyTrigger();
             }
             RefreshCooldownBuff();
+        }
+
+        internal void CheckEmergencyTrigger()
+        {
+            EnergyShieldPlayer shield = Player.GetModPlayer<EnergyShieldPlayer>();
+            if (!shield.IsAuthority) return;
+            float lifeFrac = (float)Player.statLife / Math.Max(1, Player.statLifeMax2);
+            if (IsEquipped && !Player.dead && lifeFrac < 0.30f && _prevLifeFrac >= 0.30f && Cooldown == 0)
+            {
+                Cooldown = CooldownFrames;
+                shield.AddTemporaryShield(Player.statLifeMax2 * 0.5f + Player.statDefense, EmergencyFrames);
+            }
+            _prevLifeFrac = lifeFrac;
         }
 
         public override void UpdateDead()
