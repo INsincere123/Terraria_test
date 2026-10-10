@@ -282,17 +282,17 @@ namespace TestMod.Common.Utilities
 
         public static void DrawPrimitiveTrail(Vector2[] points, Color color, float width, int pointsPerSegment = 14, bool smoothen = true)
         {
-            PrimitiveRenderer.RenderTrail(
-                points,
-                new PrimitiveSettings(
-                    _ => width,
-                    completion =>
-                    {
-                        float fade = MathF.Sin(completion * MathHelper.Pi);
-                        return color * MathHelper.Clamp(fade * 1.18f, 0f, 1f);
-                    },
-                    Smoothen: smoothen),
-                pointsPerSegment);
+            TrailDrawBuffer buffer = RentTrailBuffer();
+            try { DrawPrimitiveTrail(points, color, width, pointsPerSegment, smoothen, buffer); }
+            finally { ReturnTrailBuffer(buffer); }
+        }
+
+        private static void DrawPrimitiveTrail(IEnumerable<Vector2> points, Color color, float width, int pointsPerSegment, bool smoothen, TrailDrawBuffer buffer)
+        {
+            buffer.Style.Guided = false;
+            buffer.Style.Color = color;
+            buffer.Style.Width = width;
+            PrimitiveRenderer.RenderTrail(points, buffer.Style.Settings(smoothen), pointsPerSegment);
         }
 
         public static void DrawConstellationLine(Vector2 start, Vector2 end, float weight, int tier, float time)
@@ -301,11 +301,25 @@ namespace TestMod.Common.Utilities
             float tierGlow = 1f + tier * 0.3f;
             Color outer = Color.Lerp(new Color(45, 120, 255), new Color(255, 70, 22), tier / 3f);
             Color inner = Color.Lerp(new Color(180, 235, 255), new Color(255, 205, 95), tier / 3f);
-            Vector2[] points = CreateWavyLinePoints(start, end, 6, (0.65f + tier * 0.28f) * weight, time * 0.55f + start.X * 0.006f);
+            TrailDrawBuffer buffer = RentTrailBuffer();
+            try
+            {
+                Vector2 delta = end - start;
+                Vector2 normal = new Vector2(-delta.Y, delta.X).SafeNormalize(Vector2.Zero);
+                float amplitude = (0.65f + tier * 0.28f) * weight;
+                float phase = time * 0.55f + start.X * 0.006f;
+                for (int i = 0; i < 6; i++)
+                {
+                    float completion = i / 5f;
+                    float wave = MathF.Sin(completion * MathHelper.Pi + phase) * amplitude;
+                    buffer.Points.Add(Vector2.Lerp(start, end, completion) + normal * wave);
+                }
 
-            DrawPrimitiveTrail(points, outer * (0.17f * shimmer), (3.8f + tier * 1.15f) * weight * tierGlow);
-            DrawPrimitiveTrail(points, outer * (0.28f * shimmer), (1.9f + tier * 0.45f) * weight);
-            DrawPrimitiveTrail(points, inner * (0.58f * shimmer), (0.72f + tier * 0.11f) * weight);
+                DrawPrimitiveTrail(buffer.Points, outer * (0.17f * shimmer), (3.8f + tier * 1.15f) * weight * tierGlow, 14, true, buffer);
+                DrawPrimitiveTrail(buffer.Points, outer * (0.28f * shimmer), (1.9f + tier * 0.45f) * weight, 14, true, buffer);
+                DrawPrimitiveTrail(buffer.Points, inner * (0.58f * shimmer), (0.72f + tier * 0.11f) * weight, 14, true, buffer);
+            }
+            finally { ReturnTrailBuffer(buffer); }
         }
 
         public static void DrawEnergyPulse(SpriteBatch spriteBatch, Vector2 start, Vector2 end, float weight, int tier, float time)

@@ -3,6 +3,7 @@ using ReLogic.Content;
 using Terraria;
 using Terraria.GameContent;
 using Terraria.ModLoader;
+using TestMod.Common.Utilities;
 
 namespace TestMod.Common.Systems
 {
@@ -46,12 +47,15 @@ namespace TestMod.Common.Systems
 
         public override void Unload()
         {
+            DrawUtils.ClearTrailBuffers();
             haloNoise = null;
             spikeMask = null;
             radialRamp = null;
             softStarMote = null;
             antaresBeamHead = null;
         }
+
+        public override void OnWorldUnload() => DrawUtils.ClearTrailBuffers();
 
         private static Asset<Texture2D> TryRequestTexture(string path)
         {

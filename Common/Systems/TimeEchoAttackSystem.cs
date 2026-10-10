@@ -26,6 +26,8 @@ namespace TestMod.Common.Systems
         internal static bool Ready { get; private set; }
         private static ShotContext currentShot;
         private static uint nextRoot;
+        private const int MaxPooledShotContexts = 8;
+        private static readonly Stack<ShotContext> ShotContexts = new(MaxPooledShotContexts);
 
         private sealed class ShotContext
         {
@@ -36,6 +38,35 @@ namespace TestMod.Common.Systems
             internal uint Root, Generation;
             internal int SpawnOrdinal;
             internal readonly List<(Projectile Entity, int Identity)> Candidates = new(16);
+        }
+
+        private static ShotContext RentShotContext(Player player, Item item, Projectile parent, uint generation)
+        {
+            ShotContext context = ShotContexts.Count > 0 ? ShotContexts.Pop() : new ShotContext();
+            context.Player = player;
+            context.Item = item;
+            context.Parent = parent;
+            context.Center = player.Center;
+            context.Mouse = Main.MouseWorld;
+            context.Aim = (Main.MouseWorld - player.Center).SafeNormalize(new Vector2(player.direction, 0));
+            context.Root = ++nextRoot;
+            context.Generation = generation;
+            return context;
+        }
+
+        private static void ReturnShotContext(ShotContext context)
+        {
+            if (context == null) return;
+            // 清除引用而非只重置 Count，避免闲置上下文保留玩家、物品或已失效弹幕。
+            context.Candidates.Clear();
+            context.Player = null;
+            context.Item = null;
+            context.Parent = null;
+            context.Center = context.Mouse = context.Aim = default;
+            context.Root = context.Generation = 0;
+            context.SpawnOrdinal = 0;
+            if (ShotContexts.Count < MaxPooledShotContexts)
+                ShotContexts.Push(context);
         }
 
         private delegate void ShootOriginal(Player player, int index, Item item, int damage);
@@ -98,8 +129,9 @@ namespace TestMod.Common.Systems
             ClearAttackFilters();
             currentShot = null;
             nextRoot = 0;
+            ShotContexts.Clear();
         }
-        public override void OnWorldUnload() { currentShot = null; nextRoot = 0; }
+        public override void OnWorldUnload() { currentShot = null; nextRoot = 0; ShotContexts.Clear(); }
         private void DisposeHooks()
         {
             Ready = false;
@@ -127,9 +159,7 @@ namespace TestMod.Common.Systems
             ShotContext context = null;
             if (capture)
             {
-                context = new ShotContext { Player = player, Item = item, Center = player.Center,
-                    Mouse = Main.MouseWorld, Aim = (Main.MouseWorld - player.Center).SafeNormalize(new Vector2(player.direction, 0)),
-                    Root = ++nextRoot, Generation = player.GetModPlayer<TimeEchoPlayer>().attackState.Generation };
+                context = RentShotContext(player, item, null, player.GetModPlayer<TimeEchoPlayer>().attackState.Generation);
             }
             currentShot = context;
             bool completed = false;
@@ -137,7 +167,11 @@ namespace TestMod.Common.Systems
             finally
             {
                 currentShot = previous;
-                if (completed && context != null) FinishCapture(context, false);
+                try
+                {
+                    if (completed && context != null) FinishCapture(context, false);
+                }
+                finally { ReturnShotContext(context); }
             }
         }
 
@@ -160,9 +194,7 @@ namespace TestMod.Common.Systems
                     // 首次 AI 暂存可能的射弹，AI 后确认是资源载体才投送；普通本体由副本自行派生。
                     if (state.CanCopyAttack && data.EchoHasWeaponSource && !carrier.hostile && !IsExcludedProjectile(carrier) &&
                         (IsResourceCarrier(carrier) || NeedsFirstAIConfirmation(carrier) || adapter != null))
-                        context = new ShotContext { Player = player, Item = data.EchoSourceItem, Parent = carrier, Center = player.Center,
-                            Mouse = Main.MouseWorld, Aim = (Main.MouseWorld - player.Center).SafeNormalize(new Vector2(player.direction, 0)),
-                            Root = ++nextRoot, Generation = state.attackState.Generation };
+                        context = RentShotContext(player, data.EchoSourceItem, carrier, state.attackState.Generation);
                 }
             }
             currentShot = context;
@@ -174,22 +206,26 @@ namespace TestMod.Common.Systems
             {
                 worldEffectSource = previousWorldSource;
                 currentShot = previous;
-                if (completed && carrier.identity == identity && carrier.type == type && carrier.owner == owner &&
-                    ReferenceEquals(Main.projectile[carrier.whoAmI], carrier))
+                try
                 {
-                    bool resourceCarrier = IsResourceCarrier(carrier);
-                    data.ConfirmEchoCopyMode(resourceCarrier);
-                    if (!data.IsTimeEchoAttack && state != null && adapter is { ReplaysBody: true })
+                    if (completed && carrier.identity == identity && carrier.type == type && carrier.owner == owner &&
+                        ReferenceEquals(Main.projectile[carrier.whoAmI], carrier))
                     {
-                        if (!carrier.hostile && !IsExcludedProjectile(carrier))
-                            data.UpdateEchoProjection(carrier, state, adapter, ++nextRoot);
-                        else data.StopEchoProjection();
+                        bool resourceCarrier = IsResourceCarrier(carrier);
+                        data.ConfirmEchoCopyMode(resourceCarrier);
+                        if (!data.IsTimeEchoAttack && state != null && adapter is { ReplaysBody: true })
+                        {
+                            if (!carrier.hostile && !IsExcludedProjectile(carrier))
+                                data.UpdateEchoProjection(carrier, state, adapter, ++nextRoot);
+                            else data.StopEchoProjection();
+                        }
+                        // 载体投送实际射弹，本体碰撞另经回放；不刷新近战队列或执行副本载体 AI。
+                        if ((resourceCarrier || adapter != null) && context != null && !carrier.hostile && !IsExcludedProjectile(carrier))
+                            FinishCapture(context, true);
+                        else if (pending is { } shot) state.EmitEchoShot(shot);
                     }
-                    // 载体投送实际射弹，本体碰撞另经回放；不刷新近战队列或执行副本载体 AI。
-                    if ((resourceCarrier || adapter != null) && context != null && !carrier.hostile && !IsExcludedProjectile(carrier))
-                        FinishCapture(context, true);
-                    else if (pending is { } shot) state.EmitEchoShot(shot);
                 }
+                finally { ReturnShotContext(context); }
             }
         }
 

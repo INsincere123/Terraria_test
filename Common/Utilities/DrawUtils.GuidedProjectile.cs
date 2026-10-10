@@ -59,19 +59,23 @@ namespace TestMod.Common.Utilities
                 return;
 
             float visualTime = Main.GlobalTimeWrappedHourly * settings.TimeMultiplier;
-            Vector2[] trailPoints = CreateGuidedProjectileTrailPoints(projectile, settings, visualTime);
+            TrailDrawBuffer buffer = RentTrailBuffer();
+            try
+            {
+                List<Vector2> trailPoints = CreateGuidedProjectileTrailPoints(projectile, settings, visualTime, buffer);
+                if (trailPoints.Count >= 2)
+                    DrawGuidedProjectileTrail(trailPoints, settings, visualTime, buffer);
+                else
+                    Main.spriteBatch.End();
 
-            if (trailPoints.Length >= 2)
-                DrawGuidedProjectileTrail(trailPoints, settings, visualTime);
-            else
-                Main.spriteBatch.End();
-
-            DrawGuidedProjectileHead(projectile, settings, visualTime);
+                DrawGuidedProjectileHead(projectile, settings, visualTime);
+            }
+            finally { ReturnTrailBuffer(buffer); }
         }
 
-        private static Vector2[] CreateGuidedProjectileTrailPoints(Projectile projectile, GuidedProjectileDrawSettings settings, float visualTime)
+        private static List<Vector2> CreateGuidedProjectileTrailPoints(Projectile projectile, GuidedProjectileDrawSettings settings, float visualTime, TrailDrawBuffer buffer)
         {
-            List<Vector2> points = new();
+            List<Vector2> points = buffer.Points;
             int trailLen = Math.Min(settings.RenderedTrailPositions, projectile.oldPos.Length);
             Vector2 perpendicular = projectile.velocity.SafeNormalize(Vector2.UnitX).RotatedBy(MathHelper.PiOver2);
 
@@ -86,15 +90,14 @@ namespace TestMod.Common.Utilities
             }
 
             points.Add(projectile.Center);
-            return SmoothGuidedProjectileTrail(points, settings.CurveSamplesPerSegment);
+            return SmoothGuidedProjectileTrail(points, settings.CurveSamplesPerSegment, buffer.Smoothed);
         }
 
-        private static Vector2[] SmoothGuidedProjectileTrail(List<Vector2> points, int samplesPerSegment)
+        private static List<Vector2> SmoothGuidedProjectileTrail(List<Vector2> points, int samplesPerSegment, List<Vector2> smoothed)
         {
             if (points.Count <= 2 || samplesPerSegment <= 1)
-                return points.ToArray();
+                return points;
 
-            List<Vector2> smoothed = new(points.Count * samplesPerSegment);
             for (int i = 0; i < points.Count - 1; i++)
             {
                 Vector2 p0 = points[Math.Max(i - 1, 0)];
@@ -110,40 +113,36 @@ namespace TestMod.Common.Utilities
             }
 
             smoothed.Add(points[^1]);
-            return smoothed.ToArray();
+            return smoothed;
         }
 
-        private static void DrawGuidedProjectileTrail(Vector2[] points, GuidedProjectileDrawSettings settings, float visualTime)
+        private static void DrawGuidedProjectileTrail(List<Vector2> points, GuidedProjectileDrawSettings settings, float visualTime, TrailDrawBuffer buffer)
         {
             PrepareForAdditivePrimitives(Main.spriteBatch);
 
             if (!string.IsNullOrWhiteSpace(settings.ShaderName) && ShaderManager.TryGetShader(settings.ShaderName, out ManagedShader shader))
             {
                 settings.ConfigureShader?.Invoke(shader);
-                DrawGuidedProjectileTrailLayer(points, settings.ShaderLayer, settings.PrimitivePointsPerSegment, visualTime, shader);
+                DrawGuidedProjectileTrailLayer(points, settings.ShaderLayer, settings.PrimitivePointsPerSegment, visualTime, shader, buffer);
             }
             else
             {
-                DrawGuidedProjectileTrailLayer(points, settings.ShaderFallbackLayer, settings.PrimitivePointsPerSegment, visualTime, null);
+                DrawGuidedProjectileTrailLayer(points, settings.ShaderFallbackLayer, settings.PrimitivePointsPerSegment, visualTime, null, buffer);
             }
 
             foreach (GuidedProjectileTrailLayer layer in settings.AdditionalLayers)
-                DrawGuidedProjectileTrailLayer(points, layer, settings.PrimitivePointsPerSegment, visualTime, null);
+                DrawGuidedProjectileTrailLayer(points, layer, settings.PrimitivePointsPerSegment, visualTime, null, buffer);
         }
 
-        private static void DrawGuidedProjectileTrailLayer(Vector2[] points, GuidedProjectileTrailLayer layer, int pointsPerSegment, float visualTime, ManagedShader shader)
+        private static void DrawGuidedProjectileTrailLayer(List<Vector2> points, GuidedProjectileTrailLayer layer, int pointsPerSegment, float visualTime, ManagedShader shader, TrailDrawBuffer buffer)
         {
             if (layer.ColorFunction is null || layer.Width <= 0f || pointsPerSegment <= 0)
                 return;
 
-            PrimitiveRenderer.RenderTrail(
-                points,
-                new PrimitiveSettings(
-                    completion => GuidedProjectileWidth(completion, layer.Width, layer.WidthExponent),
-                    completion => layer.ColorFunction(completion, visualTime + layer.TimeOffset, layer.Opacity),
-                    Smoothen: true,
-                    Shader: shader),
-                pointsPerSegment);
+            buffer.Style.Guided = true;
+            buffer.Style.Layer = layer;
+            buffer.Style.VisualTime = visualTime;
+            PrimitiveRenderer.RenderTrail(points, buffer.Style.Settings(shader: shader), pointsPerSegment);
         }
 
         private static void DrawGuidedProjectileHead(Projectile projectile, GuidedProjectileDrawSettings settings, float visualTime)

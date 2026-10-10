@@ -2,6 +2,7 @@ using Microsoft.Xna.Framework;
 using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
+using TestMod.Common.Systems;
 using TestMod.Content.Projectiles.Accessories;
 
 namespace TestMod.Common.Mechanics.AccessoryEffects
@@ -46,7 +47,8 @@ namespace TestMod.Common.Mechanics.AccessoryEffects
         //  排除列表：MagnetSphereBolt 命中时不再触发追加攻击
         // ======================================================
 
-        public override int[] ExcludedProjectileTypes => [(int)ProjectileID.MagnetSphereBolt];
+        private static readonly int[] ExcludedTypes = [ProjectileID.MagnetSphereBolt];
+        public override int[] ExcludedProjectileTypes => ExcludedTypes;
 
         // ======================================================
         //  触发逻辑
@@ -70,16 +72,12 @@ namespace TestMod.Common.Mechanics.AccessoryEffects
         {
             int cannonType = ModContent.ProjectileType<SubhandCannon>();
 
-            for (int i = 0; i < Main.maxProjectiles; i++)
+            foreach (Projectile proj in ProjectileLookup.Owned(player.whoAmI, cannonType))
             {
-                Projectile proj = Main.projectile[i];
-                if (proj.active && proj.type == cannonType && proj.owner == player.whoAmI)
-                {
-                    SubhandCannon cannon = (SubhandCannon)proj.ModProjectile;
-                    if (textureOverride != null)
-                        cannon.TextureOverride = textureOverride;
-                    return cannon;
-                }
+                SubhandCannon cannon = (SubhandCannon)proj.ModProjectile;
+                if (textureOverride != null)
+                    cannon.TextureOverride = textureOverride;
+                return cannon;
             }
 
             // 生成新炮台
@@ -106,14 +104,10 @@ namespace TestMod.Common.Mechanics.AccessoryEffects
         public static void KeepCannonAlive(Player player)
         {
             int cannonType = ModContent.ProjectileType<SubhandCannon>();
-            for (int i = 0; i < Main.maxProjectiles; i++)
+            foreach (Projectile proj in ProjectileLookup.Owned(player.whoAmI, cannonType))
             {
-                Projectile proj = Main.projectile[i];
-                if (proj.active && proj.type == cannonType && proj.owner == player.whoAmI)
-                {
-                    proj.timeLeft = 2;
-                    break;
-                }
+                proj.timeLeft = 2;
+                break;
             }
         }
     }
