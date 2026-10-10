@@ -1,6 +1,6 @@
 displayName = test
 author = Zelda
-version = 0.8
+version = 0.8.1
 modReferences = Luminance
-weakReferences = textranderingsystem, ColoredDamageTypes, MassReforge
+weakReferences = textranderingsystem, ColoredDamageTypes, MassReforge, FargowiltasSouls
 buildIgnore = *.csproj, *.user, *.sln, *.md, obj\*, bin\*, .vs\*, .git\*, .claude\*, .vscode\*, Luminance.dll, Luminance.pdb, Luminance.xml, TestMod.code-workspace, Properties\*, tree.txt, tree.bat, tree.py, .gitignore, fxc.exe, d3dcompiler_47.dll

@@ -37,6 +37,7 @@ namespace TestMod.Common.Systems
         private static void BeforePostUpdateEquips(EquipsOriginal original, Player player)
         {
             if (player.TryGetModPlayer(out DashPlayer state)) state.PrepareEquippedDashes();
+            FargoAccessoryCompatSystem.PrepareMovement(player);
             original(player);
         }
 

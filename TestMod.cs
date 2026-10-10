@@ -51,6 +51,9 @@ namespace TestMod
 					case TerraShieldPlayer.StatePacket:
 						TerraShieldPlayer.ReceiveState(reader, whoAmI);
 						break;
+					case TerraWingsPlayer.DashVisualPacket:
+						TerraWingsPlayer.ReceiveDashVisual(reader, whoAmI);
+						break;
 				}
 			}
 			catch (EndOfStreamException)

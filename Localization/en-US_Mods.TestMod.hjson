@@ -97,6 +97,32 @@ VortexAmmo: {
 }
 
 Items: {
+	TerraWings: {
+		DisplayName: 泰拉之翼
+		Tooltip:
+			'''
+			终极机动饰品，外观随泰拉套职业变化
+			拥有15秒飞行储备，每秒恢复1秒，飞行中持续恢复
+			大幅提高飞行速度，垂直加速度为飞行大师之魂的400%
+			按住下和跳跃键悬停，仅按下键快速下落并穿透平台
+			提高奔跑速度、移动加速度与制动能力，移动速度增加50%
+			拥有泰拉闪耀靴、魔光护符、气球与蛙腿效果
+			免疫击退、摔落与熔岩伤害，在水中自由移动并能够攀墙
+			重力提高50%，不受太空低重力影响
+			强化钩爪的射出、收回与拉动速度
+			被钩爪拉动时获得10%伤害减免和50%荆棘，减伤持续至松钩后1秒
+			可水平冲刺穿过敌怪，造成150基础近战伤害并使用近战暴击率
+			冲刺期间免疫敌怪接触伤害
+			'''
+		JumpsEnabled: 额外跳跃：开启（气球束三段跳与屁罐跳）
+		JumpsDisabled: 额外跳跃：关闭
+		SlowModeEnabled: 慢速模式：开启（常规水平移速上限55 mph，冲刺不受限制）
+		SlowModeDisabled: 慢速模式：关闭
+		SlowModeHint: 按住Shift并左键点击背包或饰品栏中的此物品切换慢速模式
+		SingleKeyDash: 按 [{0}] 水平冲刺
+		DoubleTapDash: 双击左右方向键水平冲刺
+	}
+
 	TerraHelmet: {
 		DisplayName: 泰拉头盔
 		Tooltip: "{$Mods.TestMod.TerraArmor.PieceTooltip}"
@@ -741,6 +767,7 @@ Projectiles: {
 	StandardDashStrike.DisplayName: 冲刺伤害
 	LongDashStrike.DisplayName: 长冲刺
 	ShortDashStrike.DisplayName: 短冲刺
+	TerraWingsDashStrike.DisplayName: 泰拉之翼冲刺
 	PhantasmSpecialArrowProj.DisplayName: 真·弑神箭
 	PhantasmHoldout.DisplayName: Phantasm Holdout
 	AntaresBeam.DisplayName: 心宿二火焰

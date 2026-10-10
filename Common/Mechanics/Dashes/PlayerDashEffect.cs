@@ -32,6 +32,9 @@ namespace TestMod.Common.Mechanics.Dashes
 		/// <summary>运行时最大持续帧数；默认返回 DashDuration，子类可结合 player 状态动态调整</summary>
 		public virtual int GetMaxDuration(Player player) => DashDuration;
 
+		/// <summary>速度型冲刺在碰撞位移后自行结束，保留最后一帧位移与命中；默认保持原流程。</summary>
+		public virtual bool EndAfterMovement => false;
+
 		/// <summary>运行时冷却帧数；默认返回 DashCooldown，StandardDash 覆盖以读取 DashConfig</summary>
 		public virtual int GetCooldown(Player player) => DashCooldown;
 

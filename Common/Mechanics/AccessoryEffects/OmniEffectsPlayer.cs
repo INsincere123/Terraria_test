@@ -23,6 +23,7 @@ namespace TestMod.Common.Mechanics.AccessoryEffects
         // ===== 启用标志 (饰品每帧重新设置) =====
         public bool GrantOmniWings;            // OmniGuardianAccessory 已装备 → PostUpdateEquips 覆写 wingsLogic
         public bool ShowOmniWings;             // 外观独立控制，不影响飞行能力
+        internal bool FargoFlightInsignia;     // 相同的徽章效果交由 Fargo，遵循其开关
         public bool EnableFastFall;            // 启用快速下落
         public bool EnableTripleDodgeExtra;    // 启用自定义额外闪避 (神圣套/黑带闪避不需要标志, vanilla 自动管理)
         public bool EnablePerfectHover;        // 启用完美悬浮
@@ -96,6 +97,7 @@ namespace TestMod.Common.Mechanics.AccessoryEffects
         {
             GrantOmniWings = false;
             ShowOmniWings = false;
+            FargoFlightInsignia = false;
             DefensiveLifeMultiplier = 1f;
             DefensiveManaMultiplier = 1f;
             EnableFastFall = false;
@@ -167,7 +169,7 @@ namespace TestMod.Common.Mechanics.AccessoryEffects
             {
                 int slot = OmniGuardianWingProxy.WingSlot;
                 Player.wingsLogic = slot;   // 物理：调用 Proxy 的 HorizontalWingSpeeds / VerticalWingSpeeds
-                Player.empressBrooch  = true;  // 飞行不消耗时间
+                if (!FargoFlightInsignia) Player.empressBrooch = true;
                 Player.wingTimeMax    = 3600;  // 备用（empressBrooch 已开，实际不消耗）
             }
         }

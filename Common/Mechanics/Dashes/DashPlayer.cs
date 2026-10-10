@@ -194,7 +194,7 @@ namespace TestMod.Common.Mechanics.Dashes
 
 			if (ActiveEffect == null) return;
 
-			if (ElapsedFrames >= _activeDashMaxDuration)
+			if (ElapsedFrames >= _activeDashMaxDuration && !ActiveEffect.EndAfterMovement)
 				FinishDash();
 		}
 

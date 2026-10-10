@@ -1,5 +1,6 @@
 using Terraria;
 using Terraria.ModLoader;
+using TestMod.Common.Systems;
 
 namespace TestMod.Common.Mechanics.AccessoryEffects
 {
@@ -12,8 +13,9 @@ namespace TestMod.Common.Mechanics.AccessoryEffects
     public static class GrappleEffect
     {
         // ── 在 UpdateAccessory 中调用 ──────────────────────────────────
-        public static void Apply(Player player)
+        public static void Apply(Player player, Item source)
         {
+            if (FargoAccessoryCompatSystem.TryProvide(FargoAccessoryCompatSystem.Mahogany, player, source)) return;
             player.GetModPlayer<OmniEffectsPlayer>().EnableGrapple = true;
         }
 

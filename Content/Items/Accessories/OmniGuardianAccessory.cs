@@ -115,6 +115,8 @@ namespace TestMod.Content.Items.Accessories
             var omniPlayer = player.GetModPlayer<OmniEffectsPlayer>();
             omniPlayer.GrantOmniWings = true;
             omniPlayer.ShowOmniWings |= !hideVisual;
+            omniPlayer.FargoFlightInsignia = FargoAccessoryCompatSystem.TryProvide(
+                FargoAccessoryCompatSystem.Insignia, player, Item);
             // 完美悬浮（按下键 + 跳跃键时 velocity.Y = -0.0001f，防止虚空跑步 bug）
             PerfectHoverEffect.Apply(player);
 
@@ -202,7 +204,7 @@ namespace TestMod.Content.Items.Accessories
             player.GetModPlayer<DashPlayer>().ShortDashEffectId = "ShortDash";  // 短冲刺 (C键)
 
             // [12] 红木魔石钩爪效果
-            GrappleEffect.Apply(player);
+            GrappleEffect.Apply(player, Item);
             AbyssImmunityEffect.Apply(player);
             TheDarkImmunityEffect.Apply(player);
         }

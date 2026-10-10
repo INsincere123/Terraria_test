@@ -115,4 +115,5 @@ namespace TestMod.Content.Projectiles.Dashes
     public class StandardDashStrike : DashStrikeProjectile { }
     public class LongDashStrike : DashStrikeProjectile { }
     public class ShortDashStrike : DashStrikeProjectile { }
+    public class TerraWingsDashStrike : DashStrikeProjectile { }
 }
