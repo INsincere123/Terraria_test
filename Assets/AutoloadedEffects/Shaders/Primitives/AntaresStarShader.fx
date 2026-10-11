@@ -1,13 +1,14 @@
-sampler image : register(s1);
 sampler haloNoise : register(s2);
-sampler spikeMask : register(s3);
 sampler radialRamp : register(s4);
 
 matrix uWorldViewProjection;
 float globalTime;
 float starTier;
 float starIntensity;
-float3 texturePresence;
+float shotEnvelope;
+float shotContraction;
+float noisePresence;
+float rampPresence;
 
 struct VertexShaderInput
 {
@@ -58,7 +59,7 @@ float FractalNoise(float2 p)
     float amp = 0.5;
 
     [unroll]
-    for (int i = 0; i < 4; i++)
+    for (int i = 0; i < 2; i++)
     {
         sum += ValueNoise(p) * amp;
         p = p * 2.07 + 13.17;
@@ -68,35 +69,19 @@ float FractalNoise(float2 p)
     return sum;
 }
 
-float Spike(float2 p, float angle, float width, float length, float softness)
+// 非对称日冕弧：缓慢生长/消退，不使用持续旋转的规则十字星芒。
+float CoronaArc(float2 p, float angle, float phase, float radius, float strength)
 {
-    float s = sin(angle);
-    float c = cos(angle);
-    float2 q = float2(p.x * c - p.y * s, p.x * s + p.y * c);
-    float axis = abs(q.y) / max(width, 0.0005);
-    float reach = saturate(1.0 - abs(q.x) / max(length, 0.0005));
-    return exp(-axis * axis * softness) * pow(reach, 2.4);
-}
-
-float ProceduralSpikeMask(float2 p, float rotation, float tier)
-{
-    float spikes = 0.0;
-
-    spikes += Spike(p, rotation, 0.018, 1.10, 3.0);
-    spikes += Spike(p, rotation + 1.570796, 0.018, 1.10, 3.0);
-    spikes += Spike(p, rotation + 0.785398, 0.011, 0.70, 3.6);
-    spikes += Spike(p, rotation - 0.785398, 0.011, 0.70, 3.6);
-
-    spikes += Spike(p, -rotation * 0.55 + 0.20, 0.0055, 1.08, 4.2) * (0.55 + tier * 0.35);
-    spikes += Spike(p, -rotation * 0.55 + 1.570796 + 0.20, 0.0055, 1.08, 4.2) * (0.55 + tier * 0.35);
-
-    float ringAngle = atan2(p.y, p.x);
-    float rayHash = Hash(float2(floor((ringAngle + 3.14159) * 10.0), 17.0));
-    float fineRay = pow(abs(cos(ringAngle * 8.0 + rotation * 1.7)), 18.0) * rayHash;
-    float radiusFade = pow(saturate(1.04 - length(p)), 2.1);
-    spikes += fineRay * radiusFade * (0.12 + tier * 0.09);
-
-    return saturate(spikes);
+    float2 direction = float2(cos(angle), sin(angle));
+    float along = dot(p, direction);
+    float across = dot(p, float2(-direction.y, direction.x));
+    float growth = 0.5 - 0.5 * cos(phase);
+    float extent = lerp(0.30, radius, growth);
+    float curve = across - sin(saturate(along / max(extent, 0.01)) * 3.14159) * 0.13;
+    float filament = exp(-curve * curve * 620.0);
+    float envelope = smoothstep(0.15, 0.28, along) * (1.0 - smoothstep(extent * 0.65, extent, along));
+    float diffuse = exp(-curve * curve * 80.0) * 0.14;
+    return (filament + diffuse) * envelope * growth * strength;
 }
 
 float4 PixelShaderFunction(VertexShaderOutput input) : COLOR0
@@ -105,54 +90,40 @@ float4 PixelShaderFunction(VertexShaderOutput input) : COLOR0
     float2 p = uv * 2.0 - 1.0;
     float r = length(p);
     float tier = saturate(starTier / 3.0);
-    float rotation = globalTime * (0.28 + tier * 0.07);
+    float secondLayer = saturate(starTier - 1.0);
+    float thirdLayer = saturate(starTier - 2.0);
+    float contraction = 1.0 - shotContraction * 0.06;
+    float bodyRadius = 0.23 * contraction;
+    float activity = 1.0 + thirdLayer * 0.35;
+    float noise = FractalNoise(p * 9.0 + float2(globalTime * 0.10, -globalTime * 0.06) * activity);
+    float textureNoise = tex2D(haloNoise, p * 0.8 + float2(globalTime * 0.025 * activity, -globalTime * 0.018 * activity)).r;
+    noise = lerp(noise, textureNoise, noisePresence * 0.55);
+    float surfaceMask = 1.0 - smoothstep(bodyRadius * 0.78, bodyRadius, r);
+    float limb = sqrt(saturate(1.0 - r * r / (bodyRadius * bodyRadius)));
+    float granulation = smoothstep(0.23, 0.76, noise);
+    float surface = surfaceMask * (0.40 + limb * 0.30 + granulation * (0.24 + tier * 0.18));
+    float halo = exp(-r * r * 24.0) * (0.07 + tier * 0.012);
 
-    float proceduralNoise = FractalNoise(uv * 7.0 + float2(globalTime * 0.035, -globalTime * 0.022));
-    float textureNoise = tex2D(haloNoise, uv * 1.65 + float2(globalTime * 0.018, -globalTime * 0.012)).r;
-    float noise = lerp(proceduralNoise, textureNoise, texturePresence.x);
-    float disturbedRadius = r * (0.93 + (noise - 0.5) * (0.11 + tier * 0.05));
+    float corona = CoronaArc(p, 0.45, globalTime * 0.68, 0.78, tier * 0.48 + shotEnvelope * 0.36);
+    corona += CoronaArc(p, 3.50, globalTime * 0.47 + 2.0, 0.65, tier * 0.32 + shotEnvelope * 0.22);
+    corona += CoronaArc(p, 5.35, globalTime * 0.56 + 4.1, 0.88, secondLayer * 0.28);
+    corona += CoronaArc(p, 2.12, globalTime * 0.38 + 1.0, 0.74, thirdLayer * 0.22);
+    // 射击释放是局部喷流的短包络，不叠加成整圈白光。
+    corona += CoronaArc(p, 0.95, 1.8 + shotEnvelope * 1.2, 0.84, shotEnvelope * 0.32);
 
-    float fallbackRamp = saturate(1.0 - disturbedRadius);
-    fallbackRamp = fallbackRamp * fallbackRamp * (3.0 - 2.0 * fallbackRamp);
-    float textureRamp = tex2D(radialRamp, float2(saturate(r), 0.5)).r;
-    float ramp = lerp(fallbackRamp, textureRamp, texturePresence.z);
-
-    float farHalo = exp(-disturbedRadius * disturbedRadius * 2.05) * (0.34 + tier * 0.16);
-    float outerHalo = exp(-disturbedRadius * disturbedRadius * 4.4) * 0.56;
-    float innerHalo = exp(-disturbedRadius * disturbedRadius * 14.0) * 0.92;
-    float hotCore = exp(-r * r * 72.0) * 1.45;
-    float emberRing = exp(-abs(disturbedRadius - 0.36) * 16.0) * (0.09 + tier * 0.11);
-    float coronaGrain = pow(saturate(noise), 2.2) * exp(-disturbedRadius * disturbedRadius * 5.8) * (0.16 + tier * 0.12);
-
-    float proceduralSpikes = ProceduralSpikeMask(p, rotation, tier);
-    float textureSpikes = tex2D(spikeMask, uv).r;
-    float spikes = lerp(proceduralSpikes, saturate(textureSpikes * 1.35 + proceduralSpikes * 0.32), texturePresence.y);
-    spikes *= smoothstep(0.02, 0.22, r) * smoothstep(1.10, 0.54, r);
-
-    float flicker = 0.92 + sin(globalTime * 3.7) * 0.045 + (noise - 0.5) * 0.06;
-    float body = farHalo + outerHalo + innerHalo + emberRing + coronaGrain + hotCore;
-    float alpha = saturate((body * (0.72 + ramp * 0.55) + spikes * (0.68 + tier * 0.28)) * flicker);
-    alpha *= smoothstep(1.10, 0.70, r) * starIntensity;
-
-    float3 deepRed = float3(0.42, 0.020, 0.006);
-    float3 darkEmber = float3(0.78, 0.060, 0.012);
-    float3 ember = float3(1.00, 0.23, 0.040);
-    float3 gold = float3(1.00, 0.62, 0.14);
-    float3 whiteHot = float3(1.00, 0.94, 0.62);
-
-    float3 color = 0.0;
-    color += deepRed * farHalo;
-    color += darkEmber * outerHalo;
-    color += ember * (innerHalo + emberRing + coronaGrain);
-    color += gold * (spikes * 0.82 + hotCore * 0.45);
-    color += whiteHot * hotCore;
-    color = lerp(color, color + float3(0.24, 0.075, 0.0), tier);
-
-    float chroma = saturate(spikes + hotCore) * 0.18;
-    color.r += chroma * 0.18;
-    color.b += chroma * 0.035;
-
-    return float4(color * input.Color.rgb, alpha * input.Color.a);
+    float ramp = lerp(pow(saturate(1.0 - r), 2.0), tex2D(radialRamp, float2(saturate(r), 0.5)).r, rampPresence);
+    float falloff = (1.0 - smoothstep(0.90, 0.99, r)) * lerp(0.35, 1.0, ramp);
+    float3 surfaceColor = lerp(float3(0.52, 0.025, 0.006), float3(0.95, 0.26, 0.055), granulation * 0.65 + limb * 0.20);
+    float surfaceAlpha = surfaceMask * 0.92;
+    float coronaAlpha = saturate(corona * 0.65);
+    float haloAlpha = halo * 0.60;
+    float3 color = surfaceColor * surface * 0.92;
+    color += float3(0.9, 0.25, 0.045) * coronaAlpha * (1.0 - surfaceAlpha);
+    color += float3(0.8, 0.10, 0.02) * haloAlpha * (1.0 - surfaceAlpha) * (1.0 - coronaAlpha);
+    float alpha = 1.0 - (1.0 - surfaceAlpha) * (1.0 - coronaAlpha) * (1.0 - haloAlpha);
+    // 各层只预乘一次；不把已衰减的日冕再乘一遍总alpha。
+    return float4(saturate(color) * input.Color.rgb * falloff * starIntensity,
+        alpha * input.Color.a * falloff * starIntensity);
 }
 
 technique Technique1

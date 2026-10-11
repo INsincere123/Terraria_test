@@ -1,7 +1,10 @@
+using System;
+using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Terraria;
 using Terraria.DataStructures;
 using Terraria.ID;
+using Terraria.Localization;
 using Terraria.ModLoader;
 using TestMod.Content.Buffs;
 using TestMod.Content.Projectiles.Minions;
@@ -41,6 +44,22 @@ namespace TestMod.Content.Items.Weapons.Summon
         }
 
         public override bool CanUseItem(Player player) => true;
+
+        public override void ModifyTooltips(List<TooltipLine> tooltips)
+        {
+            const string textKey = "Mods.TestMod.Items.Antares.";
+            foreach (Projectile projectile in Main.ActiveProjectiles)
+            {
+                if (projectile.owner != Main.myPlayer || projectile.ModProjectile is not AntaresMinion minion)
+                    continue;
+                string stage = Language.GetTextValue(textKey + "Stage" + minion.AscensionTier);
+                tooltips.Add(new TooltipLine(Mod, "CurrentStage", Language.GetTextValue(textKey + "CurrentStage",
+                    projectile.minionSlots, stage, minion.SlotDamageMultiplier,
+                    Math.Max(1f, projectile.minionSlots / 3f))));
+                return;
+            }
+            tooltips.Add(new TooltipLine(Mod, "CurrentStage", Language.GetTextValue(textKey + "NotSummoned")));
+        }
 
         public override bool Shoot(Player player, EntitySource_ItemUse_WithAmmo source,
             Vector2 position, Vector2 velocity, int type, int damage, float knockback)
