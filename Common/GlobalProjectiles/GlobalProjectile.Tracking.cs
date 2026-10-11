@@ -28,6 +28,9 @@ namespace TestMod.Common.GlobalProjectiles
             if (IsTimeEchoAttack) TimeEcho_Write(projectile, binaryWriter);
             bitWriter.WriteBit(IsHomingTagged);
             bitWriter.WriteBit(vortexArrow);
+            bitWriter.WriteBit(RangerSealArrow);
+            bitWriter.WriteBit(rangerSealRocket);
+            bitWriter.WriteBit(_rangerSealRocketExtraApplied);
             bitWriter.WriteBit(vortexHolyStar);
             bitWriter.WriteBit(vortexAmmoEmpowered);
             binaryWriter.Write((byte)(vortexAmmoCategory == AmmoID.Bullet ? 1 :
@@ -57,6 +60,9 @@ namespace TestMod.Common.GlobalProjectiles
             if (IsTimeEchoAttack) TimeEcho_Read(projectile, binaryReader);
             IsHomingTagged = bitReader.ReadBit();
             vortexArrow = bitReader.ReadBit();
+            RangerSealArrow = bitReader.ReadBit();
+            rangerSealRocket = bitReader.ReadBit();
+            bool rangerExtra = bitReader.ReadBit();
             vortexHolyStar = bitReader.ReadBit();
             vortexAmmoEmpowered = bitReader.ReadBit();
             vortexAmmoCategory = binaryReader.ReadByte() switch
@@ -67,6 +73,8 @@ namespace TestMod.Common.GlobalProjectiles
             ExtraHitUseCrit = bitReader.ReadBit();
             ExtraHitIgnoreDefense = bitReader.ReadBit();
             subhandDynamicText = bitReader.ReadBit();
+            Seals_SetRocketExtraUpdates(projectile, rangerExtra && vortexAmmoCategory == AmmoID.Rocket &&
+                !IsExtraHit && !IsTimeEchoAttack && !projectile.npcProj && !projectile.trap);
             BloodFeed_ReadPenetration(projectile, bitReader.ReadBit(), binaryReader);
             if (IsExtraHit)
             {

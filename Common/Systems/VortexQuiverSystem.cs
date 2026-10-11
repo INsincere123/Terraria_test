@@ -225,14 +225,19 @@ namespace TestMod.Common.Systems
 
         private static float ScaleArrowGravity(float gravity, Projectile p)
         {
-            bool lowGravity = p.GetGlobalProjectile<QuiverProjectile>().VortexHasLowGravity(p);
+            // 微光箭（Shimmer Arrow）本身向上坠落，显式排除，保持原版反重力行为。
+            if (p.type == ProjectileID.ShimmerArrow) return gravity;
+            QuiverProjectile state = p.GetGlobalProjectile<QuiverProjectile>();
+            bool lowGravity = state.VortexHasLowGravity(p);
+            // 独立来源乘算：星璇 0.2、射手之证 0.5，共存 0.1，不产生负重力。
+            float factor = state.ArrowGravityFactor;
             if (!loggedArrowGravity && p.arrow && p.owner == Main.myPlayer)
             {
                 loggedArrowGravity = true;
                 ModContent.GetInstance<VortexQuiverSystem>().Mod.Logger.Debug(
-                    $"[VortexQuiver] 首次箭矢重力：type={p.type}, 强化={lowGravity}, 增量={gravity}->{(lowGravity ? gravity * 0.2f : gravity)}");
+                    $"[VortexQuiver] 首次箭矢重力：type={p.type}, 强化={lowGravity}, 增量={gravity}->{(lowGravity ? gravity * factor : gravity)}");
             }
-            return lowGravity ? gravity * 0.2f : gravity;
+            return lowGravity ? gravity * factor : gravity;
         }
     }
 }

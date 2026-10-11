@@ -57,6 +57,7 @@ namespace TestMod.Common.GlobalProjectiles
         public override bool PreAI(Projectile projectile)
         {
             RangedMotion_RestoreVelocity(projectile);
+            Seals_UpdateRocketExtraUpdates(projectile);
             ProjectileLookup.Observe(projectile, this);
             ResetTrackingUpdate();
             _dragonFlightPrepared = false;

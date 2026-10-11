@@ -159,6 +159,9 @@ namespace TestMod.Common.GlobalProjectiles
         internal static int GetSummonCritChance(Projectile projectile, NPC target)
         {
             int chance = 20;
+            if (projectile.owner >= 0 && projectile.owner < Main.maxPlayers &&
+                Main.player[projectile.owner].TryGetModPlayer(out SummonCritPlayer crit))
+                chance += (int)crit.BonusCritChance;
             if (projectile.minion || projectile.sentry || ProjectileID.Sets.MinionShot[projectile.type] ||
                 ProjectileID.Sets.SentryShot[projectile.type])
             {

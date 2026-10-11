@@ -8,6 +8,7 @@ namespace TestMod.Common.Players
     public class SummonCritPlayer : ModPlayer
     {
         public bool Enabled;
+        public float BonusCritChance;
 
         public static void Enable(Player player)
             => player.GetModPlayer<SummonCritPlayer>().Enabled = true;
@@ -15,6 +16,7 @@ namespace TestMod.Common.Players
         public override void ResetEffects()
         {
             Enabled = false;
+            BonusCritChance = 0f;
         }
 
         public override void ModifyHitNPCWithProj(Projectile proj, NPC target, ref NPC.HitModifiers modifiers)
@@ -24,7 +26,7 @@ namespace TestMod.Common.Players
 
         public static void TryApplySummonCrit(Player player, Projectile proj, ref NPC.HitModifiers modifiers, bool requireEnabled = true)
         {
-            // 泰拉召唤模式统一结算 20% + 鞭标记，不能再独立抽取通用暴击。
+            // 泰拉召唤模式统一结算 20% + 召唤专用加成 + 鞭标记，避免重复抽取。
             if (player.GetModPlayer<TerraArmorPlayer>().IsMode(TerraArmorMode.Summoner) &&
                 TerraArmorProjectile.IsSummonAttack(proj)) return;
             if (requireEnabled && !player.GetModPlayer<SummonCritPlayer>().Enabled)
@@ -33,7 +35,9 @@ namespace TestMod.Common.Players
             if (proj.hostile || !IsSummonDamage(proj))
                 return;
 
-            float critChance = player.GetTotalCritChance(DamageClass.Generic);
+            // 召唤暴击独立于通用暴击；专用来源统一写入 BonusCritChance。
+            // 不读取 Generic，也不通过 GetTotalCritChance 间接继承其他职业。
+            float critChance = player.GetModPlayer<SummonCritPlayer>().BonusCritChance;
             if (critChance > 0f && Main.rand.NextFloat(100f) < critChance)
                 modifiers.SetCrit();
         }

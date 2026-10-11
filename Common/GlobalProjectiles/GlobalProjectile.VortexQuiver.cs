@@ -9,11 +9,13 @@ namespace TestMod.Common.GlobalProjectiles
     public partial class GlobalProjectile
     {
         private bool vortexArrow;
+        internal bool RangerSealArrow;
         private bool vortexHolyStar;
         private int vortexAmmoCategory;
         private bool vortexAmmoEmpowered;
+        private bool rangerSealRocket;
         internal bool VortexProtectsOwner(Projectile p) => vortexAmmoCategory == AmmoID.Rocket &&
-            vortexAmmoEmpowered && !IsExtraHit && !IsTimeEchoAttack && !p.npcProj;
+            (vortexAmmoEmpowered || rangerSealRocket) && !IsExtraHit && !IsTimeEchoAttack && !p.npcProj;
         // AIType 借用时，tML 仅在 VanillaAI 内临时替换 type；生成/命中时仍是模组自己的 type。
         private static int QuiverVanillaAIType(Projectile p) => p.ModProjectile is { AIType: > 0 } mod
             ? mod.AIType : p.type;
@@ -24,8 +26,9 @@ namespace TestMod.Common.GlobalProjectiles
             ProjectileID.IchorArrow or ProjectileID.VenomArrow or ProjectileID.MoonlordArrow;
         private static bool IsQuiverArrow(Projectile p) => p.arrow ||
             p.ModProjectile is { AIType: > 0 } mod && IsQuiverGravityArrowType(mod.AIType);
-        internal bool VortexHasLowGravity(Projectile p) => vortexArrow && IsQuiverArrow(p) &&
+        internal bool VortexHasLowGravity(Projectile p) => (vortexArrow || RangerSealArrow) && IsQuiverArrow(p) &&
             IsQuiverGravityArrowType(QuiverVanillaAIType(p));
+        internal float ArrowGravityFactor => (vortexArrow ? 0.2f : 1f) * (RangerSealArrow ? 0.5f : 1f);
 
         private void VortexQuiver_OnSpawn(Projectile p, IEntitySource source)
         {
@@ -42,10 +45,11 @@ namespace TestMod.Common.GlobalProjectiles
             if (IsQuiverArrow(p) || source is EntitySource_ItemUse arrowUse && arrowUse.Item.useAmmo == AmmoID.Arrow &&
                 arrowUse.Player.whoAmI == p.owner)
             {
+                RangerSealArrow = parentState?.RangerSealArrow == true || state?.IsRangerSeal(AmmoID.Arrow) == true;
                 vortexArrow = parentState?.vortexArrow == true || state?.IsEquipped(AmmoID.Arrow) == true;
-                if (vortexArrow) p.netUpdate = true;
+                if (vortexArrow || RangerSealArrow) p.netUpdate = true;
             }
-            VortexQuiverSystem.NoteArrowSpawn(p, vortexArrow);
+            VortexQuiverSystem.NoteArrowSpawn(p, vortexArrow || RangerSealArrow);
             if (source is EntitySource_ItemUse use && use.Player.whoAmI == p.owner)
                 vortexAmmoCategory = use.Item.useAmmo == AmmoID.Bullet || use.Item.useAmmo == AmmoID.Rocket
                     ? use.Item.useAmmo : 0;
@@ -57,7 +61,10 @@ namespace TestMod.Common.GlobalProjectiles
                 // 普通已发射弹幕保留快照；手持载体的新射击读取当前装备，不继承启动时状态。
                 vortexAmmoEmpowered = parentState != null && !TimeEchoAttackSystem.IsResourceCarrier(parent)
                     ? parentState.vortexAmmoEmpowered : state?.IsEquipped(vortexAmmoCategory) == true;
-                if (vortexAmmoEmpowered) p.netUpdate = true;
+                rangerSealRocket = vortexAmmoCategory == AmmoID.Rocket &&
+                    (parentState != null && !TimeEchoAttackSystem.IsResourceCarrier(parent)
+                        ? parentState.rangerSealRocket : state?.IsRangerSeal(AmmoID.Rocket) == true);
+                if (vortexAmmoEmpowered || rangerSealRocket) p.netUpdate = true;
             }
             if (!p.friendly) return;
             if (p.type == ProjectileID.HallowStar && parentState != null &&
