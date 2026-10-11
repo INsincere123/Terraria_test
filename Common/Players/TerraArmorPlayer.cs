@@ -18,6 +18,8 @@ namespace TestMod.Common.Players
     public partial class TerraArmorPlayer : ModPlayer
     {
         public const int ReviveCooldownTicks = 120 * 60;
+        private const float CloseMeleeRange = 102f;
+        private int _closeMeleeHealCooldown;
         public TerraArmorMode Mode { get; private set; }
         public int ReviveCooldown { get; private set; }
         public bool FullSet { get; private set; }
@@ -41,6 +43,7 @@ namespace TestMod.Common.Players
         public override void PreUpdate()
         {
             if (ReviveCooldown > 0) ReviveCooldown--;
+            if (_closeMeleeHealCooldown > 0) _closeMeleeHealCooldown--;
         }
 
         public override void UpdateDead()
@@ -200,6 +203,37 @@ namespace TestMod.Common.Players
             _beetleDefenseTimer = 0;
         }
 
+        internal bool IsCloseMeleeHit(DamageClass damageClass, NPC target)
+        {
+            if (!IsMode(TerraArmorMode.Warrior) || !Equipped(Player) ||
+                !damageClass.CountsAsClass(DamageClass.Melee) || target.friendly || target.immortal ||
+                target.dontTakeDamage || target.type == NPCID.TargetDummy) return false;
+            // 按碰撞箱最近点测距，大型敌人无需靠近其中心。
+            Rectangle hitbox = target.Hitbox;
+            Vector2 closest = Vector2.Clamp(Player.Center, new Vector2(hitbox.Left, hitbox.Top),
+                new Vector2(hitbox.Right, hitbox.Bottom));
+            return Vector2.DistanceSquared(Player.Center, closest) <= CloseMeleeRange * CloseMeleeRange;
+        }
+
+        internal void HealCloseMeleeHit(DamageClass damageClass, NPC target, int damageDone)
+        {
+            if (Player.whoAmI != Main.myPlayer || _closeMeleeHealCooldown > 0 || damageDone <= 0 ||
+                !IsCloseMeleeHit(damageClass, target)) return;
+            int heal = Math.Min(10 + Player.statLifeMax2 / 100, Player.statLifeMax2 - Player.statLife);
+            if (heal <= 0) return;
+            // 所有近战物品及弹幕共用玩家冷却，仅实际回血时启动。
+            _closeMeleeHealCooldown = 10;
+            Player.Heal(heal);
+            if (Main.netMode == NetmodeID.MultiplayerClient)
+                NetMessage.SendData(MessageID.PlayerLifeMana, number: Player.whoAmI);
+        }
+
+        public override void ModifyHitNPCWithItem(Item item, NPC target, ref NPC.HitModifiers modifiers)
+        {
+            if (item.damage > 0 && IsCloseMeleeHit(item.DamageType, target))
+                modifiers.FinalDamage *= 1.05f;
+        }
+
         internal void RegisterMeleeHit(DamageClass damageClass, NPC target, int damage)
         {
             if (!IsMode(TerraArmorMode.Warrior) || !damageClass.CountsAsClass(DamageClass.Melee) ||
@@ -211,6 +245,7 @@ namespace TestMod.Common.Players
         public override void OnHitNPCWithItem(Item item, NPC target, NPC.HitInfo hit, int damageDone)
         {
             RegisterMeleeHit(item.DamageType, target, damageDone);
+            HealCloseMeleeHit(item.DamageType, target, damageDone);
             if (Player.whoAmI == Main.myPlayer && IsMode(TerraArmorMode.Ranger) && item.CountsAsClass(DamageClass.Ranged))
                 TerraArmorProjectile.SpawnPhantasm(Player, target, Player.GetSource_ItemUse(item),
                     Player.GetWeaponDamage(item));
@@ -262,6 +297,7 @@ namespace TestMod.Common.Players
 
         public override void OnEnterWorld()
         {
+            _closeMeleeHealCooldown = 0;
             ResetBeetles();
             if (Main.netMode == NetmodeID.MultiplayerClient) SendState();
         }

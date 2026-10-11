@@ -130,7 +130,7 @@ namespace TestMod.Content.Items.Accessories
             ascentWhenFalling = 5.1f;
             ascentWhenRising = 1f;
             maxCanAscendMultiplier = 1f;
-            maxAscentMultiplier = 1.75f;
+            maxAscentMultiplier = 2.5f;     //决定最大上升速度
             constantAscend = 0.54f;
         }
 

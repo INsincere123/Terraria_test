@@ -90,9 +90,14 @@ namespace TestMod.Common.GlobalProjectiles
 
         public override void ModifyHitNPC(Projectile projectile, NPC target, ref NPC.HitModifiers modifiers)
         {
+            if (!TryGetArmor(projectile, out TerraArmorPlayer armor)) return;
             if (projectile.type == ProjectileID.StardustGuardian &&
-                TryGetArmor(projectile, out TerraArmorPlayer armor) && armor.IsMode(TerraArmorMode.Summoner))
+                armor.IsMode(TerraArmorMode.Summoner))
                 modifiers.ArmorPenetration += 20;
+            GlobalProjectile effects = projectile.GetGlobalProjectile<GlobalProjectile>();
+            if (!effects.IsExtraHit && !effects.IsTimeEchoAttack && projectile.friendly && !projectile.hostile &&
+                projectile.damage > 0 && armor.IsCloseMeleeHit(projectile.DamageType, target))
+                modifiers.FinalDamage *= 1.05f;
         }
 
         private void UpdateExtraUpdates(Projectile projectile, TerraArmorPlayer armor)
@@ -122,6 +127,8 @@ namespace TestMod.Common.GlobalProjectiles
             GlobalProjectile effects = projectile.GetGlobalProjectile<GlobalProjectile>();
             if (effects.IsExtraHit || effects.IsTimeEchoAttack) return;
             armor.RegisterMeleeHit(projectile.DamageType, target, damageDone);
+            if (projectile.friendly && !projectile.hostile)
+                armor.HealCloseMeleeHit(projectile.DamageType, target, damageDone);
             if (!armor.IsMode(TerraArmorMode.Ranger) || !projectile.CountsAsClass(DamageClass.Ranged) ||
                 !projectile.friendly || projectile.hostile || projectile.type == ProjectileID.PhantasmArrow) return;
             // 原版幻影弓已为普通箭生成追击，避免重复；其他远程射弹补同样三箭。
