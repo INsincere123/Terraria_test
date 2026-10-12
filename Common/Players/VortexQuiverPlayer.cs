@@ -59,6 +59,8 @@ namespace TestMod.Common.Players
             category == AmmoID.Bullet ? cycles[1] : category == AmmoID.Rocket ? cycles[2] : null;
         // 此查询只代表星璇来源，不能把轮换可用误当作星璇强化。
         internal bool IsEquipped(int category) => GetCycle(category)?.VortexEquipped == true;
+        // 射手之证独立省弹判定：装备即对所有弹药类别生效，不依赖类别轮换。
+        internal bool HasRangerSeal => rangerSeal != null;
         internal bool IsRangerSeal(int category) => rangerSeal != null && GetCycle(category) != null;
         internal bool IsCycling(int category) => GetCycle(category) is { Equipped: true, Mode: not VortexAmmoMode.Simple };
 

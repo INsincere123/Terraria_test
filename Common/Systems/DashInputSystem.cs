@@ -5,6 +5,7 @@ using MonoMod.RuntimeDetour;
 using Terraria;
 using Terraria.ModLoader;
 using TestMod.Common.Mechanics.Dashes;
+using TestMod.Common.Players;
 
 namespace TestMod.Common.Systems
 {
@@ -36,6 +37,7 @@ namespace TestMod.Common.Systems
 
         private static void BeforePostUpdateEquips(EquipsOriginal original, Player player)
         {
+            if (player.TryGetModPlayer(out CompositeAccessoryPlayer accessories)) accessories.PrepareDashSelection();
             if (player.TryGetModPlayer(out DashPlayer state)) state.PrepareEquippedDashes();
             FargoAccessoryCompatSystem.PrepareMovement(player);
             original(player);

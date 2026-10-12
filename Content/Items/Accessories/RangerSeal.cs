@@ -37,7 +37,7 @@ namespace TestMod.Content.Items.Accessories
             if (!player.GetModPlayer<VortexQuiverPlayer>().EquipRangerSeal(this)) return;
             // 自定义数值
             player.aggro -= 400;
-            player.ammoBox = true; // 与弹药箱 Buff 共用，不重复叠加同一来源。
+            // 省弹由 GlobalItem.CanConsumeAmmo 独立掷骰 20%，不复用 ammoBox，可与弹药箱 Buff 叠加。
             player.GetDamage(DamageClass.Ranged) += 0.25f;
             player.GetCritChance(DamageClass.Ranged) += 10f;
 

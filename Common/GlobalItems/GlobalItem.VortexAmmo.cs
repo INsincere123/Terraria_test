@@ -7,6 +7,15 @@ namespace TestMod.Common.GlobalItems
 {
     public partial class GlobalItem
     {
+        // 射手之证独立省弹：20% 概率不消耗弹药，与弹药箱 Buff 各自掷骰、可叠加。
+        public override bool CanConsumeAmmo(Item weapon, Item ammo, Player player)
+        {
+            if (player.TryGetModPlayer(out VortexQuiverPlayer quiver) &&
+                quiver.HasRangerSeal && Main.rand.NextBool(5))
+                return false;
+            return true;
+        }
+
         private static void VortexAmmo_ModifyWeaponDamage(Item item, Player player, ref StatModifier damage)
         {
             // 星璇火箭箱独立提供伤害，射手之证不占用其装备状态。

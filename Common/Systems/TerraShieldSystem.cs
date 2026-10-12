@@ -102,7 +102,11 @@ namespace TestMod.Common.Systems
             cursor.Emit(OpCodes.Ldarg_1);
             cursor.Emit(OpCodes.Ldloc, healLocal);
             cursor.EmitDelegate<Func<Player, Item, int, int>>((player, item, amount) =>
-                player.TryGetModPlayer(out TerraShieldPlayer shield) ? shield.AdjustSpecialPotionHeal(item, amount) : amount);
+            {
+                if (player.TryGetModPlayer(out TerraShieldPlayer shield)) amount = shield.AdjustSpecialPotionHeal(item, amount);
+                return player.TryGetModPlayer(out CompositeAccessoryPlayer accessories)
+                    ? accessories.AdjustSpecialPotionHeal(item, amount) : amount;
+            });
             cursor.Emit(OpCodes.Stloc, healLocal);
             cursor.Goto(lifeStore, MoveType.Before);
             cursor.Emit(OpCodes.Ldarg_0);

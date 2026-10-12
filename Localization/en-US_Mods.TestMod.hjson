@@ -50,6 +50,14 @@ Configs: {
 	}
 }
 
+CompositeAccessories: {
+	PanicEnabled: 受伤后惊慌：开启
+	PanicDisabled: 受伤后惊慌：关闭
+	PanicHint: Shift＋右键切换受伤后的惊慌效果
+	SingleKeyDash: 按【{0}】水平冲刺
+	DoubleTapDash: 双击左／右方向键水平冲刺
+}
+
 TerraShieldEffects: {
 	BleedDeath: "{0}的生命随鲜血流尽了。"
 	DamageLimit: 敌怪和弹幕伤害上限为最大生命的{0}%
@@ -97,22 +105,53 @@ VortexAmmo: {
 }
 
 Items: {
+	StarfallObsidianEmblem: {
+		DisplayName: 星陨黑曜圣徽
+		Tooltip:
+			'''
+			缓慢恢复生命，治疗药水的耐药性时间缩短25%
+			受伤时释放蜜蜂、落星，并获得短暂惊慌
+			延长受伤后的无敌时间
+			免疫击退，获得黑曜石皮肤效果
+			'''
+	}
+
+	ShieldOfCthulhuPlus: {
+		DisplayName: 克苏鲁护盾+
+		Tooltip:
+			'''
+			15%概率闪避攻击，受到的伤害减少15%
+			免疫击退，获得黑曜石皮肤效果
+			可水平冲刺并穿过敌人
+			'''
+	}
+
+	OldOnesVeil: {
+		DisplayName: 旧日支配者的帷幕
+		Tooltip:
+			'''
+			缓慢恢复生命，治疗药水的耐药性时间缩短25%
+			治疗药水的生命回复量增加20%
+			受伤时释放蜜蜂、落星，获得短暂惊慌并可能混乱附近敌人
+			延长受伤后的无敌时间
+			22%概率闪避攻击，受到的伤害减少15%
+			免疫击退和十字章护盾防护的异常状态
+			可水平冲刺并穿过敌人
+			'''
+	}
+
 	TerraWings: {
 		DisplayName: 泰拉之翼
 		Tooltip:
 			'''
 			终极机动饰品，外观随泰拉套职业变化
-			拥有15秒飞行储备，每秒恢复1秒，飞行中持续恢复
-			大幅提高飞行速度，垂直加速度为飞行大师之魂的400%
+			无限飞行时间，大幅提高飞行速度，按住 ↑ 可加速垂直飞行
 			按住下和跳跃键悬停，仅按下键快速下落并穿透平台
 			提高奔跑速度、移动加速度与制动能力，移动速度增加50%
-			拥有泰拉闪耀靴、魔光护符、气球与蛙腿效果
-			免疫击退、摔落与熔岩伤害，在水中自由移动并能够攀墙
+			免疫击退与熔岩伤害，在水中自由移动并能够攀墙
 			重力提高50%，不受太空低重力影响
-			强化钩爪的射出、收回与拉动速度
-			被钩爪拉动时获得10%伤害减免和50%荆棘，减伤持续至松钩后1秒
-			可水平冲刺穿过敌怪，造成150基础近战伤害并使用近战暴击率
-			冲刺期间免疫敌怪接触伤害
+			强化钩爪，被钩爪拉动时获得10%伤害减免和50%荆棘，减伤持续至松钩后1秒
+			可水平冲刺穿过敌怪
 			'''
 		JumpsEnabled: 额外跳跃：开启（气球束三段跳与屁罐跳）
 		JumpsDisabled: 额外跳跃：关闭
@@ -396,7 +435,7 @@ Items: {
 	UltimateHelmet: {
 		DisplayName: 终极头盔
 		DragonState: 幻影龙随行：{0}（胸甲开关）
-		CannonState: 套装炮台：{0}（腿甲开关；命中时追加实际伤害的19%，不重复增伤或暴击）
+		CannonState: 套装炮台：{0}（腿甲开关；命中时追加实际伤害的19%）
 		Tooltip:
 			'''
 			+33%所有伤害 +12%暴击率 +12%攻速 +8护甲穿透
@@ -473,7 +512,7 @@ Items: {
 	FocusOrb: {
 		DisplayName: 专注宝珠
 		Tooltip: "[c/6495ED:+8%] 全属性伤害  [c/6495ED:+6%] 暴击率  [c/6495ED:+4] 护甲穿透"
-		ExtraHitRule: "[c/AAAAAA:按实际命中伤害取比例，不重复增伤或暴击]"
+		ExtraHitRule: "[c/AAAAAA:按实际命中伤害取比例]"
 	}
 
 	BerserkBlade: {
@@ -503,7 +542,7 @@ Items: {
 
 	Offhand: {
 		DisplayName: 磁球
-		Tooltip: 召唤磁球，命中敌人时发射追加弹幕，造成实际命中伤害19%的额外伤害，不重复增伤或暴击
+		Tooltip: 召唤磁球，命中敌人时发射追加弹幕，造成实际命中伤害19%的额外伤害
 	}
 
 	TestWhip: {
@@ -522,7 +561,7 @@ Items: {
 	}
 
 	EnhancedStaticHook: {
-		DisplayName: 静止钩ProMax
+		DisplayName: 静止钩+
 		Tooltip:
 			'''
 			拥有更远的射程和更快的速度
