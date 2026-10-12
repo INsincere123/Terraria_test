@@ -5,11 +5,11 @@ namespace TestMod.Content.Rarities
 {
     public class EventHorizonRarity : ModRarity
     {
-        public static readonly Color TextCoreColor = new(46, 18, 66);
-        public static readonly Color TextInnerColor = new(118, 52, 158);
-        public static readonly Color AccretionGold = new(255, 166, 55);
-        public static readonly Color AccretionOrange = new(255, 95, 34);
+        public static readonly Color TextCoreColor = new(20, 9, 38);
+        public static readonly Color TextInnerColor = new(224, 237, 255);
+        public static readonly Color AccretionGold = new(255, 194, 104);
+        public static readonly Color AccretionOrange = new(255, 123, 48);
 
-        public override Color RarityColor => Color.Lerp(TextInnerColor, AccretionGold, 0.35f);
+        public override Color RarityColor => TextInnerColor;
     }
 }

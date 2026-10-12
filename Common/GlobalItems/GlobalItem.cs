@@ -22,6 +22,15 @@ namespace TestMod.Common.GlobalItems
 
         public override bool PreDrawTooltipLine(Item item, DrawableTooltipLine line, ref int yOffset)
         {
+            // 事件视界的所有文字共用透镜，包括其他模组添加的说明；不再叠加伤害行样式。
+            if (item.rare == ModContent.RarityType<EventHorizonRarity>())
+            {
+                string style = line.Mod == "Terraria" && line.Name == "ItemName"
+                    ? TestModTextStyles.RarityEventHorizon
+                    : TestModTextStyles.RarityEventHorizonTooltip;
+                return !TextRenderingBridge.TryDrawTooltipLine(item, line, style);
+            }
+
             if (line.Mod != "Terraria")
                 return true;
 
@@ -29,9 +38,6 @@ namespace TestMod.Common.GlobalItems
             {
                 if (item.rare == ModContent.RarityType<TerraRarity>())
                     return !TextRenderingBridge.TryDrawTooltipLine(item, line, TestModTextStyles.RarityTerra);
-
-                if (item.rare == ModContent.RarityType<EventHorizonRarity>())
-                    return !TextRenderingBridge.TryDrawTooltipLine(item, line, TestModTextStyles.RarityEventHorizon);
 
                 if (item.rare == ModContent.RarityType<AntaresRarity>())
                     return !TextRenderingBridge.TryDrawTooltipLine(item, line, TestModTextStyles.RarityAntares);
