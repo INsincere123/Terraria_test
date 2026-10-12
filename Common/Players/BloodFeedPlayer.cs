@@ -1,6 +1,7 @@
 using System;
 using Microsoft.Xna.Framework;
 using Terraria;
+using Terraria.Localization;
 using Terraria.ModLoader;
 using TestMod.Content.Buffs;
 using TestMod.Common.Compatibility;
@@ -182,7 +183,7 @@ namespace TestMod.Common.Players
             DustUtils.SpawnBloodMistCloud(Player.Hitbox, 24, new Color(150, 18, 32), 1.15f);
             DustUtils.SpawnImpactBurst(Player.Center, 10, new Color(210, 28, 42), 2.4f, 5.6f, 0.82f);
             TextRenderingBridge.Spawn(new DynamicWorldTextRequest(
-                "BLOOD FEED",
+                Language.GetTextValue("Mods.TestMod.UI.WorldText.BloodFeedBerserk"),
                 Player.Top - Vector2.UnitY * 18f,
                 TestModTextStyles.BloodFeedBerserk,
                 crit: true,

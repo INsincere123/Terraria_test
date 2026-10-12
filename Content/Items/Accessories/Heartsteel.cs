@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Terraria;
+using Terraria.Localization;
 using Terraria.ID;
 using Terraria.ModLoader;
 using TestMod.Common.Players;
@@ -34,10 +35,10 @@ namespace TestMod.Content.Items.Accessories
 
             string stackColor  = maxed ? "FFD700" : "6495ED";
             string stackText   = $"[c/{stackColor}:{hsp.BonusMaxHP} / {HeartssteelPlayer.MaxBonusHP}]";
-            string maxedSuffix = maxed ? "  [c/00FF00:（已达上限，不再叠层）]" : "";
+            string maxedSuffix = maxed ? Language.GetTextValue("Mods.TestMod.Items.Heartsteel.MaxedSuffix") : "";
 
             var line = new TooltipLine(Mod, "HeartssteelStacks",
-                $"永久生命叠层：{stackText}{maxedSuffix}");
+                Language.GetTextValue("Mods.TestMod.Items.Heartsteel.StackState", stackText, maxedSuffix));
             int idx = tooltips.FindIndex(t => t.Name == "Tooltip0");
 
             if (idx >= 0)

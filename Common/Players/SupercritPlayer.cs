@@ -1,6 +1,7 @@
 using System;
 using Microsoft.Xna.Framework;
 using Terraria;
+using Terraria.Localization;
 using Terraria.ModLoader;
 using TestMod.Content.Buffs;
 using TestMod.Common.Compatibility;
@@ -92,7 +93,7 @@ namespace TestMod.Common.Players
 
             int bonusPercent = (int)MathF.Round(critOver100 * SupercritBuff.CritOverflowToCritDamageRatio);
             TextRenderingBridge.Spawn(new DynamicWorldTextRequest(
-                $"+{bonusPercent}%暴伤",
+                Language.GetTextValue("Mods.TestMod.UI.WorldText.SupercritBonus", bonusPercent),
                 npc.Center + Vector2.UnitY * 8f,
                 TestModTextStyles.Supercrit,
                 new Color(255, 214, 62),
@@ -136,7 +137,7 @@ namespace TestMod.Common.Players
 
             int bonusPercent = (int)MathF.Round(critOver100 * SupercritBuff.CritOverflowToCritDamageRatio);
             TextRenderingBridge.Spawn(new DynamicWorldTextRequest(
-                $"+{bonusPercent}%暴伤",
+                Language.GetTextValue("Mods.TestMod.UI.WorldText.SupercritBonus", bonusPercent),
                 npc.Center + Vector2.UnitY * 8f,
                 TestModTextStyles.Supercrit,
                 new Color(255, 214, 62),

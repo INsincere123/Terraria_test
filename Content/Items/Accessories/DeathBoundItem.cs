@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using ReLogic.Content;
 using Terraria;
+using Terraria.Localization;
 using Terraria.GameContent;
 using Terraria.ModLoader;
 using Terraria.ModLoader.IO;
@@ -55,7 +56,7 @@ namespace TestMod.Content.Items.Accessories
         public override void ModifyTooltips(List<TooltipLine> tooltips)
         {
             if (!IsActive)
-                tooltips.Add(new TooltipLine(Mod, "DeathBound", "已破碎")
+                tooltips.Add(new TooltipLine(Mod, "DeathBound", Language.GetTextValue("Mods.TestMod.Common.DeathBoundBroken"))
                 {
                     OverrideColor = Microsoft.Xna.Framework.Color.Gray
                 });

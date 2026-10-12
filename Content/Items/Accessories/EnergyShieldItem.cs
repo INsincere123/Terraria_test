@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Terraria;
+using Terraria.Localization;
 using Terraria.ID;
 using Terraria.ModLoader;
 using TestMod.Common.Players;
@@ -67,7 +68,7 @@ namespace TestMod.Content.Items.Accessories
             if (idx >= 0)
             {
                 tooltips.Insert(idx + 1, new TooltipLine(Mod, "ShieldCurrent",
-                    shield.MaxShield > 0f ? $"当前护盾值 [c/50A0FF:{System.Math.Ceiling(shield.CurrentShield):0}] / [c/50A0FF:{System.Math.Ceiling(shield.MaxShield):0}]" : $"预计普通护盾上限 [c/50A0FF:{maxShield}]"));
+                    shield.MaxShield > 0f ? Language.GetTextValue("Mods.TestMod.Items.EnergyShieldItem.CurrentShield", System.Math.Ceiling(shield.CurrentShield), System.Math.Ceiling(shield.MaxShield)) : Language.GetTextValue("Mods.TestMod.Items.EnergyShieldItem.ExpectedShield", maxShield)));
             }
         }
 

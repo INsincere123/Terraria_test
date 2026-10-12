@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Terraria;
+using Terraria.Localization;
 using Terraria.ModLoader;
 using TestMod.Common.Systems;
 
@@ -86,40 +87,40 @@ namespace TestMod.Content.Prefixes
             // 每条 tooltip 对应上方一个参数，注释掉不需要的即可
 
             yield return new TooltipLine(Mod, "TestMod:FusionDefense",
-                $"+{DefenseBonus} 防御") { IsModifier = true };
+                Language.GetTextValue("Mods.TestMod.PrefixTooltips.Defense", DefenseBonus)) { IsModifier = true };
 
             yield return new TooltipLine(Mod, "TestMod:FusionDR",
-                $"+{(DamageReduction * 100):0.#}% 伤害减免") { IsModifier = true };
+                Language.GetTextValue("Mods.TestMod.PrefixTooltips.DR", (DamageReduction * 100))) { IsModifier = true };
 
             yield return new TooltipLine(Mod, "TestMod:FusionMaxLife",
-                $"+{MaxLifeBonus} 最大生命值") { IsModifier = true };
+                Language.GetTextValue("Mods.TestMod.PrefixTooltips.MaxLife", MaxLifeBonus)) { IsModifier = true };
 
             yield return new TooltipLine(Mod, "TestMod:FusionLifeRegen",
-                $"+{(LifeRegenBonus / 2.0f):0.#} 每秒生命回复") { IsModifier = true };
+                Language.GetTextValue("Mods.TestMod.PrefixTooltips.LifeRegen", (LifeRegenBonus / 2.0f))) { IsModifier = true };
 
             yield return new TooltipLine(Mod, "TestMod:FusionDamage",
-                $"+{(DamageBonus * 100):0.#}% 全伤害") { IsModifier = true };
+                Language.GetTextValue("Mods.TestMod.PrefixTooltips.Damage", (DamageBonus * 100))) { IsModifier = true };
 
             yield return new TooltipLine(Mod, "TestMod:FusionCrit",
-                $"+{CritChanceBonus}% 暴击率") { IsModifier = true };
+                Language.GetTextValue("Mods.TestMod.PrefixTooltips.Crit", CritChanceBonus)) { IsModifier = true };
 
             yield return new TooltipLine(Mod, "TestMod:FusionArmorPen",
-                $"+{ArmorPenetrationBonus} 护甲穿透") { IsModifier = true };
+                Language.GetTextValue("Mods.TestMod.PrefixTooltips.ArmorPenetration", ArmorPenetrationBonus)) { IsModifier = true };
 
             yield return new TooltipLine(Mod, "TestMod:FusionMoveSpeed",
-                $"+{(MoveSpeedBonus * 100):0.#}% 移动速度") { IsModifier = true };
+                Language.GetTextValue("Mods.TestMod.PrefixTooltips.MoveSpeed", (MoveSpeedBonus * 100))) { IsModifier = true };
 
             yield return new TooltipLine(Mod, "TestMod:FusionMeleeSpeed",
-                $"+{(MeleeSpeedBonus * 100):0.#}% 近战攻速") { IsModifier = true };
+                Language.GetTextValue("Mods.TestMod.PrefixTooltips.MeleeSpeed", (MeleeSpeedBonus * 100))) { IsModifier = true };
 
             yield return new TooltipLine(Mod, "TestMod:FusionMaxMana",
-                $"+{MaxManaBonus} 最大魔力") { IsModifier = true };
+                Language.GetTextValue("Mods.TestMod.PrefixTooltips.MaxMana", MaxManaBonus)) { IsModifier = true };
 
             yield return new TooltipLine(Mod, "TestMod:FusionManaCost",
-                $"-{(ManaCostReduction * 100):0.#}% 魔力消耗") { IsModifier = true };
+                Language.GetTextValue("Mods.TestMod.PrefixTooltips.ManaCost", (ManaCostReduction * 100))) { IsModifier = true };
 
             yield return new TooltipLine(Mod, "TestMod:FusionLuck",
-                $"+{LuckBonus:0.##} 幸运") { IsModifier = true };
+                Language.GetTextValue("Mods.TestMod.PrefixTooltips.Luck", LuckBonus)) { IsModifier = true };
         }
     }
 }

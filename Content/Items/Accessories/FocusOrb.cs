@@ -42,13 +42,10 @@ namespace TestMod.Content.Items.Accessories
         {
             string keyStr = FocusOrbKeybind.AbilityKey?.GetAssignedKeys().Count > 0
                 ? FocusOrbKeybind.AbilityKey.GetAssignedKeys()[0]
-                : "未绑定";
+                : Language.GetTextValue("Mods.TestMod.Common.Unbound");
 
             var line = new TooltipLine(Mod, "FocusOrbAbility",
-                $"按 [{keyStr}] 激活：接下来 7 次命中必定暴击且弹幕自带追踪\n" +
-                $"  本该暴击时，额外造成[c/FF4500:200% ]的真实伤害\n" +
-                $"  {Language.GetTextValue("Mods.TestMod.Items.FocusOrb.ExtraHitRule")}\n" +
-                $"  [c/AAAAAA:冷却30秒]");
+                Language.GetTextValue("Mods.TestMod.Items.FocusOrb.AbilityDescription", keyStr, Language.GetTextValue("Mods.TestMod.Items.FocusOrb.ExtraHitRule")));
 
             int idx = tooltips.FindIndex(t => t.Name == "Tooltip0");
             if (idx >= 0) tooltips.Insert(idx + 1, line);

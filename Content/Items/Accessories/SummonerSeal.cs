@@ -1,4 +1,5 @@
 using Terraria;
+using Terraria.Localization;
 using Terraria.ID;
 using Terraria.ModLoader;
 using TestMod.Common.Players;
@@ -40,7 +41,7 @@ namespace TestMod.Content.Items.Accessories
         public override void AddRecipes()
         {
             // 四选一：学徒围巾 / 女猎人圆盾 / 武僧腰带 / 侍卫护盾
-            RecipeGroup group = new RecipeGroup(() => "任意旧日军团战斗饰品",
+            RecipeGroup group = new RecipeGroup(() => Language.GetTextValue("Mods.TestMod.RecipeGroups.AnyOOACombatAccessory"),
                 ItemID.ApprenticeScarf, ItemID.HuntressBuckler, ItemID.MonkBelt, ItemID.SquireShield);
             RecipeGroup.RegisterGroup(AnyOOACombatAccessoryGroup, group);
 

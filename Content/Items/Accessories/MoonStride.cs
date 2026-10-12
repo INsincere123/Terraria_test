@@ -4,6 +4,7 @@ using TestMod.Common.Mechanics.AccessoryEffects;
 using TestMod.Content.Buffs;
 using TestMod.Content.Rarities;
 using Terraria;
+using Terraria.Localization;
 using Terraria.ID;
 using Terraria.ModLoader;
 using System.Collections.Generic;
@@ -54,10 +55,7 @@ namespace TestMod.Content.Items.Accessories
             string slowKey   = KeybindUtils.GetKeyText(PreciseFlightKeybinds.SlowdownHotkey);
 
             tooltips.Add(new TooltipLine(Mod, "MoonStrideDesc",
-                $"踏空而行、凌空虚步\n" +
-                $"按下 [{toggleKey}] 开启/关闭精确飞行\n" +
-                $"按住 [{slowKey}] 减速以精确走位\n" +
-                $"免疫击退并减少25%弹幕伤害"));
+                Language.GetTextValue("Mods.TestMod.Items.MoonStride.AbilityDescription", toggleKey, slowKey)));
         }
 
         public override void AddRecipes()

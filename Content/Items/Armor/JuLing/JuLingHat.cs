@@ -1,4 +1,5 @@
 using Terraria;
+using Terraria.Localization;
 using Terraria.ID;
 using Terraria.ModLoader;
 using TestMod.Common.Players;
@@ -46,12 +47,8 @@ namespace TestMod.Content.Items.Armor.JuLing
             // setBonus 文字（从本地化读取，含按键占位符）
             string key = JuLingKeybind.AbilityKey?.GetAssignedKeys().Count > 0
                 ? JuLingKeybind.AbilityKey.GetAssignedKeys()[0]
-                : "未绑定";
-            player.setBonus = $"+{(int)(SetMagicDamage * 100)}% 魔法伤害  +{SetMagicCrit}% 魔法暴击\n"
-                            + $"按 [{key}] 激活灵力凝聚：持续 5 秒\n"
-                            + $"  魔力消耗+100%  魔法伤害+66%  魔法暴击+22%\n"
-                            + $"  暴击命中时获得 3% 吸血（单次上限 50）\n"
-                            + $"冷却 45 秒";
+                : Language.GetTextValue("Mods.TestMod.Common.Unbound");
+            player.setBonus = Language.GetTextValue("Mods.TestMod.Items.JuLingHat.SetBonus", (int)(SetMagicDamage * 100), SetMagicCrit, key);
         }
 
         public override void UpdateEquip(Player player)

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Terraria;
+using Terraria.Localization;
 using Terraria.ModLoader;
 using TestMod.Common.Systems;
 
@@ -67,7 +68,7 @@ namespace TestMod.Content.Prefixes
             // damageMult / knockbackMult / useTimeMult / scaleMult / critBonus
             // 原版会自动显示，此处只补充额外属性
             yield return new TooltipLine(Mod, "TestMod:RefinementArmorPen",
-                $"+{ArmorPenetration} 护甲穿透") { IsModifier = true };
+                Language.GetTextValue("Mods.TestMod.PrefixTooltips.ArmorPenetration", ArmorPenetration)) { IsModifier = true };
         }
     }
 }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Luminance.Core.Graphics;
 using Microsoft.Xna.Framework;
 using Terraria;
+using Terraria.Localization;
 using Terraria.Audio;
 using Terraria.DataStructures;
 using Terraria.ID;
@@ -223,7 +224,7 @@ namespace TestMod.Common.Players
                 return;
 
             TextRenderingBridge.Spawn(new DynamicWorldTextRequest(
-                "护盾已破碎",
+                Language.GetTextValue("Mods.TestMod.UI.WorldText.ShieldBroken"),
                 Player.Center + new Vector2(0f, -Player.height * 0.95f),
                 TestModTextStyles.EnergyShieldBreak,
                 ShieldTextColor,
@@ -237,7 +238,7 @@ namespace TestMod.Common.Players
                 return;
 
             TextRenderingBridge.Spawn(new DynamicWorldTextRequest(
-                "\u62A4\u76FE\u6B63\u5728\u6062\u590D",
+                Language.GetTextValue("Mods.TestMod.UI.WorldText.ShieldRecovering"),
                 Player.Center + new Vector2(0f, -Player.height * 0.95f),
                 TestModTextStyles.EnergyShieldBreak,
                 ShieldTextColor,

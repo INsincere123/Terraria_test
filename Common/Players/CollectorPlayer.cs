@@ -1,4 +1,5 @@
 using Terraria;
+using Terraria.Localization;
 using Terraria.Audio;
 using Terraria.GameContent.UI;
 using Terraria.ID;
@@ -81,7 +82,7 @@ namespace TestMod.Common.Players
             CombatText.NewText(target.Hitbox, ExecuteColor, 99999999, dramatic: true);
 
             // 金色公告文本（通知栏）
-            Main.NewText($"{target.FullName} 已被处决", new Microsoft.Xna.Framework.Color(255, 215, 0));
+            Main.NewText(Language.GetTextValue("Mods.TestMod.Items.CollectorItem.ExecutionMessage", target.FullName), new Microsoft.Xna.Framework.Color(255, 215, 0));
             // 处决音效（MoonLord = NPC_Killed_10，SoundType.Sound，MaxInstances=0，全局播放）
             SoundEngine.PlaySound(SoundID.MoonLord, null);
 

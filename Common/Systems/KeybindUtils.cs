@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Text;
 using Terraria;
+using Terraria.Localization;
 using Terraria.ModLoader;
 
 namespace TestMod.Common.Systems
@@ -22,7 +23,7 @@ namespace TestMod.Common.Systems
 
             List<string> keys = keybind.GetAssignedKeys();
             if (keys.Count == 0)
-                return "未绑定";
+                return Language.GetTextValue("Mods.TestMod.Common.Unbound");
 
             StringBuilder sb = new StringBuilder();
             sb.Append(keys[0]);

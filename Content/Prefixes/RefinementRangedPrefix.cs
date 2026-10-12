@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Terraria;
+using Terraria.Localization;
 using Terraria.ModLoader;
 using TestMod.Common.Systems;
 
@@ -61,9 +62,9 @@ namespace TestMod.Content.Prefixes
         public override IEnumerable<TooltipLine> GetTooltipLines(Item item)
         {
             yield return new TooltipLine(Mod, "TestMod:RefinementProjectileSpeed",
-                "+100%弹速") { IsModifier = true };
+                Language.GetTextValue("Mods.TestMod.PrefixTooltips.ProjectileSpeed")) { IsModifier = true };
             yield return new TooltipLine(Mod, "TestMod:RefinementArmorPen",
-                $"+{ArmorPenetration} 护甲穿透") { IsModifier = true };
+                Language.GetTextValue("Mods.TestMod.PrefixTooltips.ArmorPenetration", ArmorPenetration)) { IsModifier = true };
         }
     }
 }

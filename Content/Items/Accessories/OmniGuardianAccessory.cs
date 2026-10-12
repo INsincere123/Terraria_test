@@ -215,15 +215,7 @@ namespace TestMod.Content.Items.Accessories
             string shortDashKey = KeybindUtils.GetKeyText(DashKeybinds.BlinkKey);
 
             tooltips.Add(new TooltipLine(Mod, "OmniDesc",
-                $"获得超级翅膀、奔跑效果\n" +
-                $"获得冲刺效果 (长冲刺 [{longDashKey}] / 短冲刺 [{shortDashKey}])\n" +
-                $"超坚硬躯体，超强生存能力，三重闪避\n" +
-                $"全方位属性加成\n" +
-                $"免疫所有原版 debuff\n" +
-                $"不受太空低重力影响\n" +
-                $"耐药性降低 25%，治疗效果提高\n" +
-                $"强化钩爪\n" +
-                $"泰拉大陆在你眼中都是蝼蚁，去挑战愤怒的突变体吧"));
+                Language.GetTextValue("Mods.TestMod.Items.OmniGuardianAccessory.AbilityDescription", longDashKey, shortDashKey)));
 
             if (CalamityCompatSystem.CalamityLoaded)
                 tooltips.Add(new TooltipLine(Mod, "AbyssImmunity",

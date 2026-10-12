@@ -5,12 +5,12 @@ Configs: {
 
 		EnableRefinementPrefixes: {
 			Label: 启用炼化前缀
-			Tooltip: 关闭时不加载任何炼化前缀，也不会出现在重铸候选中。已有炼化暂存为缺失词条且无加成，重新开启并重载后恢复；主动重铸覆盖后不恢复。联机使用服务端设置。
+			Tooltip: 关闭后无法获得炼化前缀，已有炼化前缀暂时失效。重新开启并重载模组后恢复；期间重铸替换的前缀不会恢复。联机以服务端设置为准。
 		}
 
 		EnableFusionPrefix: {
 			Label: 启用融合前缀
-			Tooltip: 关闭时不加载融合前缀，也不会出现在重铸候选中。已有融合暂存为缺失词条且无加成，重新开启并重载后恢复；主动重铸覆盖后不恢复。联机使用服务端设置。
+			Tooltip: 关闭后无法获得融合前缀，已有融合前缀暂时失效。重新开启并重载模组后恢复；期间重铸替换的前缀不会恢复。联机以服务端设置为准。
 		}
 	}
 
@@ -26,10 +26,10 @@ Configs: {
 			Label: 单键触发冲刺
 			Tooltip:
 				'''
-				开启后，按【单键冲刺】键（默认 V）触发水平冲刺，屏蔽对应的左右双击。
-				支持本模组、原版、灾厄水平冲刺，以及 CalamityOverhaul 的赤影、血雾和纱幕步。
-				方向优先跟随按住的左右键，否则跟随移动方向，静止时跟随人物朝向。
-				向上、向下双击与独立技能键保持原样。关闭时恢复各系统原有按键。
+				开启后，按【单键冲刺】键（默认 V）水平冲刺，关闭对应的左右双击冲刺。
+				支持本模组、原版、灾厄，以及 CalamityOverhaul 的赤影、血雾和纱幕步。
+				按住左／右键选择方向；未按方向键时沿移动方向冲刺，静止时沿人物朝向。
+				上下双击与其他技能按键不受影响；关闭此选项后恢复双击冲刺。
 				'''
 		}
 
@@ -60,12 +60,12 @@ CompositeAccessories: {
 
 TerraShieldEffects: {
 	BleedDeath: "{0}的生命随鲜血流尽了。"
-	DamageLimit: 敌怪和弹幕伤害上限为最大生命的{0}%
+	DamageLimit: 敌怪和弹幕伤害上限为最大生命的[c/6495ED:{0}%]
 }
 
 EnvironmentEffects: {
 	AbyssImmunity: 灾厄：深渊视野清晰，水中正常移动，免除深渊扣氧、窒息、降防、离水伤害与第一层硫磺水中毒
-	TheDarkImmunity: 旅人归途：解除暗处（迷宫）的黑色遮盖，保留正常光照
+	TheDarkImmunity: 旅人归途：解除暗处（迷宫）的视野遮蔽
 }
 
 ArmorToggle: {
@@ -109,7 +109,7 @@ Items: {
 		DisplayName: 星陨黑曜圣徽
 		Tooltip:
 			'''
-			缓慢恢复生命，治疗药水的耐药性时间缩短25%
+			缓慢恢复生命，治疗药水的耐药性时间缩短[c/6495ED:25%]
 			受伤时释放蜜蜂、落星，并获得短暂惊慌
 			延长受伤后的无敌时间
 			免疫击退，获得黑曜石皮肤效果
@@ -120,7 +120,7 @@ Items: {
 		DisplayName: 克苏鲁护盾+
 		Tooltip:
 			'''
-			15%概率闪避攻击，受到的伤害减少15%
+			[c/6495ED:15%]概率闪避攻击，受到的伤害减少[c/6495ED:15%]
 			免疫击退，获得黑曜石皮肤效果
 			可水平冲刺并穿过敌人
 			'''
@@ -130,11 +130,11 @@ Items: {
 		DisplayName: 旧日支配者的帷幕
 		Tooltip:
 			'''
-			缓慢恢复生命，治疗药水的耐药性时间缩短25%
-			治疗药水的生命回复量增加20%
+			缓慢恢复生命，治疗药水的耐药性时间缩短[c/6495ED:25%]
+			治疗药水的生命回复量增加[c/50FF50:20%]
 			受伤时释放蜜蜂、落星，获得短暂惊慌并可能混乱附近敌人
 			延长受伤后的无敌时间
-			22%概率闪避攻击，受到的伤害减少15%
+			[c/6495ED:22%]概率闪避攻击，受到的伤害减少[c/6495ED:15%]
 			免疫击退和十字章护盾防护的异常状态
 			可水平冲刺并穿过敌人
 			'''
@@ -144,18 +144,18 @@ Items: {
 		DisplayName: 泰拉之翼
 		Tooltip:
 			'''
-			终极机动饰品，外观随泰拉套职业变化
+			外观随泰拉套职业变化
 			无限飞行时间，大幅提高飞行速度，按住 ↑ 可加速垂直飞行
 			按住下和跳跃键悬停，仅按下键快速下落并穿透平台
-			提高奔跑速度、移动加速度与制动能力，移动速度增加50%
+			提高奔跑速度、移动加速度与制动能力，移动速度增加[c/6495ED:50%]
 			免疫击退与熔岩伤害，在水中自由移动并能够攀墙
 			重力提高50%，不受太空低重力影响
-			强化钩爪，被钩爪拉动时获得10%伤害减免和50%荆棘，减伤持续至松钩后1秒
+			强化钩爪，被钩爪拉动时获得[c/6495ED:10%]伤害减免和[c/6495ED:50%]荆棘，减伤持续至松钩后[c/FFD700:1秒]
 			可水平冲刺穿过敌怪
 			'''
 		JumpsEnabled: 额外跳跃：开启（气球束三段跳与屁罐跳）
 		JumpsDisabled: 额外跳跃：关闭
-		SlowModeEnabled: 慢速模式：开启（常规水平移速上限55 mph，冲刺不受限制）
+		SlowModeEnabled: 慢速模式：开启（常规水平移速上限[c/FFD700:55 mph]，冲刺不受限制）
 		SlowModeDisabled: 慢速模式：关闭
 		SlowModeHint: 按住Shift并左键点击背包或饰品栏中的此物品切换慢速模式
 		SingleKeyDash: 按 [{0}] 水平冲刺
@@ -181,9 +181,9 @@ Items: {
 		DisplayName: 星璇箭袋
 		Tooltip:
 			'''
-			箭矢伤害×1.1，远程暴击率提高5%
-			提高箭矢速度和击退，20%几率不消耗箭矢
-			箭矢重力降低80%，命中使敌人带电5秒
+			箭矢伤害[c/FF8C00:×1.1]，远程暴击率提高[c/6495ED:5%]
+			提高箭矢速度和击退，[c/6495ED:20%]几率不消耗箭矢
+			箭矢重力降低[c/6495ED:80%]，命中使敌人带电[c/FFD700:5秒]
 			'''
 		ModeDefault: 当前模式：默认——按弹药栏顺序轮换箭矢
 		ModeFull: 当前模式：全域——在弹药栏和整个物品栏中顺序轮换箭矢
@@ -196,8 +196,8 @@ Items: {
 		DisplayName: 星璇弹药腰带
 		Tooltip:
 			'''
-			子弹伤害×1.1，远程暴击率提高5%
-			子弹及其衍生攻击命中使敌人带电5秒
+			子弹伤害[c/FF8C00:×1.1]，远程暴击率提高[c/6495ED:5%]
+			子弹及其衍生攻击命中使敌人带电[c/FFD700:5秒]
 			'''
 		ModeDefault: 当前模式：默认——按弹药栏顺序轮换子弹
 		ModeFull: 当前模式：全域——在弹药栏和整个物品栏中顺序轮换子弹
@@ -209,9 +209,9 @@ Items: {
 		DisplayName: 星璇炮弹箱
 		Tooltip:
 			'''
-			火箭伤害×1.1，远程暴击率提高5%
-			火箭飞行速度×2，强化火箭及其爆炸不会伤害自己
-			火箭及其衍生攻击命中使敌人带电5秒
+			火箭伤害[c/FF8C00:×1.1]，远程暴击率提高[c/6495ED:5%]
+			火箭飞行速度[c/6495ED:×2]，强化火箭及其爆炸不会伤害自己
+			火箭及其衍生攻击命中使敌人带电[c/FFD700:5秒]
 			'''
 		ModeDefault: 当前模式：默认——按弹药栏顺序轮换火箭
 		ModeFull: 当前模式：全域——在弹药栏和整个物品栏中顺序轮换火箭
@@ -224,13 +224,13 @@ Items: {
 		Tooltip:
 			'''
 			防御力提高15，仇恨提高600
-			近战伤害提高25%，近战暴击率提高10%，近战攻速提高20%
+			近战伤害提高[c/6495ED:25%]，近战暴击率提高[c/6495ED:10%]，近战攻速提高[c/6495ED:20%]
 			拥有烈火手套、蜜蜂斗篷与冰冻护盾效果
 			近战攻击点燃敌人，受伤时释放蜜蜂
 			免疫击退
-			生命值不高于50%时获得25%免伤
-			生命值高于25%时，为附近同队玩家分担25%伤害
-			受伤后5秒内获得10%免伤
+			生命值不高于[c/FF6060:50%]时获得[c/6495ED:25%]免伤
+			生命值高于[c/FFD700:25%]时，为附近同队玩家分担[c/6495ED:25%]伤害
+			受伤后[c/FFD700:5秒]内获得[c/6495ED:10%]免伤
 			'''
 	}
 
@@ -238,9 +238,9 @@ Items: {
 		DisplayName: 射手之证
 		Tooltip:
 			'''
-			远程伤害提高25%，远程暴击率提高10%
-			20%几率不消耗弹药，仇恨降低400
-			拥有熔火箭袋功能：普通箭转化为火焰箭，箭矢速度与击退提高，20%几率不消耗箭矢
+			远程伤害提高[c/6495ED:25%]，远程暴击率提高[c/6495ED:10%]
+			[c/6495ED:20%]几率不消耗弹药，仇恨降低400
+			拥有熔火箭袋功能：普通箭转化为火焰箭，箭矢速度与击退提高，[c/6495ED:20%]几率不消耗箭矢
 			箭矢重力减半，支持星璇式弹种轮换
 			火箭速度提高且爆炸不会伤害自己
 			可与星璇饰品同时生效，同类弹药优先使用星璇饰品的模式
@@ -255,8 +255,8 @@ Items: {
 		DisplayName: 法师之证
 		Tooltip:
 			'''
-			最大魔力值提高60，魔力消耗降低12%
-			魔法伤害提高25%，魔法暴击率提高10%
+			最大魔力值提高60，魔力消耗降低[c/6495ED:12%]
+			魔法伤害提高[c/6495ED:25%]，魔法暴击率提高[c/6495ED:10%]
 			生命再生提高1点/秒，防御力提高2
 			拥有魔法手铐、魔力再生手环与魔力斗篷效果
 			受伤时按所受伤害恢复魔力，魔力再生速度提高
@@ -270,8 +270,8 @@ Items: {
 		Tooltip:
 			'''
 			仆从上限提高2，哨兵上限提高1
-			召唤伤害提高30%，召唤击退提高2
-			召唤物暴击率提高10%，鞭子范围提高20%
+			召唤伤害提高[c/6495ED:30%]，召唤击退提高2
+			召唤物暴击率提高[c/6495ED:10%]，鞭子范围提高[c/6495ED:20%]
 			'''
 	}
 
@@ -279,13 +279,12 @@ Items: {
 		DisplayName: 时之回响核心
 		Tooltip:
 			'''
-			消耗后获得时之幻影能力
-			记录5秒后，幻影会复现你5秒前的位置
-			回溯：回溯时空，获得1秒无敌帧
-			回溯后5秒内每秒恢复8点生命，增加20%减伤
-			回溯冷却30秒，第25秒重新开始记录，第30秒恢复幻影
-			互换：移动至幻影位置，获得0.25秒无敌帧
-			互换后3秒内伤害×1.2，冷却10秒，第5秒开始重新记录，第10秒恢复幻影
+			使用后获得时之幻影能力，5秒后出现幻影，跟随你5秒前的位置
+			回溯：回到幻影位置，生命与魔力恢复至5秒前的数值（不会降低），获得[c/FFD700:1秒]无敌
+			回溯后5秒内每秒恢复[c/50FF50:8点生命]，增加[c/6495ED:20%]伤害减免；冷却[c/FFD700:30秒]
+			互换：移动至幻影位置，获得[c/FFD700:0.25秒]无敌
+			互换后3秒内伤害[c/FF8C00:×1.2]、护甲穿透[c/6495ED:＋25]；冷却[c/FFD700:10秒]
+			回溯或互换后幻影暂时消失，冷却结束时重新出现
 			'''
 	}
 
@@ -298,23 +297,23 @@ Items: {
 		DisplayName: 动量转换器
 		Tooltip:
 			'''
-			将当前合速度转向鼠标指向位置
-			储存两层充能，每2秒回复一层
-			两层时保留全部速度，一层时保留50%速度
-			转换后0.5秒内免疫坠落伤害与击退
-			矿车与钩爪状态下无法使用
+			将当前移动方向转向鼠标
+			最多储存[c/FFD700:2次]充能，每[c/FFD700:2秒]恢复[c/FFD700:1次]
+			有2次充能时保留全部速度，仅剩1次时保留[c/6495ED:50%]速度
+			转换后[c/FFD700:0.5秒]内免疫坠落伤害与击退
+			乘坐矿车或使用钩爪时无法使用
 			'''
 		ActivationHint: 按 [{0}] 转换动量
 	}
 
 	WeaponReforgeScroll: {
 		DisplayName: 武器重铸券（旧版）
-		Tooltip: 批量重铸已迁至 MassReforge。启用该模组并重新加载玩家或世界后，此券自动迁移；当前无法使用。
+		Tooltip: 旧版武器重铸券，当前无法使用。启用 MassReforge 后重新进入世界，可自动换为新版重铸券。
 	}
 
 	AccessoryReforgeScroll: {
 		DisplayName: 饰品重铸券（旧版）
-		Tooltip: 批量重铸已迁至 MassReforge。启用该模组并重新加载玩家或世界后，此券自动迁移；当前无法使用。
+		Tooltip: 旧版饰品重铸券，当前无法使用。启用 MassReforge 后重新进入世界，可自动换为新版重铸券。
 	}
 
 	CultistSummon: {
@@ -329,16 +328,16 @@ Items: {
 		ModeOne: 当前模式一：仅挑战；击败后不开启四柱，战斗期间保护地牢教徒
 		ModeTwo: 当前模式二：召唤时击杀现存地牢教徒；击败后开启四柱
 		ToggleHint: 在背包中右键切换模式
-		Unavailable: 四柱控制未就绪，当前无法使用；请查看模组加载日志
+		Unavailable: 当前无法使用此召唤物
 	}
 
 	AegisShield: {
 		DisplayName: 神盾
 		Tooltip:
 			'''
-			双击方向键发动盾击冲刺
-			速度 23.3 px/帧，命中后立即停止
-			[c/6495ED:碰撞伤害 200（近战加成），命中无敌 12 帧]
+			双击左／右方向键发动盾击冲刺；开启单键冲刺后按对应按键发动
+			撞击敌人后立即停止
+			[c/6495ED:造成200点近战伤害，命中后获得0.2秒无敌]
 			'''
 	}
 
@@ -346,17 +345,18 @@ Items: {
 		DisplayName: 虚空腰带
 		Tooltip:
 			'''
-			双击方向键发动高速冲刺
-			起始速度 64 px/帧，第 10 帧起逐帧衰减
-			[c/9370DB:无碰撞伤害，纯机动]
+			双击左／右方向键发动高速冲刺；开启单键冲刺后按对应按键发动
+			冲刺后逐渐减速
+			[c/9370DB:冲刺不造成伤害]
 			'''
 	}
 
 	HeavenlyCrown: {
+		BreakMessage: 天赐华冠已破碎
 		DisplayName: 天赐华冠
 		Tooltip:
 			'''
-			使你的伤害变为1.3倍
+			使你的伤害变为[c/FF8C00:1.3倍]
 			死亡后失效
 			'''
 	}
@@ -381,10 +381,10 @@ Items: {
 		Tooltip:
 			'''
 			召唤天蝎座，每轮发射3束[c/FF4500:追踪火焰]
-			[c/6495ED:5%概率]触发蓝白爆发，单束伤害再乘以槽位数÷3（最低1倍）
-			12／22／35槽质变，伤害额外×2.2／×5／×66
+			[c/6495ED:5%概率]爆发射击，单束伤害再乘以槽位数÷3（最低1倍）
+			[c/FFD700:12／22／35槽]质变，伤害额外[c/FF8C00:×2.2／×5／×66]
 			'''
-		CurrentStage: 当前：{0:0.##}槽 · {1} · 槽位伤害×{2:0.##}（爆发再×{3:0.##}）
+		CurrentStage: 当前：[c/FFD700:{0:0.##}槽] · {1} · 槽位伤害[c/FF8C00:×{2:0.##}]（爆发再[c/FF8C00:×{3:0.##}]）
 		NotSummoned: 当前：未召唤
 		Stage0: 初始
 		Stage1: 一阶质变
@@ -398,11 +398,35 @@ Items: {
 	}
 
 	OmniGuardianAccessory: {
+		AbilityDescription:
+			'''
+			大幅提升飞行与奔跑能力，按住 ↑ 加速上升，下＋跳跃悬停，下键快速下落
+			按 [{0}] 长冲刺，按 [{1}] 短冲刺
+			伤害[c/6495ED:＋100%]，暴击率[c/6495ED:＋35%]，攻速[c/6495ED:＋35%]，护甲穿透[c/6495ED:＋24]
+			最大生命与魔力[c/6495ED:＋100%]，防御[c/6495ED:＋15]，伤害减免[c/6495ED:＋15%]
+			每秒恢复[c/50FF50:15点生命]；随失血程度额外恢复[c/50FF50:10～100点生命]
+			生命低于[c/FF6060:50%]时额外获得[c/6495ED:35%]伤害减免
+			神圣护甲与黑带闪避效果，另有10%概率闪避（冷却[c/FFD700:15秒]）
+			每种减益额外提供20防御和每秒5点生命恢复；减益消退速度提高至3倍
+			免疫击退及常见原版减益，受伤后额外获得1.5秒无敌
+			仆从上限＋8，哨兵上限＋3，魔力恢复速度提高
+			治疗药水回复量变为（原回复量＋50）×5，耐药性时间缩短[c/6495ED:25%]
+			常驻蜂蜜、最高级饱食、树妖祝福和星云魔力增益，不受太空低重力影响
+			强化钩爪，被钩爪拉动时获得[c/6495ED:10%]伤害减免和[c/6495ED:50%]荆棘，减伤持续至松钩后[c/FFD700:1秒]
+			'''
 		DisplayName: 神之心
 		Tooltip: ""
 	}
 
 	JuLingHat: {
+		SetBonus:
+			'''
+			[c/6495ED:+{0}%] 魔法伤害  [c/6495ED:+{1}%] 魔法暴击
+			按 [{2}] 激活灵力凝聚：持续 [c/FFD700:5 秒]
+			  魔力消耗[c/FF6060:+100%]  魔法伤害[c/6495ED:+66%]  魔法暴击[c/6495ED:+22%]
+			  暴击命中时获得 [c/50FF50:3%] 吸血（单次上限 [c/50FF50:50]）
+			冷却 [c/FFD700:45 秒]
+			'''
 		DisplayName: 聚灵法冠
 		Tooltip:
 			'''
@@ -426,21 +450,35 @@ Items: {
 		ToggleEffectName: 幻影龙随行
 		Tooltip:
 			'''
-			+33%所有伤害 +12%暴击率 +12%攻速 +8护甲穿透
-			+33%最大生命 +33%最大法力 +5%伤害减免 +5防御 +10生命再生
-			+3召唤栏 +1哨兵栏 +1法力恢复倍率
+			[c/6495ED:+33%]所有伤害 [c/6495ED:+12%]暴击率 [c/6495ED:+12%]攻速 [c/6495ED:+8]护甲穿透
+			[c/6495ED:+33%]最大生命 [c/6495ED:+33%]最大法力 [c/6495ED:+5%]伤害减免 [c/6495ED:+5]防御 [c/6495ED:+10]生命再生
+			[c/6495ED:+3]召唤栏 [c/6495ED:+1]哨兵栏，魔力恢复速度提高
 			'''
 	}
 
 	UltimateHelmet: {
+		SetBonus:
+			'''
+			致命伤害后复活，恢复[c/50FF50:50%最大生命]并获得[c/FFD700:3秒]无敌，冷却[c/FFD700:120秒]
+			敌怪或弹幕攻击力不低于最大生命时，所受伤害降至1
+			按 [{0}] 激活引力井，持续[c/FFD700:2秒]，拉近[c/FFD700:50格]内的非Boss敌人{1}{2}
+			{3}
+			{4}
+			'''
+		CalamityBonus:
+			'''
+
+			灾厄：移除跨职业召唤伤害惩罚
+
+			'''
 		DisplayName: 终极头盔
-		DragonState: 幻影龙随行：{0}（胸甲开关）
-		CannonState: 套装炮台：{0}（腿甲开关；命中时追加实际伤害的19%）
+		DragonState: 幻影龙随行：{0}（胸甲）
+		CannonState: 套装炮台：{0}（腿甲；命中时额外造成该次伤害的[c/FF8C00:19%]）
 		Tooltip:
 			'''
-			+33%所有伤害 +12%暴击率 +12%攻速 +8护甲穿透
-			+33%最大生命 +33%最大法力 +5%伤害减免 +5防御 +10生命再生
-			+3召唤栏 +1哨兵栏
+			[c/6495ED:+33%]所有伤害 [c/6495ED:+12%]暴击率 [c/6495ED:+12%]攻速 [c/6495ED:+8]护甲穿透
+			[c/6495ED:+33%]最大生命 [c/6495ED:+33%]最大法力 [c/6495ED:+5%]伤害减免 [c/6495ED:+5]防御 [c/6495ED:+10]生命再生
+			[c/6495ED:+3]召唤栏 [c/6495ED:+1]哨兵栏
 			'''
 	}
 
@@ -449,28 +487,31 @@ Items: {
 		ToggleEffectName: 套装炮台
 		Tooltip:
 			'''
-			+34%所有伤害 +11%暴击率 +11%攻速 +8护甲穿透
-			+34%最大生命 +34%最大法力 +5%伤害减免 +5防御 +10生命再生
-			+2召唤栏 +1哨兵栏 +10%移动速度
+			[c/6495ED:+34%]所有伤害 [c/6495ED:+11%]暴击率 [c/6495ED:+11%]攻速 [c/6495ED:+8]护甲穿透
+			[c/6495ED:+34%]最大生命 [c/6495ED:+34%]最大法力 [c/6495ED:+5%]伤害减免 [c/6495ED:+5]防御 [c/6495ED:+10]生命再生
+			[c/6495ED:+2]召唤栏 [c/6495ED:+1]哨兵栏 [c/6495ED:+10%]移动速度
 			'''
 	}
 
 	MoonStride: {
+		AbilityDescription:
+			'''
+			可自由飞行
+			按下 [{0}] 开启/关闭精确飞行
+			按住 [{1}] 减速以精确走位
+			免疫击退并减少[c/6495ED:25%]弹幕伤害
+			'''
 		DisplayName: 逐月踏空靴
 		Tooltip: ""
 	}
 
 	SupercritPotion: {
-		Tooltip:
-			'''
-			超出100%暴击的部分转换为暴击伤害
-			每1%的暴击率转换为2%的暴击伤害
-			'''
+		Tooltip: 暴击率超出[c/FFD700:100%]的部分，每[c/6495ED:1%]额外增加[c/FF8C00:2%]暴击伤害
 		DisplayName: 超暴击药水
 	}
 
 	SupercritGoggles: {
-		Tooltip: 提高25%暴击率并获得超暴击buff
+		Tooltip: 暴击率提高[c/6495ED:25%]，获得超暴击效果
 		DisplayName: 超暴击护目镜
 	}
 
@@ -478,55 +519,59 @@ Items: {
 		DisplayName: 习难护符
 		Tooltip:
 			'''
-			生命恢复 +4 点/秒，防御 +18，最大生命 +60
-			免疫常见减益效果
-			受到的接触伤害降低 11%
-			实际受伤后适应该种攻击，每层降低其伤害 15%，最多 5 层
-			同种 NPC 的接触攻击或同种弹幕共用适应，接触与弹幕分别分类
-			适应持续 11 秒，同种攻击命中后叠层并刷新时间，满层也会刷新
-			首次攻击不享受适应减伤；不同攻击命中后改为该种攻击的 1 层
-			有适应层数时，本饰品的生命恢复、防御、生命上限及接触减伤翻倍
-			环境伤害清空适应；陷阱弹幕仍可适应，持续掉血不影响适应
-			闪避、免疫及护盾完全吸收不改变适应；卸装、死亡或到期清空
+			每秒恢复4点生命，防御＋18，最大生命＋60
+			免疫常见减益，接触伤害降低11%
+			受伤后适应该种攻击，每层降低其后续伤害[c/6495ED:15%]，最多[c/FFD700:5层]
+			同种敌怪的接触攻击、同种弹幕分别视为同类攻击
+			适应持续[c/FFD700:11秒]，再次受到同类攻击伤害时叠层并刷新时间
+			受到不同攻击伤害后改为该种攻击的1层适应
+			适应期间，本饰品的生命恢复、防御、生命上限及接触减伤翻倍
+			环境伤害、卸装、死亡或到期会失去适应；持续掉血不影响适应
 			'''
-		AdaptationState: 适应：{0}/{1} 层，该种攻击减伤 {2}%，剩余 {3} 秒
+		AdaptationState: 适应：[c/FFD700:{0}/{1} 层]，该种攻击减伤 [c/6495ED:{2}%]，剩余 [c/FFD700:{3} 秒]
 	}
 
 	Heartsteel: {
+		StackState: 永久生命叠层：{0}{1}
+		MaxedSuffix: "  [c/00FF00:（已达上限，不再叠层）]"
 		DisplayName: 心之钢
 		Tooltip:
 			'''
-			免疫击退
-			装备时伤害降低 [c/FF4500:1/3]
-			耐药性降低25%，获得蜂蜜效果
-			靠近 Boss [c/FFD700:2秒]后，下一次命中触发：
-			  造成 [c/FF8C00:240 + 88% 最大生命] 的额外伤害
-			  受当前武器类型的伤害加成影响，并按玩家暴击率独立暴击
-			  获得该伤害 [c/6495ED:0.8%] 的永久最大生命值（上限 [c/6495ED:+666]）
-			每有 [c/FF8C00:100 点最大生命]，体型变大 [c/FF4500:5%]（上限 +100%）
-			[c/AAAAAA:叠层在卸下装备后保留，重新装备时继续生效]
-			[c/AAAAAA:骑乘坐骑时不修改体型]
+			免疫击退，伤害降低 [c/FF4500:1/3]
+			耐药性时间缩短[c/6495ED:25%]，获得蜂蜜效果
+			在Boss周围[c/FFD700:60格]内蓄力 [c/FFD700:2秒]，下一次命中Boss时触发：
+			  造成 [c/FF8C00:240＋88%最大生命] 的额外伤害
+			  享受手持武器的伤害与暴击率加成
+			  获得该次额外伤害 [c/6495ED:0.8%] 的最大生命（累计上限 [c/6495ED:＋666]）
+			每100点最大生命使体型增大5%，最多增大100%
+			[c/AAAAAA:卸下后保留已积累的生命加成，重新装备时生效]
+			[c/AAAAAA:骑乘时体型不变]
 			'''
 	}
 
 	FocusOrb: {
+		AbilityDescription:
+			'''
+			按 [{0}] 激活：接下来[c/FFD700:7次]命中必定暴击，接下来[c/FFD700:7枚]武器弹幕自动追踪
+			  若此次攻击本就会暴击，还会造成额外真实伤害
+			  {1}
+			  [c/AAAAAA:追踪不适用于仆从、哨兵、鞭子和钩爪；冷却30秒]
+			'''
 		DisplayName: 专注宝珠
 		Tooltip: "[c/6495ED:+8%] 全属性伤害  [c/6495ED:+6%] 暴击率  [c/6495ED:+4] 护甲穿透"
-		ExtraHitRule: "[c/AAAAAA:按实际命中伤害取比例]"
+		ExtraHitRule: "[c/AAAAAA:额外伤害为此次命中伤害的200%]"
 	}
 
 	BerserkBlade: {
 		DisplayName: 狂暴之刃
 		Tooltip:
 			'''
-			[c/6495ED:+4%] 近战伤害 [c/6495ED:+2%] 暴击率 [c/6495ED:+5%] 攻速 [c/6495ED:+2] 护甲穿透
-			近战命中提供 [c/FF8C00:狂暴] 叠层，持续 [c/FFD700:2 秒]
-			每层：近战攻速 [c/6495ED:+4%]（上限 [c/6495ED:+40%]）
-			[c/FF4500:满 10 层]时，额外造成 [c/FF4500:100 + 17% 触发伤害] 的真实伤害
-			[c/AAAAAA:固定部分受伤害加成影响；比例部分不重复增伤，额外伤害不暴击]
-			[c/AAAAAA:近战本体及已识别的真近战弹幕：每次叠 1 层]
-			[c/AAAAAA:上述命中达到满层时及满层后，每次触发额外伤害]
-			[c/AAAAAA:其他近战弹幕：每 10 次叠 1 层；满层后每 5 次触发一次]
+			[c/6495ED:＋4%] 近战伤害 [c/6495ED:＋2%] 暴击率 [c/6495ED:＋5%] 攻速 [c/6495ED:＋2] 护甲穿透
+			近战命中积累 [c/FF8C00:狂暴]，每层近战攻速[c/6495ED:＋4%]，最多[c/FFD700:10层]
+			连续[c/FFD700:2秒]未命中则失去全部层数
+			武器直接命中与真近战弹幕每次叠1层，达到满层后每次命中造成额外真实伤害
+			其他近战弹幕每10次命中叠1层，满层后每5次命中触发额外伤害
+			额外伤害为 [c/FF4500:100＋此次命中伤害的17%]；其中100点受伤害加成影响，额外伤害不暴击
 			'''
 	}
 
@@ -536,13 +581,19 @@ Items: {
 	}
 
 	TimeStopRing: {
+		AbilityDescription:
+			'''
+			按 [{0}] 触发时停
+			时停期间所有敌方和敌方弹幕完全静止，玩家不受影响
+			持续 [c/FFD700:3 秒]，冷却 [c/FFD700:30 秒]
+			'''
 		DisplayName: 时停戒指
 		Tooltip: ""
 	}
 
 	Offhand: {
 		DisplayName: 磁球
-		Tooltip: 召唤磁球，命中敌人时发射追加弹幕，造成实际命中伤害19%的额外伤害
+		Tooltip: 召唤磁球，命中敌人时发射追加弹幕，造成实际命中伤害[c/FF8C00:19%]的额外伤害
 	}
 
 	TestWhip: {
@@ -551,8 +602,8 @@ Items: {
 	}
 
 	SlowField: {
-		Tooltip: 在你周围生成一个减速立场，减速敌方弹幕
-		DisplayName: 减速立场
+		Tooltip: 在周围形成减速力场，减慢敌方弹幕
+		DisplayName: 减速力场
 	}
 
 	TestHook: {
@@ -566,8 +617,8 @@ Items: {
 			'''
 			拥有更远的射程和更快的速度
 			可钩住 Boss，并随其移动
-			钩住物块时获得 10% 伤害减免
-			钩住 Boss 时获得 20% 伤害减免
+			钩住物块时获得 [c/6495ED:10%] 伤害减免
+			钩住 Boss 时获得 [c/6495ED:20%] 伤害减免
 			Boss 瞬移或无法被攻击时自动脱钩
 			使用方向键沿绳移动，跳跃脱钩
 			'''
@@ -592,18 +643,11 @@ Items: {
 		DisplayName: 泰拉棱镜
 		Tooltip:
 			'''
-			命中敌人后在目标处留下剑气，高速来回切割
-			重复命中同一目标可[c/FFD700:叠层]（上限100层），每次命中刷新持续时间
-
-			[c/FF8C00:伤害] 1-10层缓慢积累，11-20层急速飙升，20层后趋于稳定
-			[c/FF8C00:频率] 达到10层与20层时切割速度分别加快一次
-			[c/7B68EE:极限] 叠至100层时，衍生出对称的第二道剑气
-
-			剑气颜色随叠层变化：
-			· [c/CCCCCC:1-10层]  无色薄边
-			· [c/FFD700:11-20层] 金黄渐变[c/8A2BE2:蓝紫]
-			· [c/6495ED:20层以上] 冰蓝发光
-			剑气持续10秒
+			命中敌人后留下剑气，持续切割[c/FFD700:10秒]
+			重复命中同一目标可[c/FFD700:叠层]，最多[c/FFD700:100层]，并刷新持续时间
+			层数越高伤害越高，11～20层伤害提升尤为明显
+			达到10层与20层时，切割速度分别加快一次
+			达到100层时，出现第二道对称剑气
 			'''
 	}
 
@@ -613,6 +657,15 @@ Items: {
 	}
 
 	CollectorItem: {
+		StatsSeparator: ，
+		Electrified: "[c/66CCFF:命中附着带电]"
+		DamageMultiplier: "[c/FFD700:伤害变为 1.02 倍]"
+		Crit: "[c/FFD700:+{0}% 暴击率]"
+		Damage: "[c/FFD700:+{0}% 伤害]"
+		ArmorPenetration: "[c/FFD700:+{0} 护甲穿透]"
+		NoStats: "[c/AAAAAA:当前阶段：无属性加成]"
+		RewardMessage: 获得{0} 铂金 + {1} 金币
+		ExecutionMessage: "{0} 已被处决"
 		DisplayName: 收集者
 		Tooltip:
 			'''
@@ -625,15 +678,17 @@ Items: {
 	}
 
 	EnergyShieldItem: {
+		ExpectedShield: 预计普通护盾上限 [c/50A0FF:{0}]
+		CurrentShield: 当前护盾值 [c/50A0FF:{0:0}] / [c/50A0FF:{1:0}]
 		DisplayName: 能量护盾
 		Tooltip:
 			'''
-			装备后获得能量护盾，上限为 [c/50A0FF:20 + 6%最大生命值]
-			护盾状态下 [c/50FF50:+5防御力]，且免疫击退
-			11秒未受击后开始恢复，每秒恢复普通护盾总上限的1/6（空盾6秒回满）
-			普通状态整次挡伤；开始恢复后直到普通护盾回满，破盾时溢出伤害穿透
-			首次装备满盾，重戴不刷新；复活立即开始渐进恢复
-			[c/AAAAAA:护盾破碎时不造成特殊效果]
+			获得能量护盾，上限为 [c/50A0FF:20＋6%最大生命]
+			有护盾时 [c/50FF50:＋5防御]，并免疫击退
+			[c/FFD700:11秒]未受击后开始恢复，每秒恢复普通护盾总上限的[c/6495ED:1/6]
+			正常状态下，护盾可挡住整次攻击
+			开始恢复后，回满前破盾仍会受到超出护盾值的伤害
+			首次装备满盾；卸下重戴不会补满，复活后逐渐恢复
 			'''
 	}
 
@@ -641,28 +696,32 @@ Items: {
 		DisplayName: 泰拉之盾
 		Tooltip:
 			'''
-			＋300最大生命、50防御和15%免伤
-			每秒恢复1%最大生命，获得合成饰品的主要生存效果
-			二重闪避：25%概率闪避，另每30秒可必定闪避一次
+			[c/6495ED:＋300]最大生命、[c/6495ED:50]防御和[c/6495ED:15%]伤害减免
+			每秒恢复[c/50FF50:1%最大生命]，免疫击退并延长受伤无敌时间
+			[c/6495ED:25%]概率闪避攻击，另每[c/FFD700:30秒]可必定闪避一次
 			免疫除药水疾病外的原版减益，其他减益消退加快
-			常驻蜂蜜；低于25%生命自动喝药，治疗药水效果翻倍
-			敌怪和弹幕伤害上限为最大生命的20%
-			单次命中最多立即损失5点生命，余量逐渐流血
-			治疗药水清除治疗量50%的流血；卸下立即承受剩余流血
+			常驻蜂蜜；低于[c/FF6060:25%生命]自动喝药，治疗药水效果翻倍
+			敌怪和弹幕伤害上限为最大生命的[c/6495ED:20%]
+			单次命中最多立即损失[c/FF6060:5点生命]，其余伤害逐渐流血
+			治疗药水清除回复量[c/50FF50:50%]的流血伤害；卸下后立即承受剩余流血
 			'''
 	}
 
 	SuperEnergyShieldItem: {
+		ExpectedShield: 预计普通护盾上限 [c/64C8FF:{0}]
+		CurrentShield: 当前护盾值 [c/64C8FF:{0:0}] / [c/64C8FF:{1:0}]
 		DisplayName: 超能护盾
 		Tooltip:
 			'''
-			装备后获得能量护盾，上限为 [c/64C8FF:60 + 120%防御力+9%最大生命值]
-			护盾状态下 [c/50FF50:+5%减伤]、[c/50FF50:+4%伤害]、[c/50FF50:+2%暴击]，且免疫击退
-			11秒未受击后开始恢复，每秒恢复普通护盾总上限的1/6（空盾6秒回满）
-			普通状态整次挡伤；开始恢复后直到普通护盾回满，破盾时溢出伤害穿透
-			首次装备满盾，重戴不刷新；复活立即开始渐进恢复
-			[c/FF6060:生命值跌破30%时：]获得 [c/FF6060:50%最大生命 + 100%防御]的紧急护盾
-			紧急护盾优先吸收伤害，在4.5秒内衰减，不解除恢复脆弱状态；冷却120秒（卸装及死亡期间继续）
+			获得能量护盾，上限为 [c/64C8FF:60＋120%防御＋9%最大生命]
+			有护盾时 [c/50FF50:＋5%伤害减免、4%伤害、2%暴击率]，并免疫击退
+			[c/FFD700:11秒]未受击后开始恢复，每秒恢复普通护盾总上限的[c/6495ED:1/6]
+			正常状态下，护盾可挡住整次攻击
+			开始恢复后，回满前破盾仍会受到超出护盾值的伤害
+			首次装备满盾；卸下重戴不会补满，复活后逐渐恢复
+			[c/FF6060:生命低于30%时]获得 [c/FF6060:50%最大生命＋100%防御] 的紧急护盾
+			紧急护盾优先挡伤，在[c/FFD700:4.5秒]内逐渐消退，冷却[c/FFD700:120秒]
+			[c/AAAAAA:紧急护盾不取消恢复期间的破盾溢出伤害；卸装与死亡不暂停冷却]
 			'''
 	}
 
@@ -680,6 +739,7 @@ Items: {
 	}
 
 	SuperRelocator: {
+		HotkeyHint: "[{0}] 传送到鼠标位置"
 		DisplayName: 超级定位器
 		Tooltip:
 			'''
@@ -699,7 +759,7 @@ Items: {
 
 	OmniGuardianWingProxy: {
 		Tooltip: ""
-		DisplayName: Omni Guardian Wing Proxy
+		DisplayName: 神之心翅膀
 	}
 
 	TestWing: {
@@ -717,9 +777,9 @@ Items: {
 		Tooltip:
 			'''
 			召唤[c/B78ADA:黑洞]，发射[c/00B8FF:高能类星体喷流]
-			每个[c/B78ADA:黑洞]占用9个召唤栏，最多召唤4个[c/B78ADA:黑洞]
+			每个[c/B78ADA:黑洞]占用[c/FFD700:9个]召唤栏，最多召唤[c/FFD700:4个][c/B78ADA:黑洞]
 			[c/B78ADA:黑洞]撕裂敌人，敌人接近[c/B78ADA:黑洞]则持续扣血
-			强大的[c/B78ADA:天体]可吸引并吸收[c/D12A2A:敌方弹幕]
+			吸引并吸收[c/D12A2A:敌方弹幕]
 			'''
 	}
 
@@ -731,27 +791,27 @@ Items: {
 
 Buffs: {
 	HarvestTimeBuff: {
-		Description: 古有暗黑收割，今有光明收割，攻速提高50%
+		Description: 攻速提高50%
 		DisplayName: 光明收割
 	}
 
 	DarkMarkBuff: {
-		Description: ""
-		DisplayName: Dark Mark Buff
+		Description: 受到召唤物攻击时触发收割
+		DisplayName: 暗印
 	}
 
 	ArmorShredDebuff: {
-		Description: ""
-		DisplayName: Armor Shred Debuff
+		Description: 每层降低10点防御，最多10层
+		DisplayName: 破甲
 	}
 
 	AntaresBuff: {
 		DisplayName: 心宿二
-		Description: “蝎子的心脏”
+		Description: 天蝎座为你作战
 	}
 
 	ThunderBreathingBuff: {
-		Description: 一闪，足矣
+		Description: 雷之剑士为你作战
 		DisplayName: 雷之呼吸
 	}
 
@@ -762,7 +822,7 @@ Buffs: {
 
 	AntaresReviveCooldown: {
 		DisplayName: 复活冷却
-		Description: ""
+		Description: 终极套装的复活效果冷却中
 	}
 
 	AntaresGravityWellBuff: {
@@ -777,32 +837,32 @@ Buffs: {
 
 	TimeStopCDBuff: {
 		DisplayName: 时停冷却
-		Description: ""
+		Description: 时停技能冷却中
 	}
 
 	TimeStoppedBuff: {
 		DisplayName: 砸瓦鲁多
-		Description: ""
+		Description: 敌怪与敌方弹幕停止行动，你不受影响
 	}
 
 	TestWhipTagBuff: {
-		Description: Mods.TestMod.Buffs.TestWhipTagBuff.Description
-		DisplayName: Test Whip Tag Buff
+		Description: 召唤物攻击附带额外伤害与暴击，并可引发爆炸
+		DisplayName: 鞭子标记
 	}
 
 	TestWhipCooldownBuff: {
-		Description: Mods.TestMod.Buffs.TestWhipCooldownBuff.Description
-		DisplayName: Test Whip Cooldown Buff
+		Description: 暂时无法再次触发鞭子标记爆炸
+		DisplayName: 鞭子爆炸冷却
 	}
 
 	BloodExhaustionBuff: {
 		DisplayName: 虚脱
-		Description: 你因失血过多虚脱了
+		Description: 最大生命降低20%，暴走加成在4秒内消退；治疗药水回复量翻倍，并清除除虚脱外的减益
 	}
 
 	CrimsonBerserkBuff: {
 		DisplayName: 暴走
-		Description: 失血中，但肾上腺素拉满了，你爆发出惊人力量
+		Description: 生命越低，伤害与暴击率越高；每秒失去2%最大生命，结束后虚脱10秒
 	}
 
 	HuangQuanBuff: {
@@ -842,7 +902,7 @@ Buffs: {
 
 	BerserkBladeBuff: {
 		DisplayName: 狂暴
-		Description: 真近战命中持续积累，提升攻速；满层时附带真实伤害
+		Description: 每层提高4%近战攻速，最多10层；满层后近战命中可触发额外真实伤害
 	}
 
 	SuperEnergyShieldCooldownBuff: {
@@ -851,13 +911,13 @@ Buffs: {
 	}
 
 	BlindnessDebuff: {
-		Description: Mods.TestMod.Buffs.BlindnessDebuff.Description
-		DisplayName: Blindness Debuff
+		Description: Boss的瞄准与部分弹幕追踪发生偏移
+		DisplayName: 失明
 	}
 
 	BlackHoleMinionBuff: {
 		DisplayName: 黑洞
-		Description: ""
+		Description: 黑洞为你作战
 	}
 }
 
@@ -871,26 +931,26 @@ Projectiles: {
 	ShortDashStrike.DisplayName: 短冲刺
 	TerraWingsDashStrike.DisplayName: 泰拉之翼冲刺
 	PhantasmSpecialArrowProj.DisplayName: 真·弑神箭
-	PhantasmHoldout.DisplayName: Phantasm Holdout
+	PhantasmHoldout.DisplayName: 幻象
 	AntaresBeam.DisplayName: 心宿二火焰
-	AntaresMinion.DisplayName: Antares Minion
+	AntaresMinion.DisplayName: 天蝎座
 	ZenitsuMinion.DisplayName: 一闪
 	DragonSegment.DisplayName: 火龙
-	SubhandCannon.DisplayName: Subhand Cannon
+	SubhandCannon.DisplayName: 磁球炮台
 	TestWhipProj.DisplayName: Test Whip Proj
 	TestWhipExplosionProj.DisplayName: Test Whip Explosion Proj
 	TestHookProj.DisplayName: Test Hook Proj
 	EnhancedStaticHookProj.DisplayName: 加强版静止钩
-	ReflectShieldOrb.DisplayName: Reflect Shield Orb
-	DRShieldOrb.DisplayName: D R Shield Orb
+	ReflectShieldOrb.DisplayName: 反射护盾
+	DRShieldOrb.DisplayName: 减伤护盾
 	SwordQiProjectile.DisplayName: 泰拉切割
 	BloodFeedKnifeProj.DisplayName: 血饲匕首
 	TestProjectile.DisplayName: Test Projectile
-	BlackHoleMinion.DisplayName: Black Hole Minion
+	BlackHoleMinion.DisplayName: 黑洞
 	QuasarJetProjectile.DisplayName: 类星体喷流
 	QuasarJetBurstShard.DisplayName: 吸积盘喷发
 	TimeEchoMeleeProjectile.DisplayName: 幻影攻击
-	TimeEchoProjectionProjectile.DisplayName: Time Echo Projection Projectile
+	TimeEchoProjectionProjectile.DisplayName: 幻影攻击
 }
 
 Prefixes: {
@@ -908,9 +968,16 @@ Prefixes: {
 }
 
 DamageClasses.TrueDamageClass.DisplayName: 真实伤害
-Tiles.HuangQuanAltarTile.MapEntry: Huang Quan Altar Tile
+Tiles.HuangQuanAltarTile.MapEntry: 黄泉馈灵塔
 
 UI: {
+	WorldText: {
+		BloodFeedBerserk: 血馈暴走
+		ShieldBroken: 护盾已破碎
+		ShieldRecovering: 护盾正在恢复
+		SupercritBonus: +{0}%暴伤
+	}
+
 	ShieldBar: {
 		Ready: 护盾就绪
 		Waiting: 等待恢复 {0}秒
@@ -921,9 +988,9 @@ UI: {
 }
 
 TimeEcho: {
-	Recording: 时间记录建立中
+	Recording: 幻影将在5秒后出现
 	AttackHint: "{0}：同步攻击（需幻影）"
-	AttackDetails: 持续5秒，结束后冷却15秒；攻击伤害50%
+	AttackDetails: 持续[c/FFD700:5秒]，结束后冷却[c/FFD700:15秒]；攻击伤害[c/FF8C00:50%]
 	Unbound: 未绑定
 }
 
@@ -931,17 +998,17 @@ TerraArmor: {
 	LightState: 环境光照：{0}
 	PieceTooltip:
 		'''
-		+33%伤害、12%暴击、10%攻速、10护甲穿透
-		+11%移速，-8%魔力消耗，3%伤害减免
-		每秒回复5生命，+3召唤物、1哨兵栏位
+		[c/6495ED:+33%]伤害、[c/6495ED:12%]暴击、[c/6495ED:10%]攻速、[c/6495ED:10]护甲穿透
+		[c/6495ED:+11%]移速，[c/6495ED:-8%]魔力消耗，[c/6495ED:3%]伤害减免
+		每秒回复[c/6495ED:5]生命，[c/6495ED:+3]召唤物、[c/6495ED:1]哨兵栏位
 		'''
 	SetBonus:
 		'''
 		免疫原版减益，获得钯金、神圣和叶绿套效果
-		+200生命、200魔力，重力正常化
-		使用时间缩短20%，弹幕速度加快
-		致死时满血复活并获得3秒保护，冷却120秒
-		当前：{0}，按[{1}]切换职业
+		最大生命[c/6495ED:＋200]，最大魔力[c/6495ED:＋200]，不受太空低重力影响
+		攻击间隔缩短[c/6495ED:20%]，弹幕速度加快
+		致命伤害后满血复活并获得[c/FFD700:3秒]无敌，冷却[c/FFD700:120秒]
+		当前职业：{0}，按 [{1}] 切换
 		{2}
 		'''
 	ModeChanged: 泰拉套：{0}
@@ -956,15 +1023,38 @@ TerraArmor: {
 	Effects: {
 		Warrior:
 			'''
-			双甲虫、耀斑套和烈火手套效果，+15%免伤、1500仇恨
-			近距离近战命中，伤害变为1.05倍，且回复10+最大生命值1%
+			双甲虫、耀斑套和烈火手套效果，[c/6495ED:+15%]免伤、[c/6495ED:1500]仇恨
+			近距离近战命中，伤害变为[c/FF8C00:1.05倍]，且回复[c/50FF50:10+最大生命值1%]
 			'''
 		Ranger: 星璇潜行，无限弹药，远程命中触发幻影追击，-400仇恨
 		Mage: 双幽灵与星云套效果，强化焰拾取即满层
 		Summoner:
 			'''
 			四套高级酒馆盔甲与星尘套效果，强化星尘守卫
-			+50%鞭子范围，召唤物+20%暴击，-400仇恨
+			[c/6495ED:+50%]鞭子范围，召唤物[c/6495ED:+20%]暴击，[c/6495ED:-400]仇恨
 			'''
 	}
 }
+
+Common: {
+	Unbound: 未绑定
+	DeathBoundBroken: 已破碎
+}
+
+PrefixTooltips: {
+	Defense: +{0} 防御
+	DR: +{0:0.#}% 伤害减免
+	MaxLife: +{0} 最大生命值
+	LifeRegen: +{0:0.#} 每秒生命回复
+	Damage: +{0:0.#}% 全伤害
+	Crit: +{0}% 暴击率
+	ArmorPenetration: +{0} 护甲穿透
+	MoveSpeed: +{0:0.#}% 移动速度
+	MeleeSpeed: +{0:0.#}% 近战攻速
+	MaxMana: +{0} 最大魔力
+	ManaCost: -{0:0.#}% 魔力消耗
+	Luck: +{0:0.##} 幸运
+	ProjectileSpeed: +100%弹速
+}
+
+RecipeGroups.AnyOOACombatAccessory: 任意旧日军团战斗饰品

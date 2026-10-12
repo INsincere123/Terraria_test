@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Terraria;
+using Terraria.Localization;
 using Terraria.ID;
 using Terraria.ModLoader;
 using TestMod.Common.Players;
@@ -119,22 +120,22 @@ namespace TestMod.Content.Items.Accessories
         private static string BuildStatsLine(CombatStatsConfig stats, bool electrified)
         {
             if (stats.ArmorPenetration == 0 && stats.Damage == 0f && stats.Crit == 0 && !electrified)
-                return "[c/AAAAAA:当前阶段：无属性加成]";
+                return Language.GetTextValue("Mods.TestMod.Items.CollectorItem.NoStats");
 
             List<string> parts = new();
             if (stats.ArmorPenetration != 0)
-                parts.Add($"[c/FFD700:+{stats.ArmorPenetration} 护甲穿透]");
+                parts.Add(Language.GetTextValue("Mods.TestMod.Items.CollectorItem.ArmorPenetration", stats.ArmorPenetration));
             if (stats.Damage != 0f)
-                parts.Add($"[c/FFD700:+{(int)(stats.Damage * 100f)}% 伤害]");
+                parts.Add(Language.GetTextValue("Mods.TestMod.Items.CollectorItem.Damage", (int)(stats.Damage * 100f)));
             if (stats.Crit != 0)
-                parts.Add($"[c/FFD700:+{stats.Crit}% 暴击率]");
+                parts.Add(Language.GetTextValue("Mods.TestMod.Items.CollectorItem.Crit", stats.Crit));
             if (electrified)
             {
-                parts.Add("[c/FFD700:伤害变为 1.02 倍]");
-                parts.Add("[c/66CCFF:命中附着带电]");
+                parts.Add(Language.GetTextValue("Mods.TestMod.Items.CollectorItem.DamageMultiplier"));
+                parts.Add(Language.GetTextValue("Mods.TestMod.Items.CollectorItem.Electrified"));
             }
 
-            return string.Join("，", parts);
+            return string.Join(Language.GetTextValue("Mods.TestMod.Items.CollectorItem.StatsSeparator"), parts);
         }
 
         public override void AddRecipes()

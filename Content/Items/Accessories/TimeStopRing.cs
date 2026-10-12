@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using TestMod.Common.Systems;
 using TestMod.Common.Mechanics.AccessoryEffects;
 using Terraria;
+using Terraria.Localization;
 using Terraria.ID;
 using Terraria.ModLoader;
 using TestMod.Content.Rarities;
@@ -33,9 +34,7 @@ namespace TestMod.Content.Items.Accessories
         {
             string keyText = KeybindUtils.GetKeyText(TimeStopKeybinds.TimeStopKey);
             tooltips.Add(new TooltipLine(Mod, "TimeStopDesc",
-                $"按 [{keyText}] 触发时停\n" +
-                $"时停期间所有敌方和敌方弹幕完全静止，玩家不受影响\n" +
-                $"持续 3 秒，冷却 30 秒"));
+                Language.GetTextValue("Mods.TestMod.Items.TimeStopRing.AbilityDescription", keyText)));
         }
 
         public override void AddRecipes()

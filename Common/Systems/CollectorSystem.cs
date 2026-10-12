@@ -1,5 +1,6 @@
 using System;
 using Terraria;
+using Terraria.Localization;
 using Terraria.DataStructures;
 using Terraria.ID;
 using Terraria.ModLoader;
@@ -93,7 +94,7 @@ namespace TestMod.Common.Systems
 
                 player.AddBuff(BuffID.Lucky, LuckyBuffDuration);
 
-                Main.NewText($"获得{platinum} 铂金 + {gold} 金币",
+                Main.NewText(Language.GetTextValue("Mods.TestMod.Items.CollectorItem.RewardMessage", platinum, gold),
                     new Microsoft.Xna.Framework.Color(255, 255, 100));
             }
         }

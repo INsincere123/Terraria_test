@@ -1,4 +1,5 @@
 using Terraria;
+using Terraria.Localization;
 using Terraria.ID;
 using Terraria.ModLoader;
 using TestMod.Common.Players;
@@ -18,7 +19,7 @@ namespace TestMod.Content.Items.Accessories
             Item.value     = Item.sellPrice(gold: 20);
         }
 
-        public override string BreakMessage => "天赐华冠已破碎";
+        public override string BreakMessage => Language.GetTextValue("Mods.TestMod.Items.HeavenlyCrown.BreakMessage");
 
         protected override void OnActiveStateChanged()
         {

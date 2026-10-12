@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Terraria;
+using Terraria.Localization;
 using Terraria.ID;
 using Terraria.ModLoader;
 using TestMod.Common.Players;
@@ -35,7 +36,7 @@ namespace TestMod.Content.Items.Tools
             var keys    = SuperRelocatorKeybind.Hotkey.GetAssignedKeys();
             string key  = keys.Count > 0 ? keys[0] : "?";
             tooltips.Add(new TooltipLine(Mod, "Hotkey",
-                $"[{key}] 传送到鼠标位置"));
+                Language.GetTextValue("Mods.TestMod.Items.SuperRelocator.HotkeyHint", key)));
         }
 
         public override void AddRecipes()

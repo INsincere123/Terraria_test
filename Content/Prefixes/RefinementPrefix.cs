@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Terraria;
+using Terraria.Localization;
 using Terraria.ModLoader;
 using TestMod.Common.Systems;
 using TestMod.Content.Items.DamageTypes;
@@ -64,7 +65,7 @@ namespace TestMod.Content.Prefixes
         // 护甲穿透在引擎 tooltip 里没有内置显示，手动追加一行
         public override IEnumerable<TooltipLine> GetTooltipLines(Item item)
         {
-            yield return new TooltipLine(Mod, "ArmorPen", $"+{ArmorPenetration} 护甲穿透")
+            yield return new TooltipLine(Mod, "ArmorPen", Language.GetTextValue("Mods.TestMod.PrefixTooltips.ArmorPenetration", ArmorPenetration))
             {
                 IsModifier    = true,
                 IsModifierBad = false,
