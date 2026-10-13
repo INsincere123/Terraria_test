@@ -21,6 +21,9 @@ namespace TestMod
 			{
 				switch (reader.ReadByte())
 				{
+					case OutlandCombatTechniquesSystem.UseRequestPacket:
+						OutlandCombatTechniquesSystem.ReceiveUseRequest(reader, whoAmI);
+						break;
 					case EnergyShieldPlayer.ShieldStatePacket:
 						EnergyShieldPlayer.ReceiveShieldState(reader, whoAmI);
 						break;

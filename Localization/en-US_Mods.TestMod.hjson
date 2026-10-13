@@ -1,3 +1,9 @@
+OutlandCombatTechniques: {
+	AlreadyUsed: 本世界已使用，无法再次使用
+	Volume1Used: 本世界的城镇居民掌握了外域战斗技术卷一！
+	Volume2Used: 本世界的城镇居民掌握了外域战斗技术卷二！
+}
+
 Configs: {
 	TestModServerConfig: {
 		DisplayName: TestMod 玩法设置
@@ -105,6 +111,27 @@ VortexAmmo: {
 }
 
 Items: {
+	OutlandCombatTechniquesVolumeOne: {
+		DisplayName: 外域战斗技术卷一
+		Tooltip:
+			'''
+			永久强化本世界的城镇居民：防御增加[c/6495ED:6]，伤害加成增加[c/FF8C00:20%]
+			可与先进战斗技术及其卷二叠加
+			每世界仅可使用[c/FFD700:一次]，使用后消耗
+			'''
+	}
+
+	OutlandCombatTechniquesVolumeTwo: {
+		DisplayName: 外域战斗技术卷二
+		Tooltip:
+			'''
+			永久强化本世界的城镇居民：防御增加[c/6495ED:100]，最大生命增加[c/6495ED:1000]
+			伤害提高[c/FF8C00:150%]，攻击速度提高[c/6495ED:50%]
+			可与外域战斗技术卷一和两本先进战斗技术叠加，无需先使用卷一
+			每世界仅可使用[c/FFD700:一次]，使用后消耗，不恢复当前生命
+			'''
+	}
+
 	StarfallObsidianEmblem: {
 		DisplayName: 星陨黑曜圣徽
 		Tooltip:
