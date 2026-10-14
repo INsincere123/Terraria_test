@@ -21,6 +21,9 @@ namespace TestMod
 			{
 				switch (reader.ReadByte())
 				{
+					case ScarecrowSystem.PlaceRequestPacket:
+						ScarecrowSystem.ReceivePlaceRequest(reader, whoAmI);
+						break;
 					case OutlandCombatTechniquesSystem.UseRequestPacket:
 						OutlandCombatTechniquesSystem.ReceiveUseRequest(reader, whoAmI);
 						break;

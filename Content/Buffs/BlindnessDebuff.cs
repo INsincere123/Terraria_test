@@ -3,8 +3,7 @@ using Terraria.ModLoader;
 
 namespace TestMod.Content.Buffs
 {
-    // 纯标记型 debuff，无逻辑。
-    // 实际失明行为由 GlobalNPC / GlobalProjectile 驱动。
+    // 仅保留旧内容身份；诱敌已改为独立的稻草人道具，本 Buff 不再提供效果。
     public class BlindnessDebuff : ModBuff
     {
         public override string Texture => "Terraria/Images/Buff_18"; // 借用黑暗 debuff 图标

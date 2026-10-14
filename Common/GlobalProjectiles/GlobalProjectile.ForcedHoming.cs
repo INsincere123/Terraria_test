@@ -20,6 +20,7 @@ namespace TestMod.Common.GlobalProjectiles
         public override void OnSpawn(Projectile projectile, IEntitySource source)
         {
             ProjectileLookup.Observe(projectile, this);
+            Decoy_OnSpawn(projectile, source);
             if (TimeEcho_OnSpawn(projectile, source)) return;
             VortexQuiver_OnSpawn(projectile, source);
             RangedMotion_OnSpawn(projectile, source);

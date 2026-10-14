@@ -15,13 +15,11 @@ namespace TestMod.Common.GlobalNPCs
                 return false;
             }
 
-            Blindness_PreAI(npc);
             return true;
         }
 
         public override void PostAI(NPC npc)
         {
-            Blindness_PostAI(npc);
             TimeStop_PostAI(npc);
         }
 

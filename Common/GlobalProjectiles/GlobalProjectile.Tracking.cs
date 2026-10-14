@@ -24,6 +24,7 @@ namespace TestMod.Common.GlobalProjectiles
 
         public override void SendExtraAI(Projectile projectile, BitWriter bitWriter, BinaryWriter binaryWriter)
         {
+            Decoy_Write(binaryWriter);
             bitWriter.WriteBit(IsTimeEchoAttack);
             if (IsTimeEchoAttack) TimeEcho_Write(projectile, binaryWriter);
             bitWriter.WriteBit(IsHomingTagged);
@@ -56,6 +57,7 @@ namespace TestMod.Common.GlobalProjectiles
 
         public override void ReceiveExtraAI(Projectile projectile, BitReader bitReader, BinaryReader binaryReader)
         {
+            Decoy_Read(binaryReader);
             IsTimeEchoAttack = bitReader.ReadBit();
             if (IsTimeEchoAttack) TimeEcho_Read(projectile, binaryReader);
             IsHomingTagged = bitReader.ReadBit();

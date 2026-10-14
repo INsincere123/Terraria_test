@@ -23,6 +23,9 @@ namespace TestMod.Common.GlobalNPCs
             => binaryWriter.Write(Generation);
 
         public override void ReceiveExtraAI(NPC npc, BitReader bitReader, BinaryReader binaryReader)
-            => Generation = binaryReader.ReadUInt32();
+        {
+            uint generation = binaryReader.ReadUInt32();
+            if (Main.netMode == NetmodeID.MultiplayerClient) Generation = generation;
+        }
     }
 }

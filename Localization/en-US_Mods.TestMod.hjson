@@ -1,3 +1,5 @@
+NPCs.ScarecrowDecoy.DisplayName: 诱敌稻草人
+
 OutlandCombatTechniques: {
 	AlreadyUsed: 本世界已使用，无法再次使用
 	Volume1Used: 本世界的城镇居民掌握了外域战斗技术卷一！
@@ -780,8 +782,19 @@ Items: {
 	}
 
 	DevTestAccessory: {
-		Tooltip: ""
+		Tooltip: 诱敌功能已移至独立道具‘诱敌稻草人’
 		DisplayName: Dev Test Accessory
+	}
+
+	ScarecrowLure: {
+		DisplayName: 诱敌稻草人
+		Tooltip:
+			'''
+			在鼠标指定的空位放置不可摧毁的稻草人，持续[c/FFD700:8秒]
+			吸引[c/FFD700:2400像素]内的敌人和Boss朝它移动与攻击
+			最远放置距离[c/FFD700:1000像素]
+			每人最多放置一个，再次使用替换旧稻草人
+			'''
 	}
 
 	OmniGuardianWingProxy: {
@@ -938,7 +951,7 @@ Buffs: {
 	}
 
 	BlindnessDebuff: {
-		Description: Boss的瞄准与部分弹幕追踪发生偏移
+		Description: 此效果已停用，请使用诱敌稻草人
 		DisplayName: 失明
 	}
 

@@ -73,9 +73,6 @@ namespace TestMod.Common.GlobalProjectiles
             if (TryFreezeOnTimeStop(projectile))
                 return false;
 
-            if (!Blindness_PreAI(projectile))
-                return false;
-
             // 红木魔石效果：钩爪飞行阶段速度 ×2
             GrappleEffect.TryBoostLaunchSpeed(projectile);
 
@@ -126,6 +123,9 @@ namespace TestMod.Common.GlobalProjectiles
 
         public override void SetDefaults(Projectile projectile)
         {
+            DecoySource = default;
+            DecoyExcluded = false;
+            DecoySelection.Reset();
             ApplySpiderSetDefaults(projectile);
             ApplyContactMinionSetDefaults(projectile);   // ① 冲撞型:独立无敌帧
             ApplyTerraprismaDefaults(projectile);
@@ -145,8 +145,6 @@ namespace TestMod.Common.GlobalProjectiles
                 RequestTrackingSync(projectile);
                 return;
             }
-            Blindness_PostAI(projectile);
-
             if (projectile.owner < 0 || projectile.owner >= Main.maxPlayers) return;
 
             Player player = Main.player[projectile.owner];
