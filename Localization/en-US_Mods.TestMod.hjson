@@ -113,6 +113,18 @@ VortexAmmo: {
 }
 
 Items: {
+	LifetakingSpear: {
+		DisplayName: 索命长矛
+		Tooltip:
+			'''
+			投出长矛，命中敌人后与其连接[c/FFD700:10秒]
+			连接期间，主动武器及其派生攻击无需命中也能伤害该敌人
+			同一次攻击机会只造成一次伤害，不叠加
+			不包括召唤物、哨兵和追加攻击
+			每次投掷后需等待[c/FFD700:30秒]
+			'''
+	}
+
 	OutlandCombatTechniquesVolumeOne: {
 		DisplayName: 外域战斗技术卷一
 		Tooltip:
@@ -962,6 +974,7 @@ Buffs: {
 }
 
 Projectiles: {
+	LifetakingSpearProjectile.DisplayName: 索命长矛
 	HeartsteelExtraHitProjectile.DisplayName: 心之钢
 	BerserkBladeExtraHitProjectile.DisplayName: 狂暴之刃
 	FocusExtraHitProjectile.DisplayName: 专注宝珠追加伤害
@@ -1098,3 +1111,4 @@ PrefixTooltips: {
 }
 
 RecipeGroups.AnyOOACombatAccessory: 任意旧日军团战斗饰品
+Lifetaking.Cooldown: 距离下次投掷还有[c/FFD700:{0}秒]

@@ -21,6 +21,12 @@ namespace TestMod
 			{
 				switch (reader.ReadByte())
 				{
+					case LifetakingPlayer.RequestPacketId:
+						LifetakingPlayer.ReceiveRequest(reader, whoAmI);
+						break;
+					case LifetakingPlayer.StatePacketId:
+						LifetakingPlayer.ReceiveState(reader);
+						break;
 					case ScarecrowSystem.PlaceRequestPacket:
 						ScarecrowSystem.ReceivePlaceRequest(reader, whoAmI);
 						break;
