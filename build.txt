@@ -1,6 +1,6 @@
 displayName = test
 author = Zelda
-version = 0.8.2
+version = 0.8.3
 modReferences = Luminance
 weakReferences = textranderingsystem, ColoredDamageTypes, MassReforge, FargowiltasSouls
-buildIgnore = *.csproj, *.user, *.sln, *.md, obj\*, bin\*, .vs\*, .git\*, .claude\*, .vscode\*, Luminance.dll, Luminance.pdb, Luminance.xml, TestMod.code-workspace, Properties\*, tree.txt, tree.bat, tree.py, .gitignore, fxc.exe, d3dcompiler_47.dll
+buildIgnore = *.csproj, *.csproj.*, *.user, *.suo, *.sln, *.slnx, *.code-workspace, *.md, *.log, *.lnk, *.bak, *.tmp, *.orig, *.rej, *.tmod, obj\*, bin\*, build\*, .vs\*, .git\*, .claude\*, .vscode\*, .codebase-memory\*, .gitignore, Properties\*, docs\*, Luminance.dll, Luminance.pdb, Luminance.xml, Assets\AutoloadedEffects\Compiler\*, tree.*, 文件树.txt, 待办.md, 待办.txt

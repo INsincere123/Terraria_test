@@ -603,6 +603,18 @@ Items: {
 		ExtraHitRule: "[c/AAAAAA:额外伤害为此次命中伤害的200%]"
 	}
 
+	SkywardSigil: {
+		DisplayName: 天俯印记
+		Tooltip:
+			'''
+			在Boss上方命中时获得俯瞰，每层[c/FF8C00:+5%]暴击伤害
+			在Boss下方命中时获得仰视，每层[c/FF6060:-5%]暴击伤害
+			俯瞰与仰视最多[c/FFD700:6层]，获得新层时优先抵消反向层数
+			每[c/FFD700:0.5秒]最多叠加一次，叠加时刷新共同的[c/FFD700:5秒]持续时间
+			[c/AAAAAA:满层后仍可刷新持续时间；卸下饰品时清空层数]
+			'''
+	}
+
 	BerserkBlade: {
 		DisplayName: 狂暴之刃
 		Tooltip:
@@ -950,6 +962,16 @@ Buffs: {
 	AdversityAdaptationBuff: {
 		DisplayName: 习难适应
 		Description: 对已适应的攻击每层减伤15%，最多75%；习难护符的四项基础加成翻倍
+	}
+
+	SkywardOverlookBuff: {
+		DisplayName: 俯瞰
+		Description: 每层提高5%暴击伤害，最多6层；显示抵消仰视后的层数
+	}
+
+	SkywardUpwardBuff: {
+		DisplayName: 仰视
+		Description: 每层降低5%暴击伤害，最多6层；显示抵消俯瞰后的层数
 	}
 
 	BerserkBladeBuff: {
