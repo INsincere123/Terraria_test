@@ -21,6 +21,9 @@ namespace TestMod
 			{
 				switch (reader.ReadByte())
 				{
+					case GodModePlayer.StatePacket:
+						GodModePlayer.ReceiveState(reader, whoAmI);
+						break;
 					case LifetakingPlayer.RequestPacketId:
 						LifetakingPlayer.ReceiveRequest(reader, whoAmI);
 						break;

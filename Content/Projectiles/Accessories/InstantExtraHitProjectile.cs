@@ -123,5 +123,4 @@ namespace TestMod.Content.Projectiles.Accessories
     public class HeartsteelExtraHitProjectile : InstantExtraHitProjectile { }
     public class BerserkBladeExtraHitProjectile : InstantExtraHitProjectile { }
     public class FocusExtraHitProjectile : InstantExtraHitProjectile { }
-    public class HarvestExtraHitProjectile : InstantExtraHitProjectile { }
 }

@@ -37,7 +37,7 @@ namespace TestMod.Common.GlobalProjectiles
                 _visibilityViewport = viewport;
                 System.Array.Clear(VisiblePhantasms);
                 int count = 0;
-                // 每 tick / 镜头变化仅扫描一次；原版、GodMode 和泰拉套等所有来源共享本地绘制额度。
+                // 每 tick / 镜头变化仅扫描一次；原版、强化武器和泰拉套等所有来源共享本地绘制额度。
                 for (int i = 0; i < Main.maxProjectiles && count < MaxVisiblePhantasms; i++)
                 {
                     Projectile candidate = Main.projectile[i];

@@ -1,7 +1,9 @@
 using System;
 using Terraria;
 using Terraria.ID;
-using TestMod.Common.Players;
+using TestMod.Common.DataStructures;
+using TestMod.Common.Systems;
+using ProjectileState = TestMod.Common.GlobalProjectiles.GlobalProjectile;
 
 namespace TestMod.Common.GlobalNPCs
 {
@@ -15,28 +17,25 @@ namespace TestMod.Common.GlobalNPCs
             ClearArmorShredIfExpired(npc);
             Electrified_UpdateLifeRegen(npc, ref damage);
 
-            if (!AnyPlayerInGodMode())
-                return;
-
-            if (npc.HasBuff(BuffID_Celled))
+            if (npc.HasBuff(BuffID_Celled) && HasAttachedPlus(npc, ProjectileID.StardustCellMinionShot, PlusWeaponKind.StardustCell))
             {
                 npc.lifeRegen -= 80 * 170;
                 damage = Math.Max(damage, 40 * 180);
             }
 
-            if (npc.HasBuff(BuffID_Daybroken))
+            if (npc.HasBuff(BuffID_Daybroken) && HasAttachedPlus(npc, ProjectileID.Daybreak, PlusWeaponKind.Daybreak))
             {
                 npc.lifeRegen -= 200 * 9;
                 damage = Math.Max(damage, 100 * 10);
             }
         }
 
-        private static bool AnyPlayerInGodMode()
+        private static bool HasAttachedPlus(NPC npc, int type, PlusWeaponKind kind)
         {
-            for (int i = 0; i < Main.maxPlayers; i++)
+            foreach (Projectile p in ProjectileLookup.OfType(type))
             {
-                Player player = Main.player[i];
-                if (player.active && player.GetModPlayer<GodModePlayer>().GodModeBuff)
+                if (p.ai[0] == 1f && p.ai[1] == npc.whoAmI && p.owner >= 0 && p.owner < Main.maxPlayers &&
+                    Main.player[p.owner].active && p.GetGlobalProjectile<ProjectileState>().HasPlusWeapon(kind))
                     return true;
             }
 

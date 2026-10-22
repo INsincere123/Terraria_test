@@ -1,6 +1,7 @@
 using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
+using TestMod.Content.Items.Weapons.Plus;
 
 namespace TestMod.Common.Players
 {
@@ -18,7 +19,7 @@ namespace TestMod.Common.Players
                 Player.whipRangeMultiplier *= held.scale;
             }
 
-            if (Player.GetModPlayer<GodModePlayer>().GodModeBuff && held.type == ItemID.RainbowWhip)
+            if (held.ModItem is KaleidoscopePlus)
                 Player.whipRangeMultiplier *= 1.5f;
         }
     }

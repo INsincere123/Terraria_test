@@ -7,6 +7,7 @@ namespace TestMod.Common.GlobalItems
     {
         public override void UseAnimation(Item item, Player player)
         {
+            PlusWeapons_UseAnimation(item, player);
             if (player.TryGetModPlayer(out TimeEchoPlayer echo)) echo.BeginMeleeSwing();
         }
     }

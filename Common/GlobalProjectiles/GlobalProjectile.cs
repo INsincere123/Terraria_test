@@ -3,7 +3,7 @@ using Terraria.ID;
 using Terraria.ModLoader;
 using Microsoft.Xna.Framework;
 using System;
-using TestMod.Content.Buffs;
+using TestMod.Common.DataStructures;
 using TestMod.Common.Compatibility;
 using TestMod.Common.Players;
 using TestMod.Common.Systems;
@@ -22,9 +22,6 @@ namespace TestMod.Common.GlobalProjectiles
     public partial class GlobalProjectile : Terraria.ModLoader.GlobalProjectile
     {
         public override bool InstancePerEntity => true;
-
-        // 万花筒连击衰减系数
-        public float currentWhipDecay = 1f;
 
         // Subhand 自己发出的原版 MagnetSphereBolt 用这个标记接管伤害数字，避免影响原版磁球武器。
         public bool subhandDynamicText;
@@ -123,6 +120,8 @@ namespace TestMod.Common.GlobalProjectiles
 
         public override void SetDefaults(Projectile projectile)
         {
+            PlusWeapon = PlusWeaponKind.None;
+            ExcludedFromGodSmith = false;
             DecoySource = default;
             DecoyExcluded = false;
             DecoySelection.Reset();
@@ -150,20 +149,18 @@ namespace TestMod.Common.GlobalProjectiles
             Player player = Main.player[projectile.owner];
             if (!player.active) return;
 
-            bool godMode = player.GetModPlayer<GodModePlayer>().GodModeBuff;
-
             // ─────────────── 专属处理分支 (优先级最高) ───────────────
 
             // 排除名单优先于所有专属和通用追踪，仍保留末尾公共处理。
             if (VanillaMinionExclusions.Contains(projectile.type))
             {
-                // 保持原版本体 AI；GodMode 等伤害强化由命中路径独立处理。
+                // 保持原版本体 AI；强化武器的伤害由来源标记独立处理。
             }
             else if (projectile.type == ProjectileID.AbigailMinion || projectile.type == ProjectileID.EmpressBlade)
             {
                 // PreAI 已完整处理攻击运动，保留末尾公共处理与同步。
             }
-            // 🐉 星尘龙（仅龙头；追踪不依赖 GodMode，GodMode 保留伤害强化）
+            // 🐉 星尘龙（仅龙头；通用追踪与强化武器的伤害分别处理）
             else if (ProjectileID.Sets.StardustDragon[projectile.type])
             {
                 if (projectile.type == ProjectileID.StardustDragon1)
@@ -180,7 +177,7 @@ namespace TestMod.Common.GlobalProjectiles
             // 🌌 星云烈焰普通弹 + Ex弹：环射 + 2400px 通用追踪范围
             else if (projectile.type == ProjectileID.NebulaBlaze1 || projectile.type == ProjectileID.NebulaBlaze2)
             {
-                if (godMode)
+                if (HasPlusWeapon(PlusWeaponKind.NebulaBlaze))
                 {
                     TrySpawnNebulaBlazeRing(projectile);
                     ApplyNebulaBlazeBoostedTracking(projectile);
@@ -189,7 +186,7 @@ namespace TestMod.Common.GlobalProjectiles
             // ☀️ 破晓之光矛（仅飞行中追踪，插入敌人后不再干预）
             else if (projectile.type == ProjectileID.Daybreak)
             {
-                if (godMode && projectile.ai[0] == 0)
+                if (HasPlusWeapon(PlusWeaponKind.Daybreak) && projectile.ai[0] == 0)
                     ApplyDaybreakTracking(projectile);
             }
             // 🕷️ 蜘蛛法杖：独立无敌帧 + 扩展瞄准/返回范围
@@ -234,7 +231,7 @@ namespace TestMod.Common.GlobalProjectiles
         }
 
         // ══════════════════════════════════════════════════════════════
-        //   ModifyHitNPC — 伤害修正（godMode 开启时生效）
+        //   ModifyHitNPC — 通用伤害规则与独立强化武器
         // ══════════════════════════════════════════════════════════════
         public override void ModifyHitNPC(Projectile projectile, NPC target, ref NPC.HitModifiers modifiers)
         {
@@ -243,7 +240,7 @@ namespace TestMod.Common.GlobalProjectiles
             Player player = Main.player[projectile.owner];
             if (projectile.ModProjectile is InstantExtraHitProjectile) return;
 
-            // 真实伤害：无视防御（不依赖 godMode）；通用减伤由 TrueDamageSystem 在最终计算时处理。
+            // 真实伤害：无视防御（不依赖强化武器）；通用减伤由 TrueDamageSystem 在最终计算时处理。
             if (projectile.DamageType == TrueDamageClass.Instance)
             {
                 modifiers.ScalingArmorPenetration += 1f;
@@ -269,41 +266,16 @@ namespace TestMod.Common.GlobalProjectiles
             if (player.active && player.GetModPlayer<BloodFeedPlayer>().IsBerserk)
                 modifiers.ScalingArmorPenetration += 1f;
 
-            // 鞭子 tag 效果：不依赖 godMode
+            // 鞭子 tag 效果：不依赖强化武器
             WhipTag_ModifyHitNPC(projectile, target, ref modifiers);
 
-            if (!player.active || !player.GetModPlayer<GodModePlayer>().GodModeBuff) return;
-
-            // 🐉 星尘龙 ×8
-            if (ProjectileID.Sets.StardustDragon[projectile.type])
-                modifiers.SourceDamage *= 8f;
-            // 🧠 星尘细胞本体 + 子细胞 ×15
-            else if (projectile.type == ProjectileID.StardustCellMinion ||
-                     projectile.type == ProjectileID.StardustCellMinionShot)
-                modifiers.SourceDamage *= 15f;
-            // ✨ 泰拉棱镜 ×11
-            else if (projectile.type == ProjectileID.EmpressBlade)
-                modifiers.SourceDamage *= 11f;
-            // 🌙 月亮传送门激光 ×13
-            else if (projectile.type == ProjectileID.MoonlordTurretLaser)
-                modifiers.SourceDamage *= 13f;
-            // 🌈 七彩水晶本体 + 爆炸 ×10
-            else if (projectile.type == ProjectileID.RainbowCrystal || projectile.type == ProjectileID.RainbowCrystalExplosion)
-                modifiers.SourceDamage *= 10f;
-
-            // 🪢 万花筒衰减（用独立 if，确保鞭子能同时应用其他倍率）
-            if (ProjectileID.Sets.IsAWhip[projectile.type])
-            {
-                modifiers.SourceDamage *= currentWhipDecay;
-                currentWhipDecay *= 0.95f;
-            }
+            if (player.active) PlusWeapon_ModifyHit(projectile, ref modifiers);
         }
 
         // ══════════════════════════════════════════════════════════════
         //   OnHitNPC — 命中后特效
         //
-        //   · 冲撞型召唤物的"弹开"是 QoL 功能,不依赖 godMode
-        //   · 其余特效需 godMode 开启
+        //   · 冲撞型召唤物的"弹开"是 QoL 功能,不依赖强化武器
         // ══════════════════════════════════════════════════════════════
         public override void OnHitNPC(Projectile projectile, NPC target, NPC.HitInfo hit, int damageDone)
         {
@@ -332,7 +304,7 @@ namespace TestMod.Common.GlobalProjectiles
                     TestModTextStyles.Subhand);
             }
 
-            // 额外伤害只完成投送和数字显示，不再次触发追加攻击、鞭爆炸或收割。
+            // 额外伤害只完成投送和数字显示，不再次触发追加攻击或鞭爆炸。
             if (IsExtraHit || IsTimeEchoAttack) return;
 
             VortexQuiver_OnHitNPC(projectile, target);
@@ -342,38 +314,19 @@ namespace TestMod.Common.GlobalProjectiles
             if (projectile.friendly && !projectile.hostile)
                 player.GetModPlayer<OnHitEffectsPlayer>().DispatchProjectileHit(projectile, target, hit, damageDone);
 
-            // 💥 ① 冲撞型召唤物 (含蜘蛛) 命中后弹开 ── 不需 godMode
+            // 💥 ① 冲撞型召唤物 (含蜘蛛) 命中后弹开 ── 不需强化武器
             //    防止贴在 boss 身上空转无敌帧
             if (IsContactMinion(projectile) || IsSpiderMinion(projectile.type))
             {
                 ApplyContactMinionBounce(projectile, target);
             }
 
-            // 🪢 鞭子 tag 效果：不依赖 godMode
+            // 🪢 鞭子 tag 效果：不依赖强化武器
             WhipTag_OnHitNPC(projectile, target, hit, damageDone);
 
-            // 星尘龙命中后的 3 次 AI 更新停追属于运动规则，不受 GodMode 开关影响。
+            // 星尘龙命中后的 3 次 AI 更新停追属于所有星尘龙共用的运动规则。
             if (ProjectileID.Sets.StardustDragon[projectile.type])
                 _dragonTrackingCooldown = 3;
-
-            // ─────────────── 以下为 godMode 专属效果 ───────────────
-            if (!player.GetModPlayer<GodModePlayer>().GodModeBuff) return;
-
-            // 🪢 鞭子命中：打暗印 + 重置衰减 
-            if (ProjectileID.Sets.IsAWhip[projectile.type])
-            {
-                target.AddBuff(ModContent.BuffType<DarkMarkBuff>(), 600);
-                currentWhipDecay = 1f;
-            }
-
-            // 💀 召唤物命中带暗印的敌人：触发收割
-            if ((projectile.minion ||
-                 ProjectileID.Sets.MinionShot[projectile.type] ||
-                 ProjectileID.Sets.SentryShot[projectile.type]) &&
-                target.HasBuff(ModContent.BuffType<DarkMarkBuff>()))
-            {
-                DoHarvest(target, player);
-            }
         }
     }
 }

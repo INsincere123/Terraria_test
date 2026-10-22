@@ -19,9 +19,11 @@ namespace TestMod.Common.GlobalProjectiles
 
         public override void OnSpawn(Projectile projectile, IEntitySource source)
         {
+            MarkGodSmithIsolation(projectile, source);
             ProjectileLookup.Observe(projectile, this);
             Decoy_OnSpawn(projectile, source);
             if (TimeEcho_OnSpawn(projectile, source)) return;
+            PlusWeapon_OnSpawn(projectile, source);
             VortexQuiver_OnSpawn(projectile, source);
             RangedMotion_OnSpawn(projectile, source);
             // 只对玩家直接使用物品生成的弹幕打标记；衍生弹幕不消耗追踪次数。

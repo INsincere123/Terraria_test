@@ -16,7 +16,7 @@ namespace TestMod.Common.GlobalProjectiles
         //
         //   从 WhipTagRegistry 读取每个 tag 的参数，不硬编码任何数值。
         //   注册新鞭子只需在 WhipTagRegistry.PostSetupContent() 里加一行。
-        //   由主文件的 ModifyHitNPC / OnHitNPC 调用，不依赖 godMode。
+        //   由主文件的 ModifyHitNPC / OnHitNPC 调用，普通与强化鞭子共用。
         // ══════════════════════════════════════════════════════════════
 
         /// <summary>

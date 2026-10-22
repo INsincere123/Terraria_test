@@ -6,6 +6,7 @@ using Terraria.ID;
 using Terraria.ModLoader;
 using Terraria.ModLoader.IO;
 using TestMod.Common.Utilities;
+using TestMod.Common.DataStructures;
 
 namespace TestMod.Common.GlobalProjectiles
 {
@@ -40,6 +41,9 @@ namespace TestMod.Common.GlobalProjectiles
             bitWriter.WriteBit(IsExtraHit);
             bitWriter.WriteBit(ExtraHitUseCrit);
             bitWriter.WriteBit(ExtraHitIgnoreDefense);
+            bitWriter.WriteBit(ExcludedFromGodSmith);
+            binaryWriter.Write((byte)PlusWeapon);
+            if (PlusWeapon != PlusWeaponKind.None) binaryWriter.Write(projectile.originalDamage);
             bitWriter.WriteBit(subhandDynamicText);
             bitWriter.WriteBit(_bloodFeedPenetrationOverridden);
             BloodFeed_WritePenetration(binaryWriter);
@@ -74,6 +78,10 @@ namespace TestMod.Common.GlobalProjectiles
             IsExtraHit = bitReader.ReadBit();
             ExtraHitUseCrit = bitReader.ReadBit();
             ExtraHitIgnoreDefense = bitReader.ReadBit();
+            ExcludedFromGodSmith = bitReader.ReadBit();
+            byte plusKind = binaryReader.ReadByte();
+            int plusDamage = plusKind != 0 ? binaryReader.ReadInt32() : 0;
+            PlusWeapon_Read(projectile, plusKind, plusDamage);
             subhandDynamicText = bitReader.ReadBit();
             Seals_SetRocketExtraUpdates(projectile, rangerExtra && vortexAmmoCategory == AmmoID.Rocket &&
                 !IsExtraHit && !IsTimeEchoAttack && !projectile.npcProj && !projectile.trap);

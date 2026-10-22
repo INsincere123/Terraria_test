@@ -9,9 +9,6 @@ namespace TestMod.Common.GlobalItems
 {
     public partial class GlobalItem : Terraria.ModLoader.GlobalItem
     {
-        private static bool IsGodMode(Player player) =>
-            player?.active == true && player.GetModPlayer<GodModePlayer>().GodModeBuff;
-
         public override void SetDefaults(Item item)
         {
             if (item.type == ItemID.AmethystHook)

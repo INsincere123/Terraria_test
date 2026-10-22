@@ -6,6 +6,7 @@ using Terraria.Audio;
 using Terraria.DataStructures;
 using Terraria.ID;
 using Terraria.ModLoader;
+using TestMod.Content.Items.Weapons.Plus;
 
 namespace TestMod.Content.Projectiles.Ranged
 {
@@ -38,7 +39,7 @@ namespace TestMod.Content.Projectiles.Ranged
             // 玩家不能继续使用就销毁
             if (!player.active || player.dead || player.noItems || player.CCed
             || !player.HasAmmo(player.HeldItem)
-            || player.HeldItem.type != ItemID.Phantasm
+            || player.HeldItem.ModItem is not PhantasmPlus
             || !player.channel)  // 松开鼠标时 channel 为 false
             {
                 Projectile.Kill();
@@ -82,8 +83,8 @@ namespace TestMod.Content.Projectiles.Ranged
             if (Main.myPlayer != Projectile.owner) return;
 
             // 拾取弹药
-            player.PickAmmo(player.HeldItem, out _, out float shootSpeed,
-                out int arrowDamage, out float arrowKnockback, out _);
+            if (!player.PickAmmo(player.HeldItem, out _, out float shootSpeed,
+                out int arrowDamage, out float arrowKnockback, out _)) return;
 
             float spread = MathHelper.ToRadians(6f);
             int arrowCount = 2;
