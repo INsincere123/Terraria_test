@@ -1,3 +1,4 @@
+using TestMod.Content.Rarities;
 using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
@@ -17,7 +18,7 @@ namespace TestMod.Content.Items.Tools
             Item.consumable = true;
             Item.useStyle = ItemUseStyleID.HoldUp;
             Item.useTime = Item.useAnimation = 30;
-            Item.rare = ItemRarityID.Purple;
+            Item.rare = ModContent.RarityType<ChronocrystalRarity>();
             Item.value = 0;
         }
 

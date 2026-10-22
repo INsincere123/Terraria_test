@@ -1,3 +1,4 @@
+using TestMod.Content.Rarities;
 using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
@@ -13,7 +14,7 @@ namespace TestMod.Content.Items.Accessories
             Item.height = 30;
             Item.accessory = true;
             Item.value = Item.sellPrice(gold: 15);
-            Item.rare = ItemRarityID.Red;
+            Item.rare = ModContent.RarityType<AuroraRarity>();
         }
 
         public override void UpdateAccessory(Player player, bool hideVisual)

@@ -10,16 +10,6 @@ namespace TestMod.Common.Systems
 {
     public partial class CalamityCompatSystem : ModSystem
     {
-        // ╔══════════════════════════════════════════════════════╗
-        // ║           灾厄稀有度调整区域                         ║
-        // ║  ApplyRarity  灾厄加载时覆盖的灾厄稀有度内部类名     ║
-        // ║  未加载灾厄时物品保持各自 SetDefaults 里的原版稀有度 ║
-        // ╚══════════════════════════════════════════════════════╝
-        public const string ApplyRarity = "CalamityRed"; // ← 在这里修改
-
-        // ── 运行时稀有度缓存（-2 = 灾厄未加载，不覆盖）────────
-        public static int CalamityRarity = -2;
-
         // ── 灾厄加载状态 ─────────────────────────────────────
         public static bool CalamityLoaded { get; private set; }
 
@@ -38,10 +28,6 @@ namespace TestMod.Common.Systems
         {
             CalamityLoaded = ModLoader.TryGetMod("CalamityMod", out Mod cal);
             if (!CalamityLoaded) return;
-
-            // 缓存稀有度 ID
-            if (ModContent.TryFind<ModRarity>("CalamityMod", ApplyRarity, out var rarity))
-                CalamityRarity = rarity.Type;
 
             // 缓存 CalamityPlayer 类型及所需字段
             _calPlayerType      = cal.Code.GetType("CalamityMod.CalPlayer.CalamityPlayer");
@@ -117,7 +103,6 @@ namespace TestMod.Common.Systems
             _gSabatonField = null;
             _fearmongerSetField = null;
             CalamityLoaded = false;
-            CalamityRarity = -2;
         }
 
         // ── 快速下落兼容：设置 gSabaton 标志，激活灾厄 Stompers 加速逻辑 ─

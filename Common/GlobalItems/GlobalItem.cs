@@ -39,6 +39,13 @@ namespace TestMod.Common.GlobalItems
                 if (item.rare == ModContent.RarityType<AntaresRarity>())
                     return !TextRenderingBridge.TryDrawTooltipLine(item, line, TestModTextStyles.RarityAntares);
 
+                if (item.rare == ModContent.RarityType<AuroraRarity>())
+                    return !TextRenderingBridge.TryDrawTooltipLine(item, line, TestModTextStyles.RarityAurora);
+                if (item.rare == ModContent.RarityType<EmberCrownRarity>())
+                    return !TextRenderingBridge.TryDrawTooltipLine(item, line, TestModTextStyles.RarityEmberCrown);
+                if (item.rare == ModContent.RarityType<ChronocrystalRarity>())
+                    return !TextRenderingBridge.TryDrawTooltipLine(item, line, TestModTextStyles.RarityChronocrystal);
+
                 return true;
             }
 

@@ -1,3 +1,4 @@
+using TestMod.Content.Rarities;
 using Terraria;
 using Terraria.ID;
 using Terraria.Localization;
@@ -75,9 +76,7 @@ namespace TestMod.Content.Items.Armor.UltimateArmor
             Item.width = 22;
             Item.height = 20;
             Item.value = 1000000;
-            Item.rare = ItemRarityID.Red;
-            if (CalamityCompatSystem.CalamityLoaded)
-                Item.rare = CalamityCompatSystem.CalamityRarity;
+            Item.rare = ModContent.RarityType<AntaresRarity>();
             Item.defense = Defense;
         }
 

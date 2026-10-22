@@ -16,7 +16,7 @@ namespace TestMod.Content.Items.Accessories
             Item.width = 32;
             Item.height = 32;
             Item.accessory = true;
-            Item.rare = ModContent.RarityType<AntaresRarity>();
+            Item.rare = ModContent.RarityType<EmberCrownRarity>();
             Item.value = Item.sellPrice(gold: 10);
         }
 

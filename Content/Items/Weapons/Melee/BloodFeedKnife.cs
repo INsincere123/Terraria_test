@@ -1,3 +1,4 @@
+using TestMod.Content.Rarities;
 using System;
 using Microsoft.Xna.Framework;
 using Terraria;
@@ -39,7 +40,7 @@ namespace TestMod.Content.Items.Weapons.Melee
             Item.shoot        = ModContent.ProjectileType<BloodFeedKnifeProj>();
             Item.shootSpeed   = ShootSpeed;
             Item.value        = Item.sellPrice(gold: 20);
-            Item.rare         = ItemRarityID.Pink;
+            Item.rare = ModContent.RarityType<EmberCrownRarity>();
             Item.autoReuse    = true;
         }
 

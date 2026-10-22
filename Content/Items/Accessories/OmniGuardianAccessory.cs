@@ -104,8 +104,6 @@ namespace TestMod.Content.Items.Accessories
             Item.accessory = true;
             Item.value = Item.sellPrice(platinum: 100);
             Item.rare  = ModContent.RarityType<AntaresRarity>();
-            if (CalamityCompatSystem.CalamityLoaded)
-                Item.rare = CalamityCompatSystem.CalamityRarity;
         }
 
         public override void UpdateAccessory(Player player, bool hideVisual)

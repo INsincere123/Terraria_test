@@ -1,3 +1,4 @@
+using TestMod.Content.Rarities;
 using System.Collections.Generic;
 using Terraria;
 using Terraria.ID;
@@ -15,7 +16,7 @@ namespace TestMod.Content.Items.Accessories
             Item.width = 32;
             Item.height = 32;
             Item.accessory = true;
-            Item.rare = ItemRarityID.Pink;
+            Item.rare = ModContent.RarityType<AuroraRarity>();
             Item.value = Item.sellPrice(gold: 5);
         }
 

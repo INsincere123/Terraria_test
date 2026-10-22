@@ -8,6 +8,8 @@ namespace TestMod.Content.Rarities
         public static readonly Color ColorA = new(30, 60, 180);
         public static readonly Color ColorB = new(90, 20, 160);
 
+        public override int GetPrefixedRarity(int offset, float valueMult) => Type;
+
         public override Color RarityColor => Color.Lerp(ColorA, ColorB, 0.5f) * 2f;
     }
 }

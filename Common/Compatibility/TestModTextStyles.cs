@@ -23,6 +23,10 @@ namespace TestMod.Common.Compatibility
         public const string RarityEventHorizonTooltip = "Rarity.EventHorizon.Tooltip";
         public const string RarityTerra = "Rarity.Terra";
 
+        public const string RarityAurora = "Rarity.Aurora";
+        public const string RarityEmberCrown = "Rarity.EmberCrown";
+        public const string RarityChronocrystal = "Rarity.Chronocrystal";
+
         public static Color GetFallbackColor(string key) => key switch
         {
             DamageMelee => new Color(255, 24, 34),
@@ -40,6 +44,9 @@ namespace TestMod.Common.Compatibility
             RarityAntares => new Color(30, 60, 180),
             RarityEventHorizon => new Color(224, 237, 255),
             RarityEventHorizonTooltip => Color.White,
+            RarityAurora => new Color(101, 231, 220),
+            RarityEmberCrown => new Color(242, 103, 55),
+            RarityChronocrystal => new Color(190, 225, 248),
             RarityTerra => new Color(36, 184, 106),
             _ => new Color(180, 50, 255)
         };

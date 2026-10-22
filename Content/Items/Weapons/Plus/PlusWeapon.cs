@@ -5,6 +5,7 @@ using Terraria.ID;
 using Terraria.ModLoader;
 using TestMod.Common.DataStructures;
 using TestMod.Common.Systems;
+using TestMod.Content.Rarities;
 using TestMod.Content.Projectiles.Ranged;
 
 namespace TestMod.Content.Items.Weapons.Plus
@@ -29,8 +30,7 @@ namespace TestMod.Content.Items.Weapons.Plus
         public override void SetDefaults()
         {
             Item.CloneDefaults(Definition.OriginalType);
-            Item.rare = CalamityCompatSystem.CalamityRarity >= 0
-                ? CalamityCompatSystem.CalamityRarity : ItemRarityID.Purple;
+            Item.rare = ModContent.RarityType<AntaresRarity>();
         }
 
         public override void ModifyWeaponDamage(Player player, ref StatModifier damage) => damage *= Definition.WeaponDamage;

@@ -21,7 +21,7 @@ namespace TestMod.Content.Items.Accessories
             Item.width = 22;
             Item.height = 22;
             Item.accessory = true;
-            Item.rare = ModContent.RarityType<AntaresRarity>();
+            Item.rare = ModContent.RarityType<ChronocrystalRarity>();
             Item.value = Item.sellPrice(gold: 5);
         }
 

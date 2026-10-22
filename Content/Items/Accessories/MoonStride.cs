@@ -23,7 +23,7 @@ namespace TestMod.Content.Items.Accessories
             Item.accessory = true;
             Item.defense = 10;
             Item.value = Item.sellPrice(platinum: 2);
-            Item.rare = ModContent.RarityType<AntaresRarity>();
+            Item.rare = ModContent.RarityType<AuroraRarity>();
         }
 
         public override void UpdateAccessory(Player player, bool hideVisual)
