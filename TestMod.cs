@@ -42,6 +42,15 @@ namespace TestMod
 					case CultistSummonSystem.SummonRequestPacket:
 						CultistSummonSystem.ReceiveSummonRequest(reader, whoAmI);
 						break;
+					case TheSonSummonSystem.SummonRequestPacket:
+						TheSonSummonSystem.ReceiveSummonRequest(reader, whoAmI);
+						break;
+					case WallofShadowArenaSystem.RequestPacket:
+						WallofShadowArenaSystem.ReceiveRequest(whoAmI);
+						break;
+					case WallofShadowArenaSystem.StatePacket:
+						WallofShadowArenaSystem.ReceiveState(reader);
+						break;
 					case CultistSummonSystem.SummonSoundPacket:
 						CultistSummonSystem.ReceiveSummonSound(reader);
 						break;

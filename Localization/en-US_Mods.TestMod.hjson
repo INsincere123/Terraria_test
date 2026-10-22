@@ -357,6 +357,125 @@ Items: {
 		Tooltip: 旧版饰品重铸券，当前无法使用。启用 MassReforge 后重新进入世界，可自动换为新版重铸券。
 	}
 
+	SlimeGodSummon: {
+		DisplayName: 史莱姆之神召唤物
+		Tooltip:
+			'''
+			召唤史莱姆之神
+			可在任意时间和地点使用
+			史莱姆之神已存在时无法使用
+			使用后不消耗
+			'''
+	}
+
+	TheOverwatcherSummon: {
+		DisplayName: 极视终表召唤物
+		Tooltip:
+			'''
+			召唤极视终表
+			可在任意时间和地点使用
+			极视终表已存在时无法使用
+			使用后不消耗
+			'''
+	}
+
+	TheLifebringerSummon: {
+		DisplayName: 万籁携生召唤物
+		Tooltip:
+			'''
+			召唤万籁携生
+			可在任意时间和地点使用
+			万籁携生已存在时无法使用
+			使用后不消耗
+			'''
+	}
+
+	TheMaterealizerSummon: {
+		DisplayName: 化物天匠召唤物
+		Tooltip:
+			'''
+			召唤化物天匠
+			可在任意时间和地点使用
+			化物天匠已存在时无法使用
+			使用后不消耗
+			'''
+	}
+
+	ScarabBeliefSummon: {
+		DisplayName: 圣甲虫信仰召唤物
+		Tooltip:
+			'''
+			召唤圣甲虫信仰
+			可在任意时间和地点使用
+			圣甲虫信仰已存在时无法使用
+			使用后不消耗
+			'''
+	}
+
+	WorldsEndEverlastingFallingWhaleSummon: {
+		DisplayName: 世末·永落鲸召唤物
+		Tooltip:
+			'''
+			召唤世末·永落鲸
+			可在任意时间和地点使用
+			世末·永落鲸已存在时无法使用
+			使用后不消耗
+			'''
+	}
+
+	WallofShadowSummon: {
+		DisplayName: 暗影墙召唤物
+		Tooltip:
+			'''
+			临时生成[c/FFD700:74×44格]的黑暗封印并召唤暗影墙
+			战斗结束后撤离场内玩家并恢复原地形
+			附近有Boss、家具、住房背景墙、线路或模组地形时无法生成
+			使用后不消耗
+			'''
+		UnsafeArea: 附近没有足够的安全空间，无法生成黑暗封印。请避开建筑、家具、线路、模组地形及世界边缘。
+		Unavailable: 临时场地当前不可用，请查看日志。
+		CheckWaiting: 【暗影墙检测】正在等待服务器检查当前位置。
+		CheckPlayer: 【暗影墙检测】当前玩家无法召唤。
+		CheckNotReady: 【暗影墙检测】封印场地暂不可用，请查看加载日志。
+		CheckRecovery: 【暗影墙检测】上一次场地尚未完成恢复，暂时无法创建新场地。
+		CheckLimit: 【暗影墙检测】本次游戏创建的场地数量已达上限，请保存退出后重新进入。
+		CheckActive: 【暗影墙检测】已有临时封印正在使用或清理，请稍后再试。
+		CheckPosition: 【暗影墙检测】当前位置无效，无法确定场地范围。
+		CheckSameBoss: 【暗影墙检测】世界中已有暗影墙，无法重复召唤。
+		CheckHeldItem: 【暗影墙检测】请保持手持暗影墙召唤物后再试。
+		CheckStart: 【暗影墙检测】场地左上角为（{0}，{1}），大小74×44格，包含边缘检查共80×50格。以下位置均为物块坐标。
+		CheckBoundary: 【暗影墙检测】场地过于靠近世界边缘，请向世界内部移动。
+		CheckSpecialObject: 【暗影墙检测】（{0}，{1}）存在特殊家具或设施，无法覆盖。
+		CheckChest: 【暗影墙检测】（{0}，{1}）存在箱子，无法覆盖。
+		CheckSign: 【暗影墙检测】（{0}，{1}）存在标牌，无法覆盖。
+		CheckBoss: 【暗影墙检测】世界中存在Boss：{0}，请先结束当前战斗。
+		CheckTownNPC: 【暗影墙检测】附近存在城镇NPC：{0}，请换一个位置。
+		CheckModTile: 【暗影墙检测】（{0}，{1}）存在模组或未加载的地形，无法覆盖。
+		CheckModWall: 【暗影墙检测】（{0}，{1}）存在模组或未加载的背景墙，无法覆盖。
+		CheckRestrictedTile: 【暗影墙检测】（{0}，{1}）存在不可覆盖的方块、家具或植物，请换一个位置。
+		CheckHousingWall: 【暗影墙检测】（{0}，{1}）存在住房背景墙，无法覆盖。
+		CheckPaint: 【暗影墙检测】（{0}，{1}）存在涂漆的方块或背景墙，无法覆盖。
+		CheckWire: 【暗影墙检测】（{0}，{1}）存在电线或制动器，无法覆盖。
+		CheckCoating: 【暗影墙检测】（{0}，{1}）存在发光或隐形涂层，无法覆盖。
+		CheckBorderLiquid: 【暗影墙检测】边缘（{0}，{1}）存在液体，请远离液体或换一个位置。
+		CheckBorderFalling: 【暗影墙检测】边缘（{0}，{1}）存在可能下落的方块，请换一个位置。
+		CheckTerrainPassed: 【暗影墙检测】地形检查通过，未发现阻挡。
+		CheckNoExit: 【暗影墙检测】附近找不到干燥且不被阻挡的撤离位置，已取消召唤。
+		CheckExitPassed: 【暗影墙检测】撤离位置检查通过，出口为（{0}，{1}）。
+		CheckCreated: 【暗影墙检测】封印场地已生成，暗影墙已召唤。
+	}
+
+	TheSonSummon: {
+		DisplayName: 圣子召唤物
+		Tooltip:
+			'''
+			召唤圣子
+			可在任意时间和地点使用
+			圣子已存在时无法使用
+			使用后不消耗
+			'''
+	}
+
 	CultistSummon: {
 		DisplayName: 狂信者的遗物
 		Tooltip:
