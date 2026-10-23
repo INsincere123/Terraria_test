@@ -4,6 +4,7 @@ using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
 using TestMod.Content.Items.DamageTypes;
+using TestMod.Content.Projectiles.Accessories;
 
 namespace TestMod.Common.Compatibility
 {
@@ -11,20 +12,48 @@ namespace TestMod.Common.Compatibility
     public static class TextRenderingBridge
     {
         private static Mod renderer;
+        private static Mod exclusionRenderer;
         private static bool loggedFailure;
 
         internal static void Load()
         {
             loggedFailure = false;
             renderer = null;
+            exclusionRenderer = null;
             if (!Main.dedServ)
+            {
                 ModLoader.TryGetMod("textranderingsystem", out renderer);
+                Mod target = renderer;
+                if (Call("RegisterCombatTextExclusions", ModContent.GetInstance<global::TestMod.TestMod>(),
+                    (Func<Item, bool>)ExcludeAutomaticCombatItem, (Func<Projectile, bool>)ExcludeAutomaticCombatProjectile) is true)
+                    exclusionRenderer = target;
+            }
         }
 
         internal static void Unload()
         {
+            // 保留独立注册引用：普通文字接口本轮失败后，也仍能注销排除规则。
+            if (exclusionRenderer is not null)
+            {
+                try { exclusionRenderer.Call("UnregisterCombatTextExclusions", ModContent.GetInstance<global::TestMod.TestMod>()); }
+                catch (Exception exception)
+                {
+                    ModContent.GetInstance<global::TestMod.TestMod>().Logger.Warn($"Could not unregister combat text exclusions: {exception}");
+                }
+            }
+            exclusionRenderer = null;
             renderer = null;
             loggedFailure = false;
+        }
+
+        private static bool ExcludeAutomaticCombatItem(Item item) => item.DamageType == TrueDamageClass.Instance;
+
+        private static bool ExcludeAutomaticCombatProjectile(Projectile projectile)
+        {
+            if (projectile.DamageType == TrueDamageClass.Instance || projectile.ModProjectile is InstantExtraHitProjectile)
+                return true;
+            var state = projectile.GetGlobalProjectile<global::TestMod.Common.GlobalProjectiles.GlobalProjectile>();
+            return state.IsExtraHit || state.IsTimeEchoAttack || state.subhandDynamicText;
         }
 
         private static object Call(params object[] args)
@@ -81,7 +110,12 @@ namespace TestMod.Common.Compatibility
 
         public static bool TryDrawDamageLine(Item item, DrawableTooltipLine line)
         {
-            DamageClass damageClass = item.DamageType;
+            string key = GetDamageStyleKey(item.DamageType);
+            return key is not null && TryDrawTooltipLine(item, line, key);
+        }
+
+        internal static string GetDamageStyleKey(DamageClass damageClass)
+        {
             string key = null;
             if (damageClass == TrueDamageClass.Instance)
                 key = TestModTextStyles.DamageTrue;
@@ -93,7 +127,8 @@ namespace TestMod.Common.Compatibility
                 key = TestModTextStyles.DamageMagic;
             else if (damageClass == DamageClass.Summon || damageClass == DamageClass.SummonMeleeSpeed)
                 key = TestModTextStyles.DamageSummon;
-            return key is not null && TryDrawTooltipLine(item, line, key);
+            return key;
         }
+
     }
 }

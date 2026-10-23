@@ -29,11 +29,11 @@ namespace TestMod.Common.Compatibility
 
         public static Color GetFallbackColor(string key) => key switch
         {
-            DamageMelee => new Color(255, 24, 34),
-            DamageRanged => new Color(58, 238, 210),
-            DamageMagic => new Color(124, 74, 255),
-            DamageSummon => new Color(82, 232, 154),
-            DamageTrue => Color.White,
+            DamageMelee => new Color(235, 75, 91),
+            DamageRanged => new Color(77, 225, 195),
+            DamageMagic => new Color(180, 131, 250),
+            DamageSummon => new Color(105, 182, 255),
+            DamageTrue => new Color(247, 242, 223),
             ExtraHit => new Color(180, 50, 255),
             BlackHoleAbsorb => new Color(218, 148, 40),
             Subhand => new Color(150, 255, 188),
