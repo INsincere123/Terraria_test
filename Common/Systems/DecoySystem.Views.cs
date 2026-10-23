@@ -109,7 +109,8 @@ namespace TestMod.Common.Systems
                 if (entity is Projectile shot)
                 {
                     frame.ProjectileOwner = shot.owner;
-                    frame.ProjectileData = shot.GetGlobalProjectile<DecoyProjectile>();
+                    shot.TryGetGlobalProjectile(out DecoyProjectile data);
+                    frame.ProjectileData = data;
                 }
                 frame.CommitGeometry = commit;
                 frame.Fake = decoy != null;

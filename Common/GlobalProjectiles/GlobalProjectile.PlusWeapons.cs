@@ -40,21 +40,6 @@ namespace TestMod.Common.GlobalProjectiles
 
         internal bool HasPlusWeapon(PlusWeaponKind kind) => PlusWeapon == kind && !IsTimeEchoAttack && !IsExtraHit;
 
-        private void PlusWeapon_ModifyHit(Projectile p, ref NPC.HitModifiers modifiers)
-        {
-            if (IsTimeEchoAttack || IsExtraHit) return;
-            bool boosted = PlusWeapon switch
-            {
-                PlusWeaponKind.StardustDragon => ProjectileID.Sets.StardustDragon[p.type],
-                PlusWeaponKind.StardustCell => p.type is ProjectileID.StardustCellMinion or ProjectileID.StardustCellMinionShot,
-                PlusWeaponKind.Terraprisma => p.type == ProjectileID.EmpressBlade,
-                PlusWeaponKind.LunarPortal => p.type == ProjectileID.MoonlordTurretLaser,
-                PlusWeaponKind.RainbowCrystal => p.type is ProjectileID.RainbowCrystal or ProjectileID.RainbowCrystalExplosion,
-                _ => false
-            };
-            if (boosted) modifiers.SourceDamage *= PlusWeaponDefinition.For(PlusWeapon).HitDamage;
-        }
-
         private void PlusWeapon_Read(Projectile p, byte kind, int originalDamage)
         {
             var value = (PlusWeaponKind)kind;

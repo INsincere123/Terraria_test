@@ -44,15 +44,16 @@ namespace TestMod.Common.GlobalProjectiles
             bitWriter.WriteBit(ExcludedFromGodSmith);
             binaryWriter.Write((byte)PlusWeapon);
             if (PlusWeapon != PlusWeaponKind.None) binaryWriter.Write(projectile.originalDamage);
+            binaryWriter.Write((byte)TrackingWeapon);
             bitWriter.WriteBit(subhandDynamicText);
             bitWriter.WriteBit(_bloodFeedPenetrationOverridden);
             BloodFeed_WritePenetration(binaryWriter);
             if (IsExtraHit) binaryWriter.Write(projectile.DamageType.Type);
-            if (projectile.type == ProjectileID.EmpressBlade) WriteTerraprismaAI(binaryWriter);
-            if (projectile.type == ProjectileID.AbigailMinion) WriteAbigailAI(projectile, binaryWriter);
+            if (projectile.type == ProjectileID.EmpressBlade && HasEnhancedTerraprisma) WriteTerraprismaAI(binaryWriter);
+            if (projectile.type == ProjectileID.AbigailMinion && HasTrackingWeapon(TrackingWeaponKind.Abigail)) WriteAbigailAI(projectile, binaryWriter);
             // 乌鸦用 localAI 保存冲刺周期，随 owner 的位置/速度同步供远端预测。
-            if (projectile.type == ProjectileID.Raven) binaryWriter.Write(projectile.localAI[0]);
-            if (projectile.type == ProjectileID.StardustDragon1)
+            if (projectile.type == ProjectileID.Raven && HasTrackingWeapon(TrackingWeaponKind.Raven)) binaryWriter.Write(projectile.localAI[0]);
+            if (projectile.type == ProjectileID.StardustDragon1 && HasEnhancedDragon)
             {
                 _dragonFlight.Write(binaryWriter);
                 binaryWriter.Write((byte)Math.Clamp(_dragonTrackingCooldown, 0, 3));
@@ -82,6 +83,10 @@ namespace TestMod.Common.GlobalProjectiles
             byte plusKind = binaryReader.ReadByte();
             int plusDamage = plusKind != 0 ? binaryReader.ReadInt32() : 0;
             PlusWeapon_Read(projectile, plusKind, plusDamage);
+            var trackingKind = (TrackingWeaponKind)binaryReader.ReadByte();
+            TrackingWeapon = !IsTimeEchoAttack && !IsExtraHit && TrackingWeaponMatches(trackingKind, projectile.type)
+                ? trackingKind : TrackingWeaponKind.None;
+            ApplyTrackingSourceDefaults(projectile);
             subhandDynamicText = bitReader.ReadBit();
             Seals_SetRocketExtraUpdates(projectile, rangerExtra && vortexAmmoCategory == AmmoID.Rocket &&
                 !IsExtraHit && !IsTimeEchoAttack && !projectile.npcProj && !projectile.trap);
@@ -91,10 +96,10 @@ namespace TestMod.Common.GlobalProjectiles
                 projectile.DamageType = DamageClassLoader.GetDamageClass(binaryReader.ReadInt32()) ?? projectile.DamageType;
                 projectile.CritChance = 0;
             }
-            if (projectile.type == ProjectileID.EmpressBlade) ReadTerraprismaAI(projectile, binaryReader);
-            if (projectile.type == ProjectileID.AbigailMinion) ReadAbigailAI(projectile, binaryReader);
-            if (projectile.type == ProjectileID.Raven) projectile.localAI[0] = binaryReader.ReadSingle();
-            if (projectile.type == ProjectileID.StardustDragon1)
+            if (projectile.type == ProjectileID.EmpressBlade && HasEnhancedTerraprisma) ReadTerraprismaAI(projectile, binaryReader);
+            if (projectile.type == ProjectileID.AbigailMinion && HasTrackingWeapon(TrackingWeaponKind.Abigail)) ReadAbigailAI(projectile, binaryReader);
+            if (projectile.type == ProjectileID.Raven && HasTrackingWeapon(TrackingWeaponKind.Raven)) projectile.localAI[0] = binaryReader.ReadSingle();
+            if (projectile.type == ProjectileID.StardustDragon1 && HasEnhancedDragon)
             {
                 _dragonFlight.Read(binaryReader);
                 int cooldown = binaryReader.ReadByte();

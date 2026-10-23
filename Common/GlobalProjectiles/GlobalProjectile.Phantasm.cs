@@ -10,9 +10,9 @@ namespace TestMod.Common.GlobalProjectiles
         //   用于:MinionShot 召唤物射弹及星云烈焰；排除名单和专用 AI 优先
         // ══════════════════════════════════════════════════════════════
         private void ApplyHighTierTracking(Projectile projectile, float minSpeed, float maxSpeed,
-            float lerpAmount, float extraCorrection, bool prioritizeMinionTarget = false)
+            float lerpAmount, float extraCorrection, bool prioritizeMinionTarget = false, float range = 2400f)
         {
-            int targetIndex = FindTrackingTarget(projectile, projectile.Center, 2400f, prioritizeMinionTarget);
+            int targetIndex = FindTrackingTarget(projectile, projectile.Center, range, prioritizeMinionTarget);
             if (targetIndex < 0) return;
 
             NPC target = Main.npc[targetIndex];

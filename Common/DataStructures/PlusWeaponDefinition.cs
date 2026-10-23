@@ -9,18 +9,18 @@ namespace TestMod.Common.DataStructures
     }
 
     public readonly record struct PlusWeaponDefinition(int OriginalType, float WeaponDamage,
-        float Knockback = 1f, float HitDamage = 1f)
+        float Knockback = 1f)
     {
         public static PlusWeaponDefinition For(PlusWeaponKind kind) => kind switch
         {
             PlusWeaponKind.Phantasm => new(ItemID.Phantasm, 3.6f),
             PlusWeaponKind.Daybreak => new(ItemID.DayBreak, 14f, 2f),
             PlusWeaponKind.NebulaBlaze => new(ItemID.NebulaBlaze, 1.8f),
-            PlusWeaponKind.StardustDragon => new(ItemID.StardustDragonStaff, 11f, 1f, 8f),
-            PlusWeaponKind.StardustCell => new(ItemID.StardustCellStaff, 18f, 2f, 15f),
-            PlusWeaponKind.LunarPortal => new(ItemID.MoonlordTurretStaff, 15f, 5f, 13f),
-            PlusWeaponKind.RainbowCrystal => new(ItemID.RainbowCrystalStaff, 15f, 2f, 10f),
-            PlusWeaponKind.Terraprisma => new(ItemID.EmpressBlade, 15f, 2f, 11f),
+            PlusWeaponKind.StardustDragon => new(ItemID.StardustDragonStaff, 11f),
+            PlusWeaponKind.StardustCell => new(ItemID.StardustCellStaff, 18f, 2f),
+            PlusWeaponKind.LunarPortal => new(ItemID.MoonlordTurretStaff, 15f, 5f),
+            PlusWeaponKind.RainbowCrystal => new(ItemID.RainbowCrystalStaff, 15f, 2f),
+            PlusWeaponKind.Terraprisma => new(ItemID.EmpressBlade, 15f, 2f),
             PlusWeaponKind.Kaleidoscope => new(ItemID.RainbowWhip, 6.3f),
             _ => new(0, 1f)
         };

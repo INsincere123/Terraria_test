@@ -521,6 +521,51 @@ Items: {
 			'''
 	}
 
+	DesertTigerStaffPlus: {
+		DisplayName: "{$ItemName.StormTigerStaff}+"
+		Tooltip: 召唤沙漠虎，扩大索敌范围并强化追击能力
+	}
+
+	RavenStaffPlus: {
+		DisplayName: "{$ItemName.RavenStaff}+"
+		Tooltip: 召唤乌鸦，以冲刺和远距离突袭追击敌人
+	}
+
+	AbigailsFlowerPlus: {
+		DisplayName: "{$ItemName.AbigailsFlower}+"
+		Tooltip: 召唤阿比盖尔，扩大索敌范围并强化追击能力
+	}
+
+	SpiderStaffPlus: {
+		DisplayName: "{$ItemName.SpiderStaff}+"
+		Tooltip:
+			'''
+			召唤蜘蛛，扩大索敌范围并强化追击能力
+			各只蜘蛛可独立命中敌人，命中后弹开再次追击
+			'''
+	}
+
+	SummonOverdriveCore: {
+		DisplayName: 追猎徽记
+		Tooltip:
+			'''
+			召唤物行动更迅猛
+			[c/AAAAAA:不影响“+”系列武器及其射弹]
+			[c/AAAAAA:不影响哨兵本体；不与泰拉套的额外更新效果叠加]
+			'''
+	}
+
+	SpiritGuidanceCore: {
+		DisplayName: 御灵核心
+		Tooltip:
+			'''
+			扩大部分原版近身仆从的索敌范围并强化追击，命中后弹开
+			这些仆从可独立命中敌人
+			召唤物发射的普通射弹自动追踪敌人
+			[c/AAAAAA:不影响拥有专属攻击方式的仆从；多个御灵核心的效果不叠加]
+			'''
+	}
+
 	PhantasmPlus: {
 		DisplayName: "{$ItemName.Phantasm}+"
 		Tooltip:
@@ -554,7 +599,7 @@ Items: {
 		DisplayName: "{$ItemName.StardustDragonStaff}+"
 		Tooltip:
 			'''
-			召唤伤害提高至原武器的[c/FF8C00:11倍]，龙节命中伤害再提高至[c/FF8C00:8倍]
+			召唤伤害提高至原武器的[c/FF8C00:11倍]
 			与普通星尘之龙法杖交替使用时重新召唤星尘龙
 			'''
 	}
@@ -564,35 +609,23 @@ Items: {
 		Tooltip:
 			'''
 			召唤伤害提高至原武器的[c/FF8C00:18倍]，击退提高至[c/6495ED:2倍]
-			细胞与子细胞命中伤害再提高至[c/FF8C00:15倍]，附着时大幅强化持续伤害
+			附着时大幅强化持续伤害
 			'''
 	}
 
 	LunarPortalStaffPlus: {
 		DisplayName: "{$ItemName.MoonlordTurretStaff}+"
-		Tooltip:
-			'''
-			召唤伤害提高至原武器的[c/FF8C00:15倍]，击退提高至[c/6495ED:5倍]
-			传送门激光命中伤害再提高至[c/FF8C00:13倍]
-			'''
+		Tooltip: 召唤伤害提高至原武器的[c/FF8C00:15倍]，击退提高至[c/6495ED:5倍]
 	}
 
 	RainbowCrystalStaffPlus: {
 		DisplayName: "{$ItemName.RainbowCrystalStaff}+"
-		Tooltip:
-			'''
-			召唤伤害提高至原武器的[c/FF8C00:15倍]，击退提高至[c/6495ED:2倍]
-			水晶与爆炸命中伤害再提高至[c/FF8C00:10倍]
-			'''
+		Tooltip: 召唤伤害提高至原武器的[c/FF8C00:15倍]，击退提高至[c/6495ED:2倍]
 	}
 
 	TerraprismaPlus: {
 		DisplayName: "{$ItemName.EmpressBlade}+"
-		Tooltip:
-			'''
-			召唤伤害提高至原武器的[c/FF8C00:15倍]，击退提高至[c/6495ED:2倍]
-			命中伤害再提高至[c/FF8C00:11倍]
-			'''
+		Tooltip: 召唤伤害提高至原武器的[c/FF8C00:15倍]，击退提高至[c/6495ED:2倍]
 	}
 
 	KaleidoscopePlus: {

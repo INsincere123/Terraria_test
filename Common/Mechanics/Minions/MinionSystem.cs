@@ -22,7 +22,7 @@ namespace TestMod.Common.Mechanics.Minions
     public static class MinionSystem
     {
         // ── 数值调节区：冲撞型召唤物 ────────────────────────────────
-        public const float ContactTargetRange = 3200f;  // 瞄准距离（200 图格）
+        public const float ContactTargetRange = 1300f;  // 御灵核心瞄准距离（约81图格）
         public const float ContactReturnDist  = 5600f;  // 超出此距离传送回玩家
         public const int   ContactHitCooldown = 20;     // 独立无敌帧（≈0.33s）
         public const float ContactChaseSpeed  = 21f;    // 追击速度

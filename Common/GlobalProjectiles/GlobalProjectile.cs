@@ -61,6 +61,7 @@ namespace TestMod.Common.GlobalProjectiles
             // 减速力场：在 AI 跑之前恢复上帧保存的自然速度，防止衰减
             SlowField_RestoreVelocity(projectile);
             if (IsTimeEchoAttack) return TimeEcho_PreAI(projectile);
+            UpdateContactTrackingImmunity(projectile);
 
             // 暴走期间：在碰撞检测前强制弹幕无限穿透
             BloodFeed_SetBerserkPenetrate(projectile);
@@ -75,7 +76,7 @@ namespace TestMod.Common.GlobalProjectiles
 
             PrepareStardustDragonFlight(projectile);
 
-            if (projectile.type == ProjectileID.EmpressBlade)
+            if (projectile.type == ProjectileID.EmpressBlade && HasEnhancedTerraprisma)
             {
                 if (projectile.owner < 0 || projectile.owner >= Main.maxPlayers) return false;
                 Player owner = Main.player[projectile.owner];
@@ -84,7 +85,7 @@ namespace TestMod.Common.GlobalProjectiles
                 return false;
             }
 
-            if (projectile.type == ProjectileID.AbigailMinion)
+            if (projectile.type == ProjectileID.AbigailMinion && HasTrackingWeapon(TrackingWeaponKind.Abigail))
             {
                 if (projectile.owner < 0 || projectile.owner >= Main.maxPlayers) return false;
                 Player owner = Main.player[projectile.owner];
@@ -93,7 +94,7 @@ namespace TestMod.Common.GlobalProjectiles
                 return false;
             }
 
-            if (projectile.type != ProjectileID.Raven) return true;
+            if (projectile.type != ProjectileID.Raven || !HasTrackingWeapon(TrackingWeaponKind.Raven)) return true;
             if (projectile.owner < 0 || projectile.owner >= Main.maxPlayers) return true;
 
             Player player = Main.player[projectile.owner];
@@ -125,9 +126,8 @@ namespace TestMod.Common.GlobalProjectiles
             DecoySource = default;
             DecoyExcluded = false;
             DecoySelection.Reset();
-            ApplySpiderSetDefaults(projectile);
-            ApplyContactMinionSetDefaults(projectile);   // ① 冲撞型:独立无敌帧
-            ApplyTerraprismaDefaults(projectile);
+            TrackingWeapon = TrackingWeaponKind.None;
+            _trackingDefaultsApplied = _contactImmunityApplied = false;
         }
 
         // ══════════════════════════════════════════════════════════════
@@ -163,7 +163,7 @@ namespace TestMod.Common.GlobalProjectiles
             // 🐉 星尘龙（仅龙头；通用追踪与强化武器的伤害分别处理）
             else if (ProjectileID.Sets.StardustDragon[projectile.type])
             {
-                if (projectile.type == ProjectileID.StardustDragon1)
+                if (projectile.type == ProjectileID.StardustDragon1 && HasEnhancedDragon)
                     ApplyStardustDragonTracking(projectile);
             }
             // 🐦‍⬛ 乌鸦(317) 由 PreAI 接管，此处不重复处理
@@ -172,7 +172,7 @@ namespace TestMod.Common.GlobalProjectiles
                      projectile.type == ProjectileID.StormTigerTier2 ||
                      projectile.type == ProjectileID.StormTigerTier3)
             {
-                ApplyLegacyTigerTracking(projectile);
+                if (HasTrackingWeapon(TrackingWeaponKind.DesertTiger)) ApplyLegacyTigerTracking(projectile);
             }
             // 🌌 星云烈焰普通弹 + Ex弹：环射 + 2400px 通用追踪范围
             else if (projectile.type == ProjectileID.NebulaBlaze1 || projectile.type == ProjectileID.NebulaBlaze2)
@@ -192,7 +192,7 @@ namespace TestMod.Common.GlobalProjectiles
             // 🕷️ 蜘蛛法杖：独立无敌帧 + 扩展瞄准/返回范围
             else if (IsSpiderMinion(projectile.type))
             {
-                ApplySpiderPostAI(projectile, player);
+                if (HasTrackingWeapon(TrackingWeaponKind.Spider)) ApplySpiderPostAI(projectile, player);
             }
 
             // ─────────────── 通用分类分支 ───────────────
@@ -206,7 +206,10 @@ namespace TestMod.Common.GlobalProjectiles
             //    覆盖星尘细胞子弹/大黄蜂尖刺/UFO激光/双子激光/迷你鲨鱼等
             else if (ProjectileID.Sets.MinionShot[projectile.type])     // 官方集合，包含所有标记为 MinionShot 的弹射物，要排除的话必须排除射弹，不能排除召唤物
             {
-                ApplyHighTierTracking(projectile, 16.1f, 69f, 0.10f, 0.225f, prioritizeMinionTarget: true);
+                if (HasPlusWeapon(PlusWeaponKind.StardustCell))
+                    ApplyHighTierTracking(projectile, 16.1f, 69f, 0.10f, 0.225f, prioritizeMinionTarget: true);
+                else if (HasSpiritGuidance(player))
+                    ApplyHighTierTracking(projectile, 13f, 55f, 0.08f, 0.18f, prioritizeMinionTarget: true, range: 1300f);
             }
             // 🚫 ② 射击型本体：保持 vanilla AI，不干预
             //    (贴敌会让它们不发射射弹,必须放弃追踪强化)
@@ -217,7 +220,7 @@ namespace TestMod.Common.GlobalProjectiles
             // 🥊 ① 冲撞型召唤物：蜘蛛式扩大范围追踪
             else if (IsContactMinion(projectile))
             {
-                ApplyContactMinionTracking(projectile, player);
+                if (HasSpiritGuidance(player)) ApplyContactMinionTracking(projectile, player);
             }
 
             // 万花筒范围扩大已移至 CorePlayer.PostUpdateEquips，通过 whipRangeMultiplier 实现
@@ -269,7 +272,6 @@ namespace TestMod.Common.GlobalProjectiles
             // 鞭子 tag 效果：不依赖强化武器
             WhipTag_ModifyHitNPC(projectile, target, ref modifiers);
 
-            if (player.active) PlusWeapon_ModifyHit(projectile, ref modifiers);
         }
 
         // ══════════════════════════════════════════════════════════════
@@ -314,9 +316,10 @@ namespace TestMod.Common.GlobalProjectiles
             if (projectile.friendly && !projectile.hostile)
                 player.GetModPlayer<OnHitEffectsPlayer>().DispatchProjectileHit(projectile, target, hit, damageDone);
 
-            // 💥 ① 冲撞型召唤物 (含蜘蛛) 命中后弹开 ── 不需强化武器
+            // 冲撞型由御灵核心启用，蜘蛛仅由对应强化武器启用。
             //    防止贴在 boss 身上空转无敌帧
-            if (IsContactMinion(projectile) || IsSpiderMinion(projectile.type))
+            if ((IsContactMinion(projectile) && HasSpiritGuidance(player)) ||
+                (IsSpiderMinion(projectile.type) && HasTrackingWeapon(TrackingWeaponKind.Spider)))
             {
                 ApplyContactMinionBounce(projectile, target);
             }
@@ -324,8 +327,8 @@ namespace TestMod.Common.GlobalProjectiles
             // 🪢 鞭子 tag 效果：不依赖强化武器
             WhipTag_OnHitNPC(projectile, target, hit, damageDone);
 
-            // 星尘龙命中后的 3 次 AI 更新停追属于所有星尘龙共用的运动规则。
-            if (ProjectileID.Sets.StardustDragon[projectile.type])
+            // 仅强化星尘龙使用命中后停追。
+            if (HasEnhancedDragon && ProjectileID.Sets.StardustDragon[projectile.type])
                 _dragonTrackingCooldown = 3;
         }
     }

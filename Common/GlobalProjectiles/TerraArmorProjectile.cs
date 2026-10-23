@@ -3,8 +3,12 @@ using Terraria;
 using Terraria.DataStructures;
 using Terraria.ID;
 using Terraria.ModLoader;
+using Terraria.ModLoader.IO;
+using System.IO;
 using TestMod.Common.Players;
 using TestMod.Common.Systems;
+using TestMod.Common.DataStructures;
+using TestMod.Content.Items.Weapons.Plus;
 
 namespace TestMod.Common.GlobalProjectiles
 {
@@ -12,6 +16,8 @@ namespace TestMod.Common.GlobalProjectiles
     {
         public override bool InstancePerEntity => true;
         private bool _extraUpdateApplied;
+        private bool _summonDescendant;
+        private bool _plusExtraUpdatesExcluded;
         private const int MaxVisiblePhantasms = 50;
         private static readonly TerraArmorProjectile[] VisiblePhantasms = new TerraArmorProjectile[Main.maxProjectiles];
         private static bool _hasVisibilityCache;
@@ -63,8 +69,21 @@ namespace TestMod.Common.GlobalProjectiles
 
         public override void OnSpawn(Projectile projectile, IEntitySource source)
         {
-            if (!TryGetArmor(projectile, out TerraArmorPlayer armor)) return;
-            if (projectile.type == ProjectileID.CrystalLeafShot && TerraArmorPlayer.Equipped(armor.Player))
+            _plusExtraUpdatesExcluded = source switch
+            {
+                EntitySource_ItemUse use => use.Player.whoAmI == projectile.owner &&
+                    use.Item.ModItem is PlusWeapon or TrackingSummonWeapon,
+                EntitySource_Parent { Entity: Projectile plusParent } => plusParent.owner == projectile.owner &&
+                    plusParent.TryGetGlobalProjectile(out TerraArmorProjectile plusState) && plusState.IsPlusExtraUpdatesExcluded(plusParent),
+                _ => false
+            };
+            // 射弹不一定声明 MinionShot/SentryShot；按真实父实体来源保留派生链，不依赖手持物品。
+            if (source is EntitySource_Parent { Entity: Projectile parent } && parent.owner == projectile.owner &&
+                !parent.hostile && !parent.npcProj && !parent.trap)
+                _summonDescendant = IsSummonBodyOrShot(parent) ||
+                    parent.TryGetGlobalProjectile(out TerraArmorProjectile parentState) && parentState._summonDescendant;
+            TryGetArmor(projectile, out TerraArmorPlayer armor);
+            if (armor != null && projectile.type == ProjectileID.CrystalLeafShot && TerraArmorPlayer.Equipped(armor.Player))
             {
                 projectile.DamageType = DamageClass.Generic;
                 projectile.originalDamage = Player.crystalLeafDamage;
@@ -73,6 +92,35 @@ namespace TestMod.Common.GlobalProjectiles
                 projectile.ArmorPenetration = (int)armor.Player.GetTotalArmorPenetration(DamageClass.Generic);
                 projectile.netUpdate = true;
             }
+            UpdateExtraUpdates(projectile, armor);
+            if (_summonDescendant && projectile.owner == Main.myPlayer) projectile.netUpdate = true;
+        }
+
+        private static bool IsSummonBodyOrShot(Projectile p)
+            => p.minion || p.minionSlots > 0f || p.sentry || ProjectileID.Sets.MinionSacrificable[p.type] ||
+                ProjectileID.Sets.StardustDragon[p.type] || ProjectileID.Sets.MinionShot[p.type] ||
+                ProjectileID.Sets.SentryShot[p.type];
+
+        private bool HasSummonOverdrive(Projectile p)
+        {
+            if (p.owner < 0 || p.owner >= Main.maxPlayers || p.sentry || p.hostile || p.npcProj || p.trap ||
+                ProjectileID.Sets.IsAWhip[p.type] || p.aiStyle == ProjAIStyleID.Hook ||
+                !(IsSummonBodyOrShot(p) || _summonDescendant)) return false;
+            Player owner = Main.player[p.owner];
+            return owner.active && !owner.dead && owner.TryGetModPlayer(out SummonOverdrivePlayer state) && state.Enabled;
+        }
+
+        public override void SendExtraAI(Projectile projectile, BitWriter bitWriter, BinaryWriter binaryWriter)
+        {
+            bitWriter.WriteBit(_summonDescendant);
+            bitWriter.WriteBit(IsPlusExtraUpdatesExcluded(projectile));
+        }
+
+        public override void ReceiveExtraAI(Projectile projectile, BitReader bitReader, BinaryReader binaryReader)
+        {
+            _summonDescendant = bitReader.ReadBit();
+            _plusExtraUpdatesExcluded = bitReader.ReadBit();
+            TryGetArmor(projectile, out TerraArmorPlayer armor);
             UpdateExtraUpdates(projectile, armor);
         }
 
@@ -106,10 +154,19 @@ namespace TestMod.Common.GlobalProjectiles
                 !projectile.hostile && projectile.damage > 0 && projectile.aiStyle != ProjAIStyleID.Hook &&
                 !projectile.npcProj && !projectile.trap &&
                 (!Main.projPet[projectile.type] || SummonCritPlayer.IsSummonDamage(projectile));
+            // 泰拉套与御灵加速器共同持有这一份 +1；切换来源只改变维持条件，不重复加减。
+            enabled |= HasSummonOverdrive(projectile);
+            // 两组“+”武器及其任意派生射弹都不接收共享加成，保留自身原生更新次数。
+            enabled &= !IsPlusExtraUpdatesExcluded(projectile);
             if (enabled == _extraUpdateApplied) return;
             projectile.extraUpdates = System.Math.Max(0, projectile.extraUpdates + (enabled ? 1 : -1));
             _extraUpdateApplied = enabled;
         }
+
+        private bool IsPlusExtraUpdatesExcluded(Projectile projectile)
+            => _plusExtraUpdatesExcluded || projectile.TryGetGlobalProjectile(out GlobalProjectile source) &&
+                (source.PlusWeapon != PlusWeaponKind.None || source.TrackingWeapon != TrackingWeaponKind.None ||
+                 source.ExcludedFromGodSmith);
 
         public override bool? Colliding(Projectile projectile, Rectangle projHitbox, Rectangle targetHitbox)
         {

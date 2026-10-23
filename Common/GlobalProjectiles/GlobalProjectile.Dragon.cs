@@ -59,7 +59,7 @@ namespace TestMod.Common.GlobalProjectiles
         private void PrepareStardustDragonFlight(Projectile projectile)
         {
             _dragonFlightPrepared = false;
-            if (projectile.type != ProjectileID.StardustDragon1) return;
+            if (projectile.type != ProjectileID.StardustDragon1 || !HasEnhancedDragon) return;
             bool enabled = projectile.owner >= 0 && projectile.owner < Main.maxPlayers
                 && Main.player[projectile.owner].active && !Main.player[projectile.owner].dead;
             if (!enabled)

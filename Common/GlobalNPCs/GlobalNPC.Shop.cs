@@ -43,6 +43,18 @@ namespace TestMod.Common.GlobalNPCs
 
         public override void ModifyShop(NPCShop shop)
         {
+            // 满月期间，巫医出售两件御灵饰品。
+            if (shop.NpcType == NPCID.WitchDoctor)
+            {
+                foreach (int type in new[] { ModContent.ItemType<SpiritGuidanceCore>(), ModContent.ItemType<SummonOverdriveCore>() })
+                {
+                    shop.Add(new Item(type)
+                    {
+                        shopCustomPrice = Item.buyPrice(platinum: 1),
+                    }, Condition.MoonPhaseFull);
+                }
+            }
+
             // 困难模式的血月期间，高尔夫球手出售三件终阶工具/饰品。
             if (shop.NpcType == NPCID.Golfer)
             {

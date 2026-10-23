@@ -110,7 +110,15 @@ namespace TestMod.Common.Systems
 
         private static void SpawnProjectile(ProjectileSpawnOriginal original, Projectile projectile, IEntitySource source)
         {
-            var data = projectile.GetGlobalProjectile<DecoyProjectile>();
+            // 原版召唤 AI 也可能请求 ProjectileID.None；该占位实体没有 Global 实例。
+            // 仍分发原 OnSpawn，但在真实视图中执行，不能认领外层敌人的假目标。
+            if (!projectile.TryGetGlobalProjectile(out DecoyProjectile data))
+            {
+                Frame realFrame = Enter(null, false);
+                try { original(projectile, source); }
+                finally { Leave(realFrame); }
+                return;
+            }
             data.Decoy_OnSpawn(projectile, source);
             if (projectile.hostile && !data.DecoySource.Valid && source is not EntitySource_Sync and not TimeEchoAttackSource)
                 Note(projectile, "无可校验敌人来源；按弹幕自身位置选择稻草人，不推断来源", false);
@@ -146,8 +154,8 @@ namespace TestMod.Common.Systems
             // 死亡回调仍可产生攻击；保留该回调的目标视图，身份存活校验另由来源解析完成。
             if (entity is NPC npc && !Eligible(npc, false)) return null;
             if (entity is Projectile shot && (!shot.hostile || shot.friendly ||
-                shot.GetGlobalProjectile<DecoyProjectile>().IsTimeEchoAttack ||
-                shot.GetGlobalProjectile<DecoyProjectile>().DecoyExcluded)) return null;
+                !shot.TryGetGlobalProjectile(out DecoyProjectile shotData) ||
+                shotData.IsTimeEchoAttack || shotData.DecoyExcluded)) return null;
             if (entity is not NPC && entity is not Projectile) return null;
             NPC origin = source.Resolve();
             NPC target = origin?.GetGlobalNPC<DecoyState>().GetTarget(origin);
@@ -178,8 +186,9 @@ namespace TestMod.Common.Systems
 
         internal static EnemySource SourceOf(Entity entity)
         {
-            if (entity is Projectile excluded && excluded.GetGlobalProjectile<DecoyProjectile>() is var excludedData &&
-                (excludedData.IsTimeEchoAttack || excludedData.DecoyExcluded)) return default;
+            if (entity is Projectile excluded &&
+                (!excluded.TryGetGlobalProjectile(out DecoyProjectile excludedData) ||
+                 excludedData.IsTimeEchoAttack || excludedData.DecoyExcluded)) return default;
             // OnKill 中其他 Global 可以先清实体状态；当前实体的已验证来源仍须传给死亡子攻击。
             // NPC Generation / projectile identity 改变时不复用旧调用作用域。
             for (Frame frame = current; frame != null; frame = frame.Parent)
