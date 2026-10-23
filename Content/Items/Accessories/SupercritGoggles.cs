@@ -13,7 +13,7 @@ namespace TestMod.Content.Items.Accessories
             Item.width = 32;
             Item.height = 32;
             Item.accessory = true;
-            Item.rare = ModContent.RarityType<AntaresRarity>();
+            Item.rare = ModContent.RarityType<TerraRarity>();
             Item.value = Item.buyPrice(gold: 88);
         }
 
@@ -27,7 +27,7 @@ namespace TestMod.Content.Items.Accessories
         {
             CreateRecipe()
                 .AddIngredient(ItemID.EyeoftheGolem, 3)
-                .AddTile(TileID.TinkerersWorkbench)
+                .AddTile(TileID.LunarCraftingStation)
                 .Register();
         }
     }

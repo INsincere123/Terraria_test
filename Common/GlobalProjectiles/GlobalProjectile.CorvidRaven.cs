@@ -30,13 +30,21 @@ namespace TestMod.Common.GlobalProjectiles
 
         private void ApplyCorvidRavenAI(Projectile projectile, Player player)
         {
+            // 专属 AI 跳过原版存续处理，必须跟随所属玩家的召唤 Buff，不能无条件续命。
+            // 直接读取 Buff 也覆盖刚召唤、尚未刷新 raven 标志的首帧。
+            if (player.dead) player.raven = false;
+            if (!player.active || player.dead || !player.HasBuff(BuffID.Ravens))
+            {
+                projectile.friendly = false;
+                projectile.timeLeft = Math.Min(projectile.timeLeft, 2);
+                return;
+            }
+            projectile.timeLeft = 2;
+
             bool isOwner = projectile.owner == Main.myPlayer;
             // ── 首帧初始化 ───────────────────────────────────────────
             if (projectile.localAI[1] == 0f)
                 projectile.localAI[1] = 1f;
-
-            // ── 防止超时消失 ─────────────────────────────────────────
-            projectile.timeLeft = Math.Max(projectile.timeLeft, 10);
 
             // ── 防聚堆（模拟 MinionAntiClump）────────────────────────
             foreach (Projectile other in ProjectileLookup.Owned(projectile.owner, projectile.type))
