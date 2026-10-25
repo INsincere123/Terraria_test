@@ -70,6 +70,7 @@ namespace TestMod.Common.Players
 
         public void ApplySet()
         {
+            Player.GetModPlayer<DefenseDamageProtectionPlayer>().Halved = true;
             FullSet = true;
             HasIndependentMagmaStone = Player.magmaStone;
             Player.onHitDodge = true;
@@ -117,6 +118,8 @@ namespace TestMod.Common.Players
             Player.setBonus = Language.GetTextValue("Mods.TestMod.TerraArmor.SetBonus", mode,
                 KeybindUtils.GetKeyText(TerraArmorSystem.SwitchModeKey),
                 Language.GetTextValue($"Mods.TestMod.TerraArmor.Effects.{Mode}"));
+            if (CalamityDefenseDamageSystem.ReductionReady)
+                Player.setBonus += "\n" + Language.GetTextValue(CalamityDefenseDamageSystem.ReductionTextKey);
         }
 
         private void MaintainSolar()

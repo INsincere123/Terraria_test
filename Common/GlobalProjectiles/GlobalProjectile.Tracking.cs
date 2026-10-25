@@ -7,6 +7,7 @@ using Terraria.ModLoader;
 using Terraria.ModLoader.IO;
 using TestMod.Common.Utilities;
 using TestMod.Common.DataStructures;
+using TestMod.Common.Mechanics.AccessoryEffects;
 
 namespace TestMod.Common.GlobalProjectiles
 {
@@ -25,6 +26,7 @@ namespace TestMod.Common.GlobalProjectiles
 
         public override void SendExtraAI(Projectile projectile, BitWriter bitWriter, BinaryWriter binaryWriter)
         {
+            bitWriter.WriteBit(_grappleLaunchBoostApplied);
             Decoy_Write(binaryWriter);
             bitWriter.WriteBit(IsTimeEchoAttack);
             if (IsTimeEchoAttack) TimeEcho_Write(projectile, binaryWriter);
@@ -62,9 +64,12 @@ namespace TestMod.Common.GlobalProjectiles
 
         public override void ReceiveExtraAI(Projectile projectile, BitReader bitReader, BinaryReader binaryReader)
         {
+            bool grappleBoost = bitReader.ReadBit();
             Decoy_Read(binaryReader);
             IsTimeEchoAttack = bitReader.ReadBit();
             if (IsTimeEchoAttack) TimeEcho_Read(projectile, binaryReader);
+            GrappleEffect.SetLaunchBoost(projectile, ref _grappleLaunchBoostApplied,
+                grappleBoost && !IsTimeEchoAttack && projectile.aiStyle == ProjAIStyleID.Hook && projectile.ai[0] == 0f);
             IsHomingTagged = bitReader.ReadBit();
             vortexArrow = bitReader.ReadBit();
             RangerSealArrow = bitReader.ReadBit();

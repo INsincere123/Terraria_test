@@ -81,6 +81,18 @@ namespace TestMod
 					case CompositeAccessoryPlayer.DashVisualPacket:
 						CompositeAccessoryPlayer.ReceiveDashVisual(reader, whoAmI);
 						break;
+					case SmartScopePlayer.RequestPacket:
+						SmartScopePlayer.ReceiveRequest(reader, whoAmI);
+						break;
+					case SmartScopePlayer.StatePacket:
+						SmartScopePlayer.ReceiveState(reader);
+						break;
+					case AntaresArmorPlayer.GravityWellRequestPacket:
+						AntaresArmorPlayer.ReceiveGravityWellRequest(reader, whoAmI);
+						break;
+					case AntaresArmorPlayer.GravityWellActivatedPacket:
+						AntaresArmorPlayer.ReceiveGravityWellActivated();
+						break;
 				}
 			}
 			catch (EndOfStreamException)

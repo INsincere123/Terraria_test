@@ -1,7 +1,6 @@
 using System;
 using Microsoft.Xna.Framework;
 using Terraria;
-using Terraria.Audio;
 using Terraria.ID;
 using Terraria.ModLoader;
 using TestMod.Content.Buffs;
@@ -14,10 +13,10 @@ namespace TestMod.Common.Players
     // 1. 百分比生命/法力加成（需要在 PostUpdateMiscEffects 读取最终基础值）
     // 2. 套装复活效果（PreKill 拦截死亡，CD 用 AntaresReviveCooldown debuff 计时）
     // 3. 套装秒杀免疫（ModifyHitByNPC / ModifyHitByProjectile，原始攻击力 >= 最大生命值时强制为 1，无 CD）
-    // 4. 套装主动技能：引力井（按键施加增益 buff，buff 存在期间每帧持续拉取）
+    // 4. 套装主动技能：引力井（输入与显示沿 GravityWell partial；单人/服务器授权窗口内拉取）
     // 5. 套装被动：双幻影龙随行（通过 PhantasmalDragonSummoner.MaintainTwinFor 调用，
     //    解耦后所有龙的实现细节都在 PhantasmalDragonSummoner 与 DragonSegment 中）
-    public class AntaresArmorPlayer : ModPlayer
+    public partial class AntaresArmorPlayer : ModPlayer
     {
         // ╔══════════════════════════════════════════════════════╗
         // ║           引力井主动技能参数调整区域                 ║
@@ -87,32 +86,22 @@ namespace TestMod.Common.Players
         // ── 引力井 + 幻影龙维持 ──────────────────────────────
         public override void PostUpdate()
         {
+            UpdateGravityWell();
+
             if (Player.whoAmI != Main.myPlayer || !wearingFullSet)
                 return;
-
-            // ── 引力井按键 ──
-            if (AntaresKeybinds.GravityWellKey.JustPressed)
-            {
-                Player.AddBuff(ModContent.BuffType<AntaresGravityWellBuff>(), GravityWellDuration);
-                SoundEngine.PlaySound(SoundID.Item9, Player.Center);
-                SpawnGravityWaveParticles();
-            }
-
-            if (Player.HasBuff(ModContent.BuffType<AntaresGravityWellBuff>()))
-                PullNearbyEnemies();
 
             // ── 幻影龙：一行调用搞定 ──
             if (phantasmalDragonEnabled)
                 PhantasmalDragonSummoner.MaintainTwinFor(Player, DragonDamage, DragonKnockback);
         }
 
-        // ══════════════════════════════════════════════════════════════
-        //   以下为原有代码，保持不变
-        // ══════════════════════════════════════════════════════════════
-
         private void PullNearbyEnemies()
         {
             int pulled = 0;
+            Vector2 playerCenter = Player.Center;
+            const float radiusSquared = GravityWellRadius * GravityWellRadius;
+            const float stopSquared = GravityWellStopDist * GravityWellStopDist;
 
             for (int i = 0; i < Main.maxNPCs; i++)
             {
@@ -121,14 +110,18 @@ namespace TestMod.Common.Players
                 NPC npc = Main.npc[i];
                 if (!npc.active || npc.friendly || npc.boss || npc.dontTakeDamage) continue;
 
-                float dist = Vector2.Distance(Player.Center, npc.Center);
-                if (dist > GravityWellRadius || dist <= GravityWellStopDist) continue;
+                Vector2 npcCenter = npc.Center;
+                Vector2 direction = playerCenter - npcCenter;
+                float distanceSquared = direction.LengthSquared();
+                if (distanceSquared > radiusSquared || distanceSquared <= stopSquared) continue;
 
-                Vector2 direction = Player.Center - npc.Center;
-                direction.Normalize();
+                // 范围外候选不求平方根；合格候选的距离直接用于归一化。
+                float dist = MathF.Sqrt(distanceSquared);
+                direction *= 1f / dist;
 
-                Vector2 targetPos  = Player.Center - direction * GravityWellStopDist;
-                Vector2 toTarget   = targetPos - npc.Center;
+                Vector2 targetPos  = playerCenter - direction * GravityWellStopDist;
+                Vector2 toTarget   = targetPos - npcCenter;
+                // 保留实际向量长度与整数帧截断，避免改成 dist-stop 后跨越速度分段边界。
                 float   travelDist = toTarget.Length();
                 if (travelDist < 1f) continue;
 
@@ -191,10 +184,7 @@ namespace TestMod.Common.Players
             if (rawDamage < Player.statLifeMax2) return;
 
             modifiers.FinalDamage *= 0f;
-            Player.immune          = true;
-            Player.immuneTime      = 60;
-            Player.hurtCooldowns[0] = 60;
-            Player.hurtCooldowns[1] = 60;
+            GrantArmorImmunity(60);
 
             for (int i = 0; i < 20; i++)
             {
@@ -203,6 +193,15 @@ namespace TestMod.Common.Players
                 Main.dust[d].noGravity = true;
                 Main.dust[d].velocity *= 3f;
             }
+        }
+
+        // 两种保护共用下限补足，不缩短已有免疫，也不改变闪烁规则。
+        private void GrantArmorImmunity(int frames)
+        {
+            Player.immune = true;
+            Player.immuneTime = Math.Max(Player.immuneTime, frames);
+            for (int i = 0; i < Player.hurtCooldowns.Length; i++)
+                Player.hurtCooldowns[i] = Math.Max(Player.hurtCooldowns[i], frames);
         }
 
         public override bool PreKill(double damage, int hitDirection, bool pvp,
@@ -216,8 +215,7 @@ namespace TestMod.Common.Players
 
             int healAmount    = (int)(Player.statLifeMax2 * UltimateHelmet.ReviveLifePercent);
             Player.statLife   = healAmount;
-            Player.immune     = true;
-            Player.immuneTime = 60 * 3;
+            GrantArmorImmunity(60 * 3);
             Player.HealEffect(healAmount);
 
             for (int i = 0; i < 30; i++)

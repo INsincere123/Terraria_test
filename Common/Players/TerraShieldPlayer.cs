@@ -8,6 +8,7 @@ using Terraria.ModLoader;
 using Terraria.ModLoader.Default;
 using Terraria.ModLoader.IO;
 using TestMod.Common.DataStructures;
+using TestMod.Common.Systems;
 using TestMod.Content.Items.Accessories;
 
 namespace TestMod.Common.Players
@@ -60,6 +61,7 @@ namespace TestMod.Common.Players
 
         internal void ApplyAccessory(Item accessory)
         {
+            Player.GetModPlayer<DefenseDamageProtectionPlayer>().Halved = true;
             IsEquipped = true;
             _accessory = accessory;
             Player.statLifeMax2 += 300;
@@ -239,7 +241,8 @@ namespace TestMod.Common.Players
             for (int slot = 0; slot < Player.buffType.Length; slot++)
             {
                 int type = Player.buffType[slot];
-                if (type > 0 && type != BuffID.PotionSickness && Main.debuff[type])
+                if (type > 0 && type != BuffID.PotionSickness && Main.debuff[type] &&
+                    !DebuffDurationExclusions.ShouldSkipReduction(type))
                     Player.buffTime[slot] = Math.Max(1, Player.buffTime[slot] - TerraShield.ExtraDebuffTimeReduction);
             }
         }

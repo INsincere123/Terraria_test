@@ -71,6 +71,11 @@ TerraShieldEffects: {
 	DamageLimit: 敌怪和弹幕伤害上限为最大生命的[c/6495ED:{0}%]
 }
 
+DefenseDamageProtection: {
+	Immunity: 免疫灾厄新增的防御损伤
+	Reduction: 受到的灾厄防御损伤减少[c/6495ED:50%]
+}
+
 EnvironmentEffects: {
 	AbyssImmunity: 灾厄：深渊视野清晰，水中正常移动，免除深渊扣氧、窒息、降防、离水伤害与第一层硫磺水中毒
 	TheDarkImmunity: 旅人归途：解除暗处（迷宫）的视野遮蔽
@@ -100,6 +105,7 @@ Keybinds: {
 	SuperRelocator.DisplayName: 闪现
 	VanillaDash.DisplayName: 单键冲刺
 	MomentumConversion.DisplayName: 动量转换
+	SmartScope.DisplayName: 智能瞄准镜
 }
 
 GuideTimeEcho: {
@@ -201,6 +207,7 @@ Items: {
 		SlowModeHint: 按住Shift并左键点击背包或饰品栏中的此物品切换慢速模式
 		SingleKeyDash: 按 [{0}] 水平冲刺
 		DoubleTapDash: 双击左右方向键水平冲刺
+		DashHitImmunity: 冲刺撞击命中敌怪后获得[c/FFD700:{0}秒]无敌时间
 	}
 
 	TerraHelmet: {
@@ -776,6 +783,29 @@ Items: {
 		DisplayName: 超暴击药水
 	}
 
+	ClassicGrapeBeer: {
+		DisplayName: 葡萄啤酒轮椅版
+		Tooltip:
+			'''
+			经典的2.1.2葡萄酒
+			子弹、箭、飞镖、火箭及其衍生弹幕获得追踪，部分特殊弹幕除外
+			所有伤害加成降低[c/FF6060:40%]
+			持续[c/FFD700:6分钟]
+			'''
+		CalamityCompatibility: 与灾厄的葡萄啤酒不叠加，本效果优先
+	}
+
+	SmartScope: {
+		DisplayName: 智能瞄准镜
+		Tooltip: 在控件设置中绑定“智能瞄准镜”以主动使用
+		Activation:
+			'''
+			按 [c/FFD700:{0}] 启用智能瞄准，持续[c/FFD700:10秒]
+			期间发射的子弹、箭、飞镖、火箭及其衍生弹幕获得追踪，部分特殊弹幕除外
+			效果结束后冷却[c/FFD700:10秒]
+			'''
+	}
+
 	SupercritGoggles: {
 		Tooltip: 暴击率提高[c/6495ED:25%]，获得超暴击效果
 		DisplayName: 超暴击护目镜
@@ -1112,6 +1142,21 @@ Buffs: {
 	SupercritBuff: {
 		DisplayName: 超暴击
 		Description: 溢出 100% 的暴击率转化为额外暴击伤害
+	}
+
+	ClassicGrapeBeerBuff: {
+		DisplayName: 葡萄啤酒轮椅版
+		Description: 子弹、箭、飞镖、火箭及其衍生弹幕获得追踪；所有伤害加成降低30%
+	}
+
+	SmartScopeActiveBuff: {
+		DisplayName: 智能瞄准
+		Description: 子弹、箭、飞镖、火箭及其衍生弹幕获得经典葡萄啤酒追踪
+	}
+
+	SmartScopeCooldownBuff: {
+		DisplayName: 智能瞄准镜冷却
+		Description: 暂时无法再次启用智能瞄准镜
 	}
 
 	TimeStopCDBuff: {

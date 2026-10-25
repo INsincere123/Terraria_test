@@ -11,6 +11,9 @@ namespace TestMod.Common.GlobalProjectiles
     /// </summary>
     public partial class GlobalProjectile : Terraria.ModLoader.GlobalProjectile
     {
+        // 值类型状态随实体 Clone 复制；SetDefaults 清理，ExtraAI 对齐施加阶段。
+        private bool _grappleLaunchBoostApplied;
+
         // ══════════════════════════════════════════════════════════════
         //   拉人速度
         // ══════════════════════════════════════════════════════════════

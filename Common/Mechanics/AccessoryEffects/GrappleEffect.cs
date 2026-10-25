@@ -1,4 +1,5 @@
 using Terraria;
+using Terraria.ID;
 using Terraria.ModLoader;
 using TestMod.Common.Systems;
 
@@ -6,7 +7,7 @@ namespace TestMod.Common.Mechanics.AccessoryEffects
 {
     /// <summary>
     /// 红木魔石钩爪效果：
-    ///   - 所有钩爪拉人速度 ×1.5，飞出速度 ×2（extraUpdates），缩回速度 ×3
+    ///   - 所有钩爪拉人速度 ×1.5，飞出阶段额外更新 +1（普通钩爪约 ×2），缩回速度 ×3
     ///   - 被钩爪拉动时获得 10% 伤害减免 + 50% 荆棘效果
     ///   - 伤害减免在钩爪收回后持续 1 秒（60帧）
     /// </summary>
@@ -53,19 +54,30 @@ namespace TestMod.Common.Mechanics.AccessoryEffects
             mp.GrappleDRTimer = 0;
         }
 
-        // ── 由 GlobalProjectile.PreAI 调用：飞行阶段速度 ×2 ────────
-        // 利用 extraUpdates=1 让钩爪弹射物每帧执行两次 AI，等效于飞出速度翻倍。
-        // 仅在飞行阶段（ai[0] == 0）生效，附着后自动恢复原节奏。
-        public static void TryBoostLaunchSpeed(Projectile projectile)
+        // PreAI/PostAI 共用：只管理本效果的 +1，AI 中附着/收回后立即撤销。
+        internal static void UpdateLaunchSpeed(Projectile projectile, ref bool applied, bool allowBoost)
         {
-            if (projectile.aiStyle != 7) return;           // 非钩爪 AI
-            if (projectile.ai[0] != 0f)  return;           // 非飞行阶段
+            bool enabled = false;
+            if (allowBoost && projectile.active && projectile.aiStyle == ProjAIStyleID.Hook &&
+                projectile.ai[0] == 0f && projectile.owner >= 0 && projectile.owner < Main.maxPlayers)
+            {
+                Player owner = Main.player[projectile.owner];
+                if (owner != null && owner.active && !owner.dead)
+                    // owner 决定装备注入；远端保留同步的贡献，仍能在阶段结束/死亡时清理。
+                    enabled = projectile.owner != Main.myPlayer ? applied :
+                        owner.TryGetModPlayer(out OmniEffectsPlayer state) && state.EnableGrapple;
+            }
+            if (enabled == applied) return;
+            SetLaunchBoost(projectile, ref applied, enabled);
+            if (projectile.owner == Main.myPlayer) projectile.netUpdate = true;
+        }
 
-            Player owner = Main.player[projectile.owner];
-            if (owner == null || !owner.active) return;
-
-            if (owner.GetModPlayer<OmniEffectsPlayer>().EnableGrapple)
-                projectile.extraUpdates = 1;               // ×2 飞出速度
+        // 同步只改变自身贡献，重复包不叠加；不能清零其他来源或钩爪自身的更新次数。
+        internal static void SetLaunchBoost(Projectile projectile, ref bool applied, bool enabled)
+        {
+            if (enabled == applied) return;
+            projectile.extraUpdates = System.Math.Max(0, projectile.extraUpdates + (enabled ? 1 : -1));
+            applied = enabled;
         }
     }
 }

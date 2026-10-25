@@ -53,6 +53,7 @@ namespace TestMod.Common.GlobalProjectiles
         // ══════════════════════════════════════════════════════════════
         public override bool PreAI(Projectile projectile)
         {
+            GrappleEffect.UpdateLaunchSpeed(projectile, ref _grappleLaunchBoostApplied, !IsTimeEchoAttack);
             RangedMotion_RestoreVelocity(projectile);
             Seals_UpdateRocketExtraUpdates(projectile);
             ProjectileLookup.Observe(projectile, this);
@@ -70,9 +71,6 @@ namespace TestMod.Common.GlobalProjectiles
             // 仅冻结敌方弹幕（hostile && !friendly），玩家弹幕完全不受影响。
             if (TryFreezeOnTimeStop(projectile))
                 return false;
-
-            // 红木魔石效果：钩爪飞行阶段速度 ×2
-            GrappleEffect.TryBoostLaunchSpeed(projectile);
 
             PrepareStardustDragonFlight(projectile);
 
@@ -121,6 +119,7 @@ namespace TestMod.Common.GlobalProjectiles
 
         public override void SetDefaults(Projectile projectile)
         {
+            _grappleLaunchBoostApplied = false;
             PlusWeapon = PlusWeaponKind.None;
             ExcludedFromGodSmith = false;
             DecoySource = default;
@@ -135,6 +134,7 @@ namespace TestMod.Common.GlobalProjectiles
         // ══════════════════════════════════════════════════════════════
         public override void PostAI(Projectile projectile)
         {
+            GrappleEffect.UpdateLaunchSpeed(projectile, ref _grappleLaunchBoostApplied, !IsTimeEchoAttack);
             RangedMotion_ApplyVelocity(projectile);
             if (IsTimeEchoAttack)
             {

@@ -173,6 +173,8 @@ namespace TestMod.Content.Items.Accessories
                 ? Language.GetTextValue(TextKey + "SingleKeyDash", KeybindUtils.GetKeyText(DashKeybinds.VanillaDashKey))
                 : Language.GetTextValue(TextKey + "DoubleTapDash");
             tooltips.Add(new TooltipLine(Mod, "DashHint", dashHint));
+            tooltips.Add(new TooltipLine(Mod, "DashHitImmunity",
+                Language.GetTextValue(TextKey + "DashHitImmunity", TerraWingsDash.ContactIFrames / 60f)));
             tooltips.Add(new TooltipLine(Mod, "ExtraJumpState",
                 Language.GetTextValue(TextKey + (ExtraJumpsEnabled ? "JumpsEnabled" : "JumpsDisabled")))
             { OverrideColor = ExtraJumpsEnabled ? Color.LightGreen : Color.Gray });

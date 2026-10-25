@@ -1,7 +1,6 @@
 using TestMod.Content.Rarities;
 using Terraria;
 using Terraria.ID;
-using Terraria.Localization;
 using Terraria.ModLoader;
 using TestMod.Common.Players;
 using TestMod.Common.Systems;
@@ -88,26 +87,12 @@ namespace TestMod.Content.Items.Armor.UltimateArmor
         // 套装激活时每帧调用，标记 ModPlayer 启用套装效果
         public override void UpdateArmorSet(Player player)
         {
-            string key = AntaresKeybinds.GravityWellKey.GetAssignedKeys().Count > 0
-                ? AntaresKeybinds.GravityWellKey.GetAssignedKeys()[0]
-                : Language.GetTextValue("Mods.TestMod.Common.Unbound");
-
-            string calamityBonus = CalamityCompatSystem.CalamityLoaded
-                ? Language.GetTextValue("Mods.TestMod.Items.UltimateHelmet.CalamityBonus") + Language.GetTextValue(AbyssImmunityEffect.DescriptionKey)
-                : "";
-            string journeyBonus = HomewardJourneyCompatSystem.TheDarkCompatibilityReady
-                ? "\n" + Language.GetTextValue(TheDarkImmunityEffect.DescriptionKey)
-                : "";
-
+            player.GetModPlayer<DefenseDamageProtectionPlayer>().Immune = true;
             // 从实际功能盔甲槽读取物品实例状态，外观槽或背包内的其他副本不参与。
             bool dragonEnabled = player.armor[1].ModItem is UltimateBreastplate { EffectEnabled: true };
             bool cannonEnabled = player.armor[2].ModItem is UltimateLeggings { EffectEnabled: true };
-            string dragonStatus = Language.GetTextValue("Mods.TestMod.Items.UltimateHelmet.DragonState",
-                ToggleableArmorItem.GetEffectStateText(dragonEnabled));
-            string cannonStatus = Language.GetTextValue("Mods.TestMod.Items.UltimateHelmet.CannonState",
-                ToggleableArmorItem.GetEffectStateText(cannonEnabled));
-
-            player.setBonus = Language.GetTextValue("Mods.TestMod.Items.UltimateHelmet.SetBonus", key, calamityBonus, journeyBonus, dragonStatus, cannonStatus);
+            if (Main.netMode != NetmodeID.Server)
+                player.setBonus = UltimateArmorSetBonusSystem.GetText(dragonEnabled, cannonEnabled);
             player.GetModPlayer<AntaresArmorPlayer>().wearingFullSet = true;
             CalamityCompatSystem.DisableSummonPenalty(player);
             AbyssImmunityEffect.Apply(player);
@@ -147,46 +132,6 @@ namespace TestMod.Content.Items.Armor.UltimateArmor
         }
 
         public override void AddRecipes()
-        {
-            // 世界吞噬怪 / 克苏鲁之脑 二选一（腐化 or 猩红世界）
-            AddMasterTrophyRecipe(ItemID.EaterofWorldsMasterTrophy);
-            AddMasterTrophyRecipe(ItemID.BrainofCthulhuMasterTrophy);
-        }
-
-        private void AddMasterTrophyRecipe(int eowOrBoc)
-        {
-            Recipe recipe = Recipe.Create(Type);
-
-            recipe.AddIngredient(ItemID.EyeofCthulhuMasterTrophy);   // 克苏鲁之眼
-            recipe.AddIngredient(eowOrBoc);                           // 世界吞噬怪 或 克苏鲁之脑
-            recipe.AddIngredient(ItemID.SkeletronMasterTrophy);       // 骷髅王
-            recipe.AddIngredient(ItemID.QueenBeeMasterTrophy);        // 蜂王
-            recipe.AddIngredient(ItemID.KingSlimeMasterTrophy);       // 史莱姆王
-            recipe.AddIngredient(ItemID.WallofFleshMasterTrophy);     // 血肉墙
-            recipe.AddIngredient(ItemID.TwinsMasterTrophy);           // 双子魔眼
-            recipe.AddIngredient(ItemID.DestroyerMasterTrophy);       // 毁灭者
-            recipe.AddIngredient(ItemID.SkeletronPrimeMasterTrophy);  // 机械骷髅王
-            recipe.AddIngredient(ItemID.PlanteraMasterTrophy);        // 世纪之花
-            recipe.AddIngredient(ItemID.GolemMasterTrophy);           // 石巨人
-            recipe.AddIngredient(ItemID.DukeFishronMasterTrophy);     // 猪龙鱼公爵
-            recipe.AddIngredient(ItemID.LunaticCultistMasterTrophy);  // 拜月教邪教徒
-            recipe.AddIngredient(ItemID.MoonLordMasterTrophy);        // 月亮领主
-            recipe.AddIngredient(ItemID.UFOMasterTrophy);             // 火星飞碟
-            recipe.AddIngredient(ItemID.FlyingDutchmanMasterTrophy);  // 荷兰飞盗船
-            recipe.AddIngredient(ItemID.MourningWoodMasterTrophy);    // 哀木
-            recipe.AddIngredient(ItemID.PumpkingMasterTrophy);        // 南瓜王
-            recipe.AddIngredient(ItemID.IceQueenMasterTrophy);        // 冰雪女王
-            recipe.AddIngredient(ItemID.EverscreamMasterTrophy);      // 常绿尖叫怪
-            recipe.AddIngredient(ItemID.SantankMasterTrophy);         // 圣诞坦克
-            recipe.AddIngredient(ItemID.DarkMageMasterTrophy);        // 暗黑魔法师
-            recipe.AddIngredient(ItemID.OgreMasterTrophy);            // 食人魔
-            recipe.AddIngredient(ItemID.BetsyMasterTrophy);           // 双足翼龙
-            recipe.AddIngredient(ItemID.FairyQueenMasterTrophy);      // 光之女皇
-            recipe.AddIngredient(ItemID.QueenSlimeMasterTrophy);      // 史莱姆皇后
-            recipe.AddIngredient(ItemID.DeerclopsMasterTrophy);       // 独眼巨鹿
-
-            recipe.AddTile(TileID.LunarCraftingStation);
-            recipe.Register();
-        }
+            => global::TestMod.Common.Utilities.MasterTrophyRecipes.Register(Type);
     }
 }

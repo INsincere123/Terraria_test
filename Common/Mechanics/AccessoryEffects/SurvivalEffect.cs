@@ -1,5 +1,6 @@
 using System;
 using Terraria;
+using TestMod.Common.Systems;
 
 namespace TestMod.Common.Mechanics.AccessoryEffects
 {
@@ -134,7 +135,7 @@ namespace TestMod.Common.Mechanics.AccessoryEffects
                     if (Main.debuff[bt])
                     {
                         debuffCount++;
-                        if (mp.EnableSurvivalDebuffDecay)
+                        if (mp.EnableSurvivalDebuffDecay && !DebuffDurationExclusions.ShouldSkipReduction(bt))
                         {
                             player.buffTime[i] -= mp.Survival_DebuffTimeReduction;
                             if (player.buffTime[i] < 1) player.buffTime[i] = 1;

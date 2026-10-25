@@ -8,6 +8,11 @@ namespace TestMod.Content.Items.Potions
 {
     public class SupercritPotion : ModItem
     {
+        public override void SetStaticDefaults()
+        {
+            Item.ResearchUnlockCount = 20;
+        }
+
         public override void SetDefaults()
         {
             Item.width = 22;
@@ -20,22 +25,17 @@ namespace TestMod.Content.Items.Potions
             Item.autoReuse = false;
             Item.consumable = true;
             Item.maxStack = 9999;
-            Item.rare = ModContent.RarityType<AntaresRarity>();
-            Item.value = Item.buyPrice(gold: 7);
-        }
-
-        public override bool? UseItem(Player player)
-        {
-            // 15 分钟 = 15 * 60 * 60 = 54000 帧
-            player.AddBuff(ModContent.BuffType<SupercritBuff>(), 54000);
-            return true;
+            Item.buffType = ModContent.BuffType<SupercritBuff>();
+            Item.buffTime = 15 * 60 * 60;
+            Item.rare = ModContent.RarityType<TerraRarity>();
+            Item.value = Item.buyPrice(gold: 3);
         }
 
         public override void AddRecipes()
         {
-            CreateRecipe(50)
+            CreateRecipe(33)
                 .AddIngredient(ItemID.EyeoftheGolem)
-                .AddIngredient(ItemID.BottledWater, 50)
+                .AddIngredient(ItemID.BottledWater, 99)
                 .AddTile(TileID.Bottles)
                 .AddTile(TileID.AlchemyTable)
                 .Register();

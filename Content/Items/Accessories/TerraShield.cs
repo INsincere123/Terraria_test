@@ -4,6 +4,7 @@ using Terraria.ID;
 using Terraria.Localization;
 using Terraria.ModLoader;
 using TestMod.Common.Players;
+using TestMod.Common.Systems;
 using TestMod.Content.Rarities;
 
 namespace TestMod.Content.Items.Accessories
@@ -45,6 +46,9 @@ namespace TestMod.Content.Items.Accessories
                 limit.Text = Language.GetTextValue("Mods.TestMod.TerraShieldEffects.DamageLimit", percent);
             }
             SuperEnergyShieldItem.AddShieldTooltip(tooltips, Mod);
+            if (CalamityDefenseDamageSystem.ReductionReady)
+                tooltips.Add(new TooltipLine(Mod, "DefenseDamageReduction",
+                    Language.GetTextValue(CalamityDefenseDamageSystem.ReductionTextKey)));
         }
 
         public override void AddRecipes() => CreateRecipe()

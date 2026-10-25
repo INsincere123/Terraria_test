@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Linq.Expressions;
 using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
@@ -19,7 +20,7 @@ namespace TestMod.Common.Systems
         private static readonly Dictionary<int, bool> MeleeProjectileOverrides = new();
 
         // ── 反射缓存 ─────────────────────────────────────────
-        private static FieldInfo _fearmongerSetField;
+        private static Action<ModPlayer> _enableFearmongerSet;
         private static FieldInfo _gSabatonField;          // CalamityPlayer.gSabaton
         private static Type      _calPlayerType;
         private static ModPlayer _calPlayerTemplate;
@@ -31,8 +32,7 @@ namespace TestMod.Common.Systems
 
             // 缓存 CalamityPlayer 类型及所需字段
             _calPlayerType      = cal.Code.GetType("CalamityMod.CalPlayer.CalamityPlayer");
-            _fearmongerSetField = _calPlayerType?.GetField("fearmongerSet",
-                BindingFlags.Public | BindingFlags.Instance);
+            _enableFearmongerSet = null;
             _gSabatonField      = _calPlayerType?.GetField("gSabaton",
                 BindingFlags.Public | BindingFlags.Instance);
 
@@ -59,6 +59,7 @@ namespace TestMod.Common.Systems
                 }
             }
 
+            LoadSummonPenaltyCompatibility();
             LoadAbyssCompatibility();
 
             ModContent.TryFind<DamageClass>("CalamityMod", "TrueMeleeDamageClass", out var trueMelee);
@@ -101,7 +102,7 @@ namespace TestMod.Common.Systems
             _calPlayerTemplate = null;
             _calPlayerType = null;
             _gSabatonField = null;
-            _fearmongerSetField = null;
+            _enableFearmongerSet = null;
             CalamityLoaded = false;
         }
 
@@ -120,10 +121,49 @@ namespace TestMod.Common.Systems
         // ── 套装兼容：免疫跨职业召唤伤害惩罚 ─────────────────
         public static void DisableSummonPenalty(Player player)
         {
-            if (!CalamityLoaded || _fearmongerSetField == null) return;
+            if (!CalamityLoaded || _enableFearmongerSet == null || _calPlayerTemplate == null) return;
 
-            if (player.TryGetModPlayer(_calPlayerTemplate, out var modPlayer))
-                _fearmongerSetField.SetValue(modPlayer, true);
+            try
+            {
+                // 每次获取当前玩家实例，委托不捕获模板或某个玩家。
+                if (player.TryGetModPlayer(_calPlayerTemplate, out var modPlayer))
+                    _enableFearmongerSet(modPlayer);
+            }
+            catch (Exception ex)
+            {
+                _enableFearmongerSet = null;
+                ModContent.GetInstance<TestMod>().Logger.Warn($"[CalamityCompat] 召唤惩罚兼容运行失败，本轮已停用：{ex.Message}");
+            }
+        }
+
+        private void LoadSummonPenaltyCompatibility()
+        {
+            _enableFearmongerSet = null;
+            try
+            {
+                if (_calPlayerTemplate == null)
+                    throw new InvalidOperationException("找不到灾厄玩家模板");
+                _enableFearmongerSet = CreateFearmongerSetter(_calPlayerType);
+            }
+            catch (Exception ex)
+            {
+                Mod.Logger.Warn($"[CalamityCompat] 召唤惩罚兼容初始化失败，已停用：{ex.Message}");
+            }
+        }
+
+        private static Action<ModPlayer> CreateFearmongerSetter(Type playerType)
+        {
+            if (playerType == null || !typeof(ModPlayer).IsAssignableFrom(playerType))
+                throw new InvalidOperationException("灾厄玩家类型无效");
+            FieldInfo field = playerType.GetField("fearmongerSet", BindingFlags.Public | BindingFlags.Instance);
+            if (field == null || field.FieldType != typeof(bool) || field.IsInitOnly || field.IsLiteral)
+                throw new MissingFieldException(playerType.FullName, "fearmongerSet (writable bool)");
+
+            var instance = Expression.Parameter(typeof(ModPlayer), "player");
+            var assign = Expression.Assign(Expression.Field(Expression.Convert(instance, playerType), field),
+                Expression.Constant(true));
+            // 显式 void 返回体，运行时只做类型转换及字段写入，不使用反射或装箱。
+            return Expression.Lambda<Action<ModPlayer>>(Expression.Block(assign, Expression.Empty()), instance).Compile();
         }
 
         // ── 向灾厄重铸等级表追加"炼化"作为最高 tier ───────────

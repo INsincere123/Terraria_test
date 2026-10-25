@@ -8,12 +8,14 @@ using TestMod.Content.Projectiles.Dashes;
 
 namespace TestMod.Common.Mechanics.Dashes
 {
-    /// <summary>忍者冲刺的运动，日耀档近战撞击；仅主动冲刺阶段免疫 NPC 接触。</summary>
+    /// <summary>忍者冲刺运动与近战撞击；主动阶段免疫NPC接触，成功撞击后追加短暂免疫。</summary>
     public class TerraWingsDash : PlayerDashEffect
     {
         public const string EffectId = "TerraWingsDash";
         internal const float StartSpeed = 31f;
         internal const float SpeedRetention = 0.99f; // 每帧保留倍率；持续时间由 DashDuration 独立控制。
+        // 参考灾厄 Asgardian Aegis：实际撞击命中成功后补足12tick免疫。
+        internal const int ContactIFrames = 12;
         internal const float ExitSpeedRetention = 0.9f;
         // ExitSpeedRetention：冲刺结束时，仍按同方向才保留横向速度；上限为 min(StartSpeed, max(accRunSpeed, maxRunSpeed)) × 此倍率。
         // 0.35 会压到该基准的35%，产生减速顿感；1允许衔接正常跑速，但不会把已有低速抬高。
@@ -33,7 +35,7 @@ namespace TestMod.Common.Mechanics.Dashes
             TerraWingsPlayer state = player.GetModPlayer<TerraWingsPlayer>();
             state.DashSpeed = StartSpeed;
             state.BeginDashTrail();
-            // 不授予 immuneTime/hurtCooldowns，弹幕及冲刺后的伤害仍按原规则处理。
+            // 起步不授予通用免疫；仅在 AfterMovement 确认撞击命中成功后补足。
             player.timeSinceLastDashStarted = 0;
             if (player.vortexStealthActive) player.vortexStealthActive = false;
         }
@@ -84,6 +86,7 @@ namespace TestMod.Common.Mechanics.Dashes
                     if (!DashStrikeProjectile.Strike<TerraWingsDashStrike>(player, npc, hit, EffectId)) continue;
                     dash.HitTargets[i] = true;
                     dash.HitCount++;
+                    DashImmunity.Grant(player, ContactIFrames);
                 }
             }
             if (!dash.IsDashing || Math.Abs(player.position.X - state.DashStartPosition.X) + 0.01f < state.DashSpeed)

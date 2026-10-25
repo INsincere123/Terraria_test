@@ -27,6 +27,7 @@ namespace TestMod.Content.Items.Accessories
         {
             CreateRecipe()
                 .AddIngredient(ItemID.EyeoftheGolem, 3)
+                .AddIngredient(ItemID.LunarBar, 10)
                 .AddTile(TileID.LunarCraftingStation)
                 .Register();
         }
