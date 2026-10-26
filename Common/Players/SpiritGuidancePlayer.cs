@@ -5,8 +5,10 @@ namespace TestMod.Common.Players
     public sealed class SpiritGuidancePlayer : ModPlayer
     {
         public bool Enabled;
-        public override void ResetEffects() => Enabled = false;
-        public override void UpdateDead() => Enabled = false;
-        public override void OnEnterWorld() => Enabled = false;
+        public bool ModdedShotsEnabled;
+        public override void ResetEffects() => Clear();
+        public override void UpdateDead() => Clear();
+        public override void OnEnterWorld() => Clear();
+        private void Clear() => Enabled = ModdedShotsEnabled = false;
     }
 }

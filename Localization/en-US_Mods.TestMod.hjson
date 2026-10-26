@@ -1,5 +1,13 @@
 NPCs.ScarecrowDecoy.DisplayName: 诱敌稻草人
 
+HealthCommand: {
+	Description: 临时设置基础生命上限；/HP=reset 恢复正常计算
+	Usage: 用法：/HP=整数（1–32767），或 /HP=reset 恢复；仅本次进入世界有效。
+	Changed: 基础生命上限已设为 {0}（已包含原版及灾厄永久生命成长），装备和Buff仍会影响最终上限；退出世界后恢复。
+	Restored: 已恢复正常生命上限计算。
+	CompatibilityUnavailable: 灾厄永久生命兼容不可用，无法设置基础生命；仍可用 /HP=reset 恢复。
+}
+
 OutlandCombatTechniques: {
 	AlreadyUsed: 本世界已使用，无法再次使用
 	Volume1Used: 本世界的城镇居民掌握了外域战斗技术卷一！
@@ -119,6 +127,15 @@ VortexAmmo: {
 }
 
 Items: {
+	IlluminationLamp: {
+		DisplayName: 照明灯
+		Tooltip:
+			'''
+			放在背包中即可照亮周围视野
+			照明效果与泰拉头盔相同；佩戴泰拉头盔时跟随其照明开关
+			'''
+	}
+
 	LifetakingSpear: {
 		DisplayName: 索命长矛
 		Tooltip:
@@ -564,6 +581,9 @@ Items: {
 
 	SpiritGuidanceCore: {
 		DisplayName: 御灵核心
+		ModdedShotsOn: 模组仆从射弹追踪：开启
+		ModdedShotsOff: 模组仆从射弹追踪：关闭
+		ToggleHint: Shift＋右键切换模组仆从射弹追踪，原版效果不受影响
 		Tooltip:
 			'''
 			扩大部分原版近身仆从的索敌范围并强化追击，命中后弹开

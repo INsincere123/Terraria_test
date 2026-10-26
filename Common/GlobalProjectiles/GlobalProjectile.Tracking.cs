@@ -47,6 +47,7 @@ namespace TestMod.Common.GlobalProjectiles
             binaryWriter.Write((byte)PlusWeapon);
             if (PlusWeapon != PlusWeaponKind.None) binaryWriter.Write(projectile.originalDamage);
             binaryWriter.Write((byte)TrackingWeapon);
+            bitWriter.WriteBit(_minionAttackSource);
             bitWriter.WriteBit(subhandDynamicText);
             bitWriter.WriteBit(_bloodFeedPenetrationOverridden);
             BloodFeed_WritePenetration(binaryWriter);
@@ -91,6 +92,8 @@ namespace TestMod.Common.GlobalProjectiles
             var trackingKind = (TrackingWeaponKind)binaryReader.ReadByte();
             TrackingWeapon = !IsTimeEchoAttack && !IsExtraHit && TrackingWeaponMatches(trackingKind, projectile.type)
                 ? trackingKind : TrackingWeaponKind.None;
+            bool minionSource = bitReader.ReadBit();
+            _minionAttackSource = minionSource && !IsTimeEchoAttack && !IsExtraHit && IsMinionAttackCarrier(projectile);
             ApplyTrackingSourceDefaults(projectile);
             subhandDynamicText = bitReader.ReadBit();
             Seals_SetRocketExtraUpdates(projectile, rangerExtra && vortexAmmoCategory == AmmoID.Rocket &&

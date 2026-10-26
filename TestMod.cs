@@ -24,6 +24,9 @@ namespace TestMod
 					case GodModePlayer.StatePacket:
 						GodModePlayer.ReceiveState(reader, whoAmI);
 						break;
+					case BaseHealthPlayer.StatePacket:
+						BaseHealthPlayer.ReceiveState(reader, whoAmI);
+						break;
 					case LifetakingPlayer.RequestPacketId:
 						LifetakingPlayer.ReceiveRequest(reader, whoAmI);
 						break;

@@ -126,6 +126,7 @@ namespace TestMod.Common.GlobalProjectiles
             DecoyExcluded = false;
             DecoySelection.Reset();
             TrackingWeapon = TrackingWeaponKind.None;
+            _minionAttackSource = false;
             _trackingDefaultsApplied = _contactImmunityApplied = false;
         }
 
@@ -202,13 +203,13 @@ namespace TestMod.Common.GlobalProjectiles
             {
                 // 保留后续时缓与显式强制追踪的处理入口。
             }
-            // 🔫 ③ 召唤物射弹 (MinionShot)：通用高阶追踪
+            // 🔫 ③ 召唤物射弹：标准标记兜底，真实仆从及派生来源补足模组未登记的射弹。
             //    覆盖星尘细胞子弹/大黄蜂尖刺/UFO激光/双子激光/迷你鲨鱼等
-            else if (ProjectileID.Sets.MinionShot[projectile.type])     // 官方集合，包含所有标记为 MinionShot 的弹射物，要排除的话必须排除射弹，不能排除召唤物
+            else if (ProjectileID.Sets.MinionShot[projectile.type] || IsSpiritGuidanceSourceShot(projectile))
             {
                 if (HasPlusWeapon(PlusWeaponKind.StardustCell))
                     ApplyHighTierTracking(projectile, 16.1f, 69f, 0.10f, 0.225f, prioritizeMinionTarget: true);
-                else if (HasSpiritGuidance(player))
+                else if (HasSpiritGuidanceForShot(player, projectile))
                     ApplyHighTierTracking(projectile, 13f, 55f, 0.08f, 0.18f, prioritizeMinionTarget: true, range: 1300f);
             }
             // 🚫 ② 射击型本体：保持 vanilla AI，不干预

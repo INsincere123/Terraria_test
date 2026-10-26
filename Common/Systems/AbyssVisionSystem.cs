@@ -11,6 +11,7 @@ using Terraria;
 using Terraria.Graphics.Light;
 using Terraria.ModLoader;
 using TestMod.Content.Items.Armor.TerraArmor;
+using TestMod.Content.Items.Tools;
 
 namespace TestMod.Common.Systems
 {
@@ -79,10 +80,24 @@ namespace TestMod.Common.Systems
         public override void PostUpdatePlayers()
         {
             // 装备结算后每 tick 只判断一次，不在光照逐格循环中读取玩家或反射深渊属性。
-            _ambientLightEnabled = TerraHelmet.ShouldIlluminateViewport()
+            _ambientLightEnabled = ShouldIlluminateViewport()
                 || CalamityCompatSystem.ShouldIlluminateAbyssViewport();
             _worldWidth = Main.maxTilesX;
             _worldHeight = Main.maxTilesY;
+        }
+
+        private static bool ShouldIlluminateViewport()
+        {
+            if (Main.dedServ || Main.gameMenu) return false;
+            Player player = Main.LocalPlayer;
+            if (!player.active || player.dead) return false;
+            // 功能头盔优先，包括关闭状态；背包中的灯不能绕过头盔开关。
+            if (player.armor[0].ModItem is TerraHelmet)
+                return TerraHelmet.ShouldIlluminateViewport();
+            int lampType = ModContent.ItemType<IlluminationLamp>();
+            for (int index = 0; index < 50; index++)
+                if (player.inventory[index].type == lampType && player.inventory[index].stack > 0) return true;
+            return false;
         }
 
         private static void ResetVision()

@@ -62,11 +62,13 @@ namespace TestMod.Common.Systems
                 && context is ItemSlot.Context.InventoryItem or ItemSlot.Context.EquipAccessory
                     or ItemSlot.Context.EquipAccessoryVanity or ItemSlot.Context.ModdedAccessorySlot
                     or ItemSlot.Context.ModdedVanityAccessorySlot
-                && slot >= 0 && slot < inventory.Length && inventory[slot]?.ModItem is PanicToggleAccessory accessory)
+                && slot >= 0 && slot < inventory.Length && inventory[slot]?.ModItem is ModItem toggleItem
+                && toggleItem is PanicToggleAccessory or SpiritGuidanceCore)
             {
                 if (Main.mouseRight && Main.mouseRightRelease)
                 {
-                    accessory.TogglePanic();
+                    if (toggleItem is PanicToggleAccessory accessory) accessory.TogglePanic();
+                    else ((SpiritGuidanceCore)toggleItem).ToggleModdedShots();
                     Main.mouseRightRelease = false;
                 }
                 return;
