@@ -1,11 +1,19 @@
 using Terraria;
 using Terraria.ID;
+using TestMod.Common.Mechanics.Dashes;
 using TestMod.Common.Players;
 
 namespace TestMod.Content.Items.Accessories
 {
     public sealed class OldOnesVeil : PanicToggleAccessory
     {
+        internal static readonly AccessoryDashConfig DashConfiguration = new(
+            Source: AccessoryDashSource.Veil, Motion: AccessoryDashMotion.Segmented, StartSpeed: 23.9f,
+            FastRetention: 0.992f, SlowRetention: 0.96f, FastThreshold: 12f,
+            Duration: 0, Cooldown: 60, ExitRetention: 0f,
+            Damage: 160, Knockback: 10f, HitboxExpand: 6,
+            ContactImmunity: 12, Visual: AccessoryDashVisual.Smoke);
+
         protected override bool HasDash => true;
         public override void SetDefaults()
         {

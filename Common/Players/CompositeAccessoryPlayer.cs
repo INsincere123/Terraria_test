@@ -15,7 +15,6 @@ namespace TestMod.Common.Players
         private Item veilSource;
         private float dodgeFailure = 1f;
         private float healingMultiplier = 1f;
-        internal bool DashStarted;
 
         public override void ResetEffects()
         {
@@ -73,6 +72,7 @@ namespace TestMod.Common.Players
         internal void EquipShield()
         {
             ShieldEquipped = true;
+            Player.GetModPlayer<AccessoryDashPlayer>().Offer(ShieldOfCthulhuPlus.DashConfiguration);
             ApplyObsidianShield();
             Player.endurance += 0.15f;
             dodgeFailure *= 0.85f;
@@ -81,6 +81,7 @@ namespace TestMod.Common.Players
         internal void EquipVeil(OldOnesVeil accessory)
         {
             VeilEquipped = true;
+            Player.GetModPlayer<AccessoryDashPlayer>().Offer(OldOnesVeil.DashConfiguration);
             veilSource = accessory.Item;
             ApplyEmblem(accessory);
             Player.endurance += 0.15f;
@@ -100,12 +101,11 @@ namespace TestMod.Common.Players
         internal void PrepareDashSelection()
         {
             DashPlayer dash = Player.GetModPlayer<DashPlayer>();
-            if (string.IsNullOrEmpty(dash.VanillaDashEffectId))
-                dash.VanillaDashEffectId = VeilEquipped ? VeilPhaseDash.EffectId
-                    : ShieldEquipped ? CthulhuPhaseDash.EffectId : null;
-            if (dash.ActiveEffect is CompositePhaseDash active && !active.CanUseDash(Player)) dash.EndDash();
-            if (dash.VanillaDashEffectId is CthulhuPhaseDash.EffectId or VeilPhaseDash.EffectId)
-                Player.dashType = 0;
+            var shared = Player.GetModPlayer<AccessoryDashPlayer>();
+            if (string.IsNullOrEmpty(dash.VanillaDashEffectId) && shared.Selected != null)
+                dash.VanillaDashEffectId = AccessoryDash.EffectId;
+            if (dash.ActiveEffect is AccessoryDash active && !active.CanUseDash(Player)) dash.EndDash();
+            if (dash.VanillaDashEffectId == AccessoryDash.EffectId) Player.dashType = 0;
         }
 
         public override bool FreeDodge(Player.HurtInfo info)
@@ -115,9 +115,6 @@ namespace TestMod.Common.Players
             Player.NinjaDodge();
             return true;
         }
-
-        public override bool CanBeHitByNPC(NPC npc, ref int cooldownSlot) =>
-            !(Player.GetModPlayer<DashPlayer>().ActiveEffect is CompositePhaseDash dash && dash.CanUseDash(Player));
 
         public override void GetHealLife(Item item, bool quickHeal, ref int healValue)
         {
@@ -153,9 +150,6 @@ namespace TestMod.Common.Players
 
         public override void PostUpdate()
         {
-            DashPlayer dash = Player.GetModPlayer<DashPlayer>();
-            if (dash.ActiveEffect is CompositePhaseDash effect
-                && (!effect.CanUseDash(Player) || DashStarted && Player.velocity.X == 0f)) dash.EndDash();
             if (!ShieldEquipped && !VeilEquipped) remoteDashVisual = false;
             UpdateDashTrail(HasDashVisual);
         }
@@ -164,10 +158,10 @@ namespace TestMod.Common.Players
         public override void OnEnterWorld() => ResetSession();
         internal void ResetSession()
         {
-            if (Player.GetModPlayer<DashPlayer>().ActiveEffect is CompositePhaseDash)
-                Player.GetModPlayer<DashPlayer>().EndDash();
-            if (DashStarted) Player.dash = Player.dashDelay = 0;
-            ShieldEquipped = VeilEquipped = DashStarted = remoteDashVisual = false;
+            DashPlayer dash = Player.GetModPlayer<DashPlayer>();
+            var shared = Player.GetModPlayer<AccessoryDashPlayer>();
+            if (shared.IsSourceActive(AccessoryDashSource.Cthulhu) || shared.IsSourceActive(AccessoryDashSource.Veil)) dash.EndDash();
+            ShieldEquipped = VeilEquipped = remoteDashVisual = false;
             veilSource = null;
             dodgeFailure = healingMultiplier = 1f;
             ClearDashTrail();

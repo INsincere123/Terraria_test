@@ -12,7 +12,7 @@ namespace TestMod.Common.Players
         private bool remoteDashVisual;
         private bool HasDashVisual => Equipped && Player.active && !Player.dead && !Player.mount.Active
             && !Player.CCed && !Player.shimmering && !Player.tongued && !Player.pulley && Player.grapCount == 0
-            && (Player.GetModPlayer<DashPlayer>().ActiveEffect is TerraWingsDash
+            && (Player.GetModPlayer<AccessoryDashPlayer>().IsSourceActive(AccessoryDashSource.TerraWings)
                 || Main.netMode != NetmodeID.SinglePlayer && Player.whoAmI != Main.myPlayer && remoteDashVisual);
 
         public override void CopyClientState(ModPlayer targetCopy)

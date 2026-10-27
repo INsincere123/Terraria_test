@@ -51,7 +51,8 @@ namespace TestMod.Common.Systems
 
         private static void Move(Action<Player> original, Player player)
         {
-            if (player.TryGetModPlayer(out DashPlayer dash) && dash.ActiveEffect is CompositePhaseDash effect)
+            if (player.TryGetModPlayer(out DashPlayer dash) && dash.ActiveEffect is AccessoryDash effect
+                && player.GetModPlayer<AccessoryDashPlayer>().Configuration.Motion == AccessoryDashMotion.Segmented)
                 effect.Move(player);
             else original(player);
         }
@@ -79,7 +80,11 @@ namespace TestMod.Common.Systems
         public override void OnWorldUnload()
         {
             foreach (Player player in Main.player)
-                if (player?.active == true && player.TryGetModPlayer(out CompositeAccessoryPlayer state)) state.ResetSession();
+                if (player != null)
+                {
+                    if (player.TryGetModPlayer(out AccessoryDashPlayer shared)) shared.ResetSession();
+                    if (player.TryGetModPlayer(out CompositeAccessoryPlayer state)) state.ResetSession();
+                }
         }
 
         public override void Unload()

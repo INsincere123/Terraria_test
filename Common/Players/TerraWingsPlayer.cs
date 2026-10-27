@@ -23,17 +23,11 @@ namespace TestMod.Common.Players
         private bool fargoGravityProvided;
         internal bool FargoMomentumProvided;
 
-        // 冲刺状态属于玩家；效果注册表中的 TerraWingsDash 实例不保存运行字段。
-        internal float DashSpeed;
-        internal bool DashContactActive;
-        internal Vector2 DashStartPosition;
-
         public override void ResetEffects()
         {
             Equipped = false;
             equippedWings = null;
             hideWings = false;
-            DashContactActive = false;
             recoveredFlightThisTick = false;
             fargoGravityProvided = FargoMomentumProvided = false;
         }
@@ -71,7 +65,8 @@ namespace TestMod.Common.Players
             Player.GetModPlayer<GravityNormalizerPlayer>().HasGravityNormalizer = true;
             GrappleEffect.Apply(Player, wings.Item);
             FastFallEffect.Apply(Player, 30f, 2f);
-            Player.GetModPlayer<DashPlayer>().VanillaDashEffectId = TerraWingsDash.EffectId;
+            Player.GetModPlayer<AccessoryDashPlayer>().Offer(TerraWings.DashConfiguration);
+            Player.GetModPlayer<DashPlayer>().VanillaDashEffectId = AccessoryDash.EffectId;
         }
 
         public override void PostUpdateEquips()
@@ -109,7 +104,7 @@ namespace TestMod.Common.Players
 
         private void SuppressVanillaDash()
         {
-            if (Player.GetModPlayer<DashPlayer>().VanillaDashEffectId == TerraWingsDash.EffectId)
+            if (Player.GetModPlayer<DashPlayer>().VanillaDashEffectId == AccessoryDash.EffectId)
                 Player.dashType = 0;
         }
 
@@ -162,15 +157,8 @@ namespace TestMod.Common.Players
                 StopOwnDash();
 
             bool showDash = HasDashVisual;
-            if (DashContactActive && Player.GetModPlayer<DashPlayer>().ActiveEffect is TerraWingsDash dash)
-                dash.AfterMovement(Player);
             UpdateDashTrail(showDash);
         }
-
-        public override bool CanBeHitByNPC(NPC npc, ref int cooldownSlot)
-            // 原版 NPC 接触检测早于 PreUpdateMovement，不能依赖该钩子本帧才置起的标志。
-            => !(Equipped && Player.GetModPlayer<DashPlayer>().ActiveEffect is TerraWingsDash dash
-                && dash.CanUseDash(Player));
 
         public override void UpdateVisibleAccessories()
         {
@@ -197,9 +185,7 @@ namespace TestMod.Common.Players
         private void StopOwnDash()
         {
             DashPlayer dash = Player.GetModPlayer<DashPlayer>();
-            if (dash.ActiveEffect is TerraWingsDash) dash.EndDash();
-            DashContactActive = false;
-            DashSpeed = 0f;
+            if (Player.GetModPlayer<AccessoryDashPlayer>().IsSourceActive(AccessoryDashSource.TerraWings)) dash.EndDash();
         }
 
         public override void UpdateDead()

@@ -11,9 +11,9 @@ using Terraria.ID;
 using Terraria.Localization;
 using Terraria.ModLoader;
 using Terraria.ModLoader.IO;
+using TestMod.Common.Mechanics.Dashes;
 using TestMod.Common.Players;
 using TestMod.Common.Configs;
-using TestMod.Common.Mechanics.Dashes;
 using TestMod.Common.Systems;
 using TestMod.Common.Utilities;
 using TestMod.Content.Rarities;
@@ -22,6 +22,22 @@ namespace TestMod.Content.Items.Accessories
 {
     public class TerraWings : ModItem
     {
+        internal static readonly AccessoryDashConfig DashConfiguration = new(
+            Source: AccessoryDashSource.TerraWings, // 装备来源；用于选择优先级、卸装取消及区分残影来源。
+            Motion: AccessoryDashMotion.FixedDuration, // 固定时长模式，不因速度降至正常跑速而提前结束。
+            StartSpeed: 31f, // 水平起速，单位像素/tick；方向由本次冲刺输入决定。
+            FastRetention: 0.99f, // 从第2帧起，每帧保留上一帧冲刺速度的99%。
+            SlowRetention: 0.99f, // 分段模式低速段的保速倍率；当前固定时长模式不使用。
+            FastThreshold: 12f, // 分段模式高低速分界，单位像素/tick；当前固定时长模式不使用。
+            Duration: 18, // 主动持续18 tick（0.3秒），完成末帧位移和撞击后结束；撞墙或失效可提前结束。
+            Cooldown: 30, // 冲刺结束后冷却30 tick（0.5秒），从结束时开始计时。
+            ExitRetention: 0.9f, // 同向按键结束时，残速上限为min(起速, 正常跑速)×0.9；不抬高低速，松键/反向归零。
+            Damage: 666, // 每目标每次冲刺的基础真实伤害，另受真实伤害总增伤和暴击影响。
+            Knockback: 40f, // 撞击基础击退力度，实际效果受目标抗击退能力等命中规则影响。
+            HitboxExpand: 6, // 位移起终点矩形并集向四边各扩大6像素，作为撞击检测范围。
+            ContactImmunity: 12, // 成功撞击后补足12 tick（0.2秒）NPC接触免疫，不额外免疫弹幕；结束/卸装保留剩余。
+            Visual: AccessoryDashVisual.Terra); // 泰拉冲刺粒子类型；人物残影仍沿泰拉之翼原有绘制入口。
+
         public const int FlightTime = 900;
         public const float FlightSpeed = 18f;
         public const float FlightAcceleration = 0.75f;
@@ -174,7 +190,7 @@ namespace TestMod.Content.Items.Accessories
                 : Language.GetTextValue(TextKey + "DoubleTapDash");
             tooltips.Add(new TooltipLine(Mod, "DashHint", dashHint));
             tooltips.Add(new TooltipLine(Mod, "DashHitImmunity",
-                Language.GetTextValue(TextKey + "DashHitImmunity", TerraWingsDash.ContactIFrames / 60f)));
+                Language.GetTextValue(TextKey + "DashHitImmunity", DashConfiguration.ContactImmunity / 60f)));
             tooltips.Add(new TooltipLine(Mod, "ExtraJumpState",
                 Language.GetTextValue(TextKey + (ExtraJumpsEnabled ? "JumpsEnabled" : "JumpsDisabled")))
             { OverrideColor = ExtraJumpsEnabled ? Color.LightGreen : Color.Gray });

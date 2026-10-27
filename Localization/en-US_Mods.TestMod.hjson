@@ -186,7 +186,7 @@ Items: {
 			'''
 			[c/6495ED:15%]概率闪避攻击，受到的伤害减少[c/6495ED:15%]
 			免疫击退，获得黑曜石皮肤效果
-			可水平冲刺并穿过敌人
+			可水平冲刺并穿过敌人，造成[c/FF8C00:60点真实伤害]
 			'''
 	}
 
@@ -200,7 +200,7 @@ Items: {
 			延长受伤后的无敌时间
 			[c/6495ED:22%]概率闪避攻击，受到的伤害减少[c/6495ED:15%]
 			免疫击退和十字章护盾防护的异常状态
-			可水平冲刺并穿过敌人
+			可水平冲刺并穿过敌人，造成[c/FF8C00:160点真实伤害]
 			'''
 	}
 
@@ -215,7 +215,7 @@ Items: {
 			免疫击退与熔岩伤害，在水中自由移动并能够攀墙
 			重力提高50%，不受太空低重力影响
 			强化钩爪，被钩爪拉动时获得[c/6495ED:10%]伤害减免和[c/6495ED:50%]荆棘，减伤持续至松钩后[c/FFD700:1秒]
-			可水平冲刺穿过敌怪
+			可水平冲刺穿过敌怪，造成[c/FF8C00:666点真实伤害]
 			'''
 		JumpsEnabled: 额外跳跃：开启（气球束三段跳与屁罐跳）
 		JumpsDisabled: 额外跳跃：关闭
@@ -224,7 +224,7 @@ Items: {
 		SlowModeHint: 按住Shift并左键点击背包或饰品栏中的此物品切换慢速模式
 		SingleKeyDash: 按 [{0}] 水平冲刺
 		DoubleTapDash: 双击左右方向键水平冲刺
-		DashHitImmunity: 冲刺撞击命中敌怪后获得[c/FFD700:{0}秒]无敌时间
+		DashHitImmunity: 冲刺撞击命中敌怪后获得[c/FFD700:{0}秒]敌怪接触伤害免疫
 	}
 
 	TerraHelmet: {
@@ -522,16 +522,6 @@ Items: {
 			双击左／右方向键发动盾击冲刺；开启单键冲刺后按对应按键发动
 			撞击敌人后立即停止
 			[c/6495ED:造成200点近战伤害，命中后获得0.2秒无敌]
-			'''
-	}
-
-	VoidSash: {
-		DisplayName: 虚空腰带
-		Tooltip:
-			'''
-			双击左／右方向键发动高速冲刺；开启单键冲刺后按对应按键发动
-			冲刺后逐渐减速
-			[c/9370DB:冲刺不造成伤害]
 			'''
 	}
 
@@ -1283,7 +1273,7 @@ Projectiles: {
 	StandardDashStrike.DisplayName: 冲刺伤害
 	LongDashStrike.DisplayName: 长冲刺
 	ShortDashStrike.DisplayName: 短冲刺
-	TerraWingsDashStrike.DisplayName: 泰拉之翼冲刺
+	AccessoryDashStrike.DisplayName: 饰品冲刺
 	PhantasmSpecialArrowProj.DisplayName: 真·弑神箭
 	PhantasmHoldout.DisplayName: 幻象
 	AntaresBeam.DisplayName: 心宿二火焰

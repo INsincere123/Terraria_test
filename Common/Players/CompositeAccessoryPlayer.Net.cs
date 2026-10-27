@@ -13,7 +13,8 @@ namespace TestMod.Common.Players
         private bool HasDashVisual => (ShieldEquipped || VeilEquipped) && Player.active && !Player.dead
             && !Player.mount.Active && !Player.CCed && !Player.shimmering && !Player.tongued
             && !Player.pulley && Player.grapCount == 0
-            && (Player.GetModPlayer<DashPlayer>().ActiveEffect is CompositePhaseDash
+            && (Player.GetModPlayer<AccessoryDashPlayer>().IsSourceActive(AccessoryDashSource.Cthulhu)
+                || Player.GetModPlayer<AccessoryDashPlayer>().IsSourceActive(AccessoryDashSource.Veil)
                 || Main.netMode != NetmodeID.SinglePlayer && Player.whoAmI != Main.myPlayer && remoteDashVisual);
 
         public override void CopyClientState(ModPlayer targetCopy) =>
